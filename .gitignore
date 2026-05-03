@@ -1,0 +1,43 @@
+# Mercaitech — Git ignore
+
+# Configuración sensible
+api/config.local.php
+.env
+.env.local
+.env.production
+
+# Dependencias PHP
+vendor/
+composer.lock
+
+# Node (si se usa build tools)
+node_modules/
+.npm/
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# Cache
+.cache/
+tmp/
+temp/
+
+# Backups de base de datos
+database/*.dump.sql
+database/backups/

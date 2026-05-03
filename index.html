@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Mercaitech — Tecnología, hogar, moda, deportes y mucho más. Inteligencia que te entiende. Compra online con envíos rápidos y garantía total.">
+  <meta name="keywords" content="tecnología, gadgets, hogar inteligente, gaming, moda, deportes, tienda online, mercaitech">
+  <meta property="og:title" content="Mercaitech — Todo lo que buscas, en un solo lugar.">
+  <meta property="og:description" content="Tecnología, hogar, moda, gaming y más. Inteligencia que te entiende.">
+  <meta property="og:image" content="assets/banner-hero.png">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#03060D">
+  <title>Mercaitech — Todo lo que buscas, en un solo lugar.</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Mercaitech",
+    "url": "https://mercaitech.com",
+    "description": "Tienda online de tecnología, hogar, moda y deportes con IA.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://mercaitech.com/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════════════════════ -->
+<nav class="navbar" id="navbar" role="navigation" aria-label="Navegación principal">
+  <div class="navbar__inner">
+    <a href="#" class="navbar__brand" aria-label="Mercaitech — inicio">
+      <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
+      <span class="navbar__wordmark">MERCAI<span>TECH</span></span>
+    </a>
+
+    <ul class="navbar__links" role="list">
+      <li><a href="#" class="navbar__link active" data-cat="todos">Inicio</a></li>
+      <li><a href="#products" class="navbar__link" data-cat="tecnologia">Tecnología</a></li>
+      <li><a href="#products" class="navbar__link" data-cat="hogar">Hogar</a></li>
+      <li><a href="#products" class="navbar__link" data-cat="gaming">Gaming</a></li>
+      <li><a href="#products" class="navbar__link" id="open-newsletter-link">Ofertas</a></li>
+    </ul>
+
+    <div class="navbar__search">
+      <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="navbar-search-input" aria-label="Buscar productos">
+    </div>
+
+    <div class="navbar__actions">
+      <button class="icon-btn" id="search-toggle-btn" aria-label="Buscar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+      <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+      <button class="icon-btn" id="cart-btn" aria-label="Carrito de compras">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        <span class="cart-badge" id="cart-badge" aria-live="polite">0</span>
+      </button>
+      <button class="icon-btn navbar__mobile-toggle" id="mobile-menu-btn" aria-label="Menú" aria-expanded="false">
+        <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="navbar__mobile-menu" id="mobile-menu" role="dialog" aria-label="Menú móvil">
+  <a href="#" class="navbar__mobile-link">Inicio</a>
+  <a href="#products" class="navbar__mobile-link" data-cat="tecnologia">Tecnología</a>
+  <a href="#products" class="navbar__mobile-link" data-cat="hogar">Hogar</a>
+  <a href="#products" class="navbar__mobile-link" data-cat="gaming">Gaming</a>
+  <a href="#products" class="navbar__mobile-link">Ofertas</a>
+  <!-- Auth link injected by auth.js -->
+</div>
+
+<main id="main-content">
+
+<!-- ════════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════════ -->
+<section class="hero" id="hero" aria-label="Sección principal">
+  <div class="hero__ambient" aria-hidden="true"></div>
+  <div class="container">
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <span class="overline hero__eyebrow">Mercancía · IA · Tecnología</span>
+        <h1 class="hero__headline">TODO LO QUE BUSCAS,<br>EN UN SOLO LUGAR.</h1>
+        <p class="hero__sub">
+          Tecnología, hogar, moda, deportes y mucho más.<br>
+          <span class="text-cyan">Inteligencia</span> que te entiende.
+        </p>
+        <div class="hero__actions">
+          <a href="#products" class="btn btn--primary btn--lg" id="hero-cta">
+            COMPRA AHORA
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </a>
+          <a href="#categories" class="btn btn--secondary btn--lg">Ver categorías</a>
+        </div>
+        <div class="hero__stats">
+          <div>
+            <div class="hero__stat-value">+50K</div>
+            <div class="hero__stat-label">Clientes satisfechos</div>
+          </div>
+          <div>
+            <div class="hero__stat-value">+2K</div>
+            <div class="hero__stat-label">Productos disponibles</div>
+          </div>
+          <div>
+            <div class="hero__stat-value">24/7</div>
+            <div class="hero__stat-label">Soporte activo</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__visual" aria-hidden="true">
+        <div class="hero__orb"></div>
+        <div class="hero__product-card">
+          <div class="hero__product-glow"></div>
+          <svg class="hero__product-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>
+        </div>
+        <span class="hero__tag hero__tag--ai">★ IA Recomendado</span>
+        <span class="hero__tag hero__tag--sale">-25%</span>
+        <span class="hero__tag hero__tag--new">NUEVO</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     TRUST STRIP
+════════════════════════════════════════════════════════ -->
+<section class="trust" aria-label="Nuestros compromisos">
+  <div class="container">
+    <div class="trust__grid">
+      <div class="trust__item reveal">
+        <div class="trust__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div>
+          <div class="trust__label">Compra Segura</div>
+          <div class="trust__copy">Protegemos tus datos y tu tranquilidad</div>
+        </div>
+      </div>
+      <div class="trust__item reveal">
+        <div class="trust__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m2 17 6.5-4.5"/><path d="M22 17l-6.5-4.5"/><circle cx="17" cy="17" r="3"/><path d="M17 15v2l1 1"/></svg>
+        </div>
+        <div>
+          <div class="trust__label">Envíos Rápidos</div>
+          <div class="trust__copy">A todo el país con seguimiento en tiempo real</div>
+        </div>
+      </div>
+      <div class="trust__item reveal">
+        <div class="trust__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        </div>
+        <div>
+          <div class="trust__label">Garantía Total</div>
+          <div class="trust__copy">Productos 100% originales y de calidad</div>
+        </div>
+      </div>
+      <div class="trust__item reveal">
+        <div class="trust__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+        </div>
+        <div>
+          <div class="trust__label">Soporte 24/7</div>
+          <div class="trust__copy">Estamos aquí para ayudarte siempre</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     CATEGORIES
+════════════════════════════════════════════════════════ -->
+<section class="categories section" id="categories" aria-label="Categorías">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="overline text-cyan">Explora nuestro catálogo</span>
+        <h2 class="section-head__title">Categorías destacadas</h2>
+      </div>
+      <a href="#products" class="link-arrow">
+        Ver todas
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+    <div class="cat-chips" id="cat-chips" role="group" aria-label="Filtrar por categoría">
+      <button class="cat-chip active" data-cat="todos">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Todos
+      </button>
+      <button class="cat-chip" data-cat="tecnologia">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M2 15h2M2 9h2M22 15h-2M22 9h-2M15 22v-2M9 22v-2"/></svg>
+        Tecnología
+      </button>
+      <button class="cat-chip" data-cat="hogar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Hogar
+      </button>
+      <button class="cat-chip" data-cat="moda">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>
+        Moda
+      </button>
+      <button class="cat-chip" data-cat="deportes">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 22H18a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v3"/><polyline points="14 2 14 8 20 8"/><path d="M4.42 15.61a2.1 2.1 0 1 1 2.97 2.97L3 22l-1-4z"/></svg>
+        Deportes
+      </button>
+      <button class="cat-chip" data-cat="gaming">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="2"/></svg>
+        Gaming
+      </button>
+      <button class="cat-chip" data-cat="belleza">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/></svg>
+        Belleza
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     PRODUCTS GRID
+════════════════════════════════════════════════════════ -->
+<section class="products-section" id="products" aria-label="Productos destacados">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="overline text-cyan">Recomendado para ti</span>
+        <h2 class="section-head__title">Productos destacados</h2>
+      </div>
+      <a href="#" class="link-arrow" id="ver-todos-link">
+        Ver todos
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+    <div class="product-grid" id="product-grid" role="list" aria-label="Lista de productos">
+      <!-- Products injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     AI FEATURE
+════════════════════════════════════════════════════════ -->
+<section class="ai-feature section" id="ai-feature" aria-label="Inteligencia artificial Mercaitech">
+  <div class="container">
+    <div class="ai-feature__inner reveal">
+      <div class="ai-feature__glow" aria-hidden="true"></div>
+      <div class="ai-feature__icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/></svg>
+      </div>
+      <span class="overline text-cyan">Inteligencia que te conoce</span>
+      <h2 class="ai-feature__title">Mejores opciones.<br>Mejores decisiones. Mejor para ti.</h2>
+      <p class="ai-feature__copy">
+        Nuestro motor de recomendaciones aprende lo que te gusta y te muestra
+        exactamente lo que necesitas, sin ruido.
+      </p>
+      <div class="ai-feature__bullets">
+        <div class="ai-feature__bullet">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Recomendaciones personalizadas
+        </div>
+        <div class="ai-feature__bullet">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Alertas de precio inteligentes
+        </div>
+        <div class="ai-feature__bullet">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Búsqueda por lenguaje natural
+        </div>
+      </div>
+      <button class="btn btn--primary btn--lg" id="ai-cta">
+        ACTIVAR IA
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+</main><!-- end #main-content -->
+
+<!-- ════════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════ -->
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__brand-logo">
+          <img src="assets/logo.png" alt="" class="footer__logo-mark" aria-hidden="true">
+          <span class="footer__wordmark-text">MERCAI<span>TECH</span></span>
+        </div>
+        <p class="footer__brand-copy">Mercancía · IA · Tecnología. Todo lo que buscas, en un solo lugar.</p>
+        <div class="footer__socials">
+          <a href="#" class="icon-btn" aria-label="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61565192997606" target="_blank" rel="noopener noreferrer" class="icon-btn" aria-label="Facebook de Mercaitech">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="#" class="icon-btn" aria-label="Twitter / X">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+          </a>
+          <a href="#" class="icon-btn" aria-label="YouTube">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h3 class="footer__col-title">Tienda</h3>
+        <a href="#" class="footer__link" data-cat="tecnologia">Tecnología</a>
+        <a href="#" class="footer__link" data-cat="hogar">Hogar</a>
+        <a href="#" class="footer__link" data-cat="moda">Moda</a>
+        <a href="#" class="footer__link" data-cat="gaming">Gaming</a>
+        <a href="#" class="footer__link">Ofertas del día</a>
+      </div>
+      <div>
+        <h3 class="footer__col-title">Ayuda</h3>
+        <a href="#" class="footer__link">Soporte 24/7</a>
+        <a href="#" class="footer__link">Seguimiento de pedido</a>
+        <a href="#" class="footer__link">Devoluciones</a>
+        <a href="#" class="footer__link">Garantía</a>
+        <a href="#" class="footer__link">Contacto</a>
+      </div>
+      <div>
+        <h3 class="footer__col-title">Newsletter</h3>
+        <p class="footer__newsletter-copy">Ofertas exclusivas y novedades directo a tu correo.</p>
+        <form class="footer__newsletter-form" id="footer-newsletter" onsubmit="handleNewsletterSubmit(event, 'footer')">
+          <input type="email" class="footer__newsletter-input" placeholder="tu@correo.com" required aria-label="Correo electrónico para newsletter">
+          <button type="submit" class="btn btn--primary btn--icon" aria-label="Suscribirse">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 Mercaitech. Todos los derechos reservados.</span>
+      <div class="footer__bottom-links">
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════
+     CART DRAWER
+════════════════════════════════════════════════════════ -->
+<div class="cart-scrim" id="cart-scrim" aria-hidden="true"></div>
+<aside class="cart-drawer" id="cart-drawer" role="dialog" aria-label="Carrito de compras" aria-modal="true">
+  <header class="cart-drawer__head">
+    <h2 class="cart-drawer__title">Tu carrito <span class="text-subtle" id="cart-count-label">(0)</span></h2>
+    <button class="icon-btn" id="close-cart-btn" aria-label="Cerrar carrito">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </header>
+  <div class="cart-drawer__items" id="cart-items">
+    <!-- Injected by JS -->
+  </div>
+  <footer class="cart-drawer__foot" id="cart-footer">
+    <div class="cart-totals" id="cart-totals"></div>
+    <button class="btn btn--primary btn--lg btn--full" id="checkout-btn" disabled>
+      FINALIZAR COMPRA
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
+  </footer>
+</aside>
+
+<!-- ════════════════════════════════════════════════════════
+     PDP MODAL
+════════════════════════════════════════════════════════ -->
+<div class="pdp-overlay" id="pdp-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalle de producto">
+  <div class="pdp-modal" id="pdp-modal">
+    <div class="pdp-modal__header">
+      <button class="pdp-modal__back" id="pdp-close-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Volver a productos
+      </button>
+      <button class="icon-btn" id="pdp-x-btn" aria-label="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="pdp-modal__body">
+      <div id="pdp-content"><!-- Injected by JS --></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     NEWSLETTER MODAL
+════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="newsletter-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Newsletter Mercaitech">
+  <div class="modal">
+    <div class="modal__glow" aria-hidden="true"></div>
+    <button class="modal__close" id="newsletter-close" aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <div class="modal__icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+    </div>
+    <h2 class="modal__title">Ofertas exclusivas</h2>
+    <p class="modal__sub">Suscríbete y recibe un <span class="text-cyan">10% de descuento</span> en tu primera compra, además de las mejores ofertas directo a tu correo.</p>
+    <form class="modal__form" id="newsletter-modal-form" onsubmit="handleNewsletterSubmit(event, 'modal')">
+      <input type="text" class="modal__input" placeholder="Tu nombre" id="modal-name" required autocomplete="given-name">
+      <input type="email" class="modal__input" placeholder="tu@correo.com" id="modal-email" required autocomplete="email">
+      <button type="submit" class="btn btn--primary btn--lg btn--full">
+        QUIERO MI DESCUENTO
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+      <p class="modal__note">Sin spam. Puedes darte de baja en cualquier momento.</p>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SEARCH OVERLAY
+════════════════════════════════════════════════════════ -->
+<div class="search-overlay" id="search-overlay" role="search" aria-label="Buscar productos">
+  <div class="search-box">
+    <div class="search-box__input-wrap">
+      <svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías…" aria-label="Buscar productos">
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     WHATSAPP FLOATING BUTTON
+════════════════════════════════════════════════════════ -->
+<!-- ✏️  Reemplaza el número de teléfono por el tuyo (formato internacional sin +) -->
+<!-- ════ WHATSAPP CHAT WIDGET ═══════════════════════════════════ -->
+<!-- ✏️  Reemplaza el número (573001234567) por el tuyo          -->
+<div class="wa-widget" id="wa-widget" aria-label="Chat WhatsApp" role="dialog">
+  <div class="wa-widget__head">
+    <div class="wa-widget__avatar">
+      M
+      <span class="wa-widget__online-dot"></span>
+    </div>
+    <div class="wa-widget__head-info">
+      <div class="wa-widget__name">Mercaitech</div>
+      <div class="wa-widget__status">En línea</div>
+    </div>
+    <button class="wa-widget__close" id="wa-close" aria-label="Cerrar chat">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+  <div class="wa-widget__body">
+    <div class="wa-bubble">
+      <div class="wa-bubble__text">¡Hola! 👋 Bienvenido/a a <strong>Mercaitech</strong>.</div>
+      <div class="wa-bubble__time" id="wa-time-1"></div>
+    </div>
+    <div class="wa-bubble">
+      <div class="wa-bubble__text">¿En qué podemos ayudarte hoy?</div>
+      <div class="wa-bubble__time" id="wa-time-2"></div>
+    </div>
+  </div>
+  <div class="wa-widget__foot">
+    <a href="https://wa.me/573214961354?text=Hola%20Mercaitech%2C%20me%20gustaría%20obtener%20información%20sobre%20sus%20productos."
+       class="wa-widget__cta" target="_blank" rel="noopener noreferrer" id="wa-start">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+      Iniciar conversación
+    </a>
+    <div class="wa-widget__note">Respuesta habitual en minutos</div>
+  </div>
+</div>
+
+<!-- WhatsApp FAB toggle -->
+<button class="whatsapp-float" id="wa-fab" aria-label="Abrir chat de WhatsApp" aria-expanded="false">
+  <svg class="whatsapp-float__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+  </svg>
+  <span class="whatsapp-float__dot"></span>
+</button>
+
+<script>
+(function(){
+  const fab    = document.getElementById('wa-fab');
+  const widget = document.getElementById('wa-widget');
+  const close  = document.getElementById('wa-close');
+
+  // Set current time in chat bubbles
+  const now = new Date();
+  const t   = now.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+  ['wa-time-1','wa-time-2'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=t; });
+
+  function open()  { widget.classList.add('open'); fab.setAttribute('aria-expanded','true'); }
+  function closeW(){ widget.classList.remove('open'); fab.setAttribute('aria-expanded','false'); }
+
+  fab.addEventListener('click', () => widget.classList.contains('open') ? closeW() : open());
+  close.addEventListener('click', closeW);
+  document.addEventListener('keydown', e => { if(e.key==='Escape' && widget.classList.contains('open')) closeW(); });
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════
+     TOAST CONTAINER
+════════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════════════════ -->
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

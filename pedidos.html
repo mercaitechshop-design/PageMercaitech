@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Pedidos — Mercaitech</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__brand">
+      <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
+      <span class="navbar__wordmark">MERCAI<span>TECH</span></span>
+    </a>
+    <div style="flex:1"></div>
+    <div class="navbar__actions">
+      <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
+      <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="account-page">
+  <div class="container">
+    <div class="account-layout">
+      <aside class="account-sidebar">
+        <div class="account-sidebar__header">
+          <div class="account-sidebar__avatar" id="sidebar-avatar">?</div>
+          <div class="account-sidebar__name" id="sidebar-name">—</div>
+          <div class="account-sidebar__email" id="sidebar-email"></div>
+        </div>
+        <nav class="account-sidebar__nav">
+          <a href="perfil.html" class="account-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Mi perfil
+          </a>
+          <a href="pedidos.html" class="account-nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Mis pedidos
+          </a>
+          <a href="favoritos.html" class="account-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            Lista de deseos
+          </a>
+          <div style="height:1px;background:var(--border);margin:8px 0"></div>
+          <button class="account-nav-item account-nav-item--danger" onclick="MercaitechAuth.logout()" style="width:100%;text-align:left">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            Cerrar sesión
+          </button>
+        </nav>
+      </aside>
+
+      <div class="account-panel">
+        <h1 class="account-panel__title">Mis pedidos</h1>
+        <div id="orders-container">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/auth.js"></script>
+<script>
+'use strict';
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+function initials(name) {
+  return (name||'?').split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const user = MercaitechAuth.getUser();
+  const cont = document.getElementById('orders-container');
+
+  if (!user) {
+    cont.innerHTML = `
+      <div class="account-empty">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/></svg>
+        <div class="account-empty__title">Inicia sesión para ver tus pedidos</div>
+        <a href="login.html" class="btn btn--primary">INICIAR SESIÓN</a>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('sidebar-avatar').textContent = initials(user.nombre);
+  document.getElementById('sidebar-name').textContent   = user.nombre;
+  document.getElementById('sidebar-email').textContent  = user.email;
+
+  // Try to load orders from API
+  fetch('api/orders.php?usuario=' + encodeURIComponent(user.email))
+    .then(r => r.json())
+    .then(data => renderOrders(data.data || []))
+    .catch(() => renderOrders([]));
+});
+
+function renderOrders(orders) {
+  const cont = document.getElementById('orders-container');
+  if (!orders || orders.length === 0) {
+    cont.innerHTML = `
+      <div class="account-empty">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <div class="account-empty__title">Aún no tienes pedidos</div>
+        <p class="account-empty__sub">Cuando realices tu primera compra, podrás seguirla aquí.</p>
+        <a href="index.html" class="btn btn--primary">EXPLORAR PRODUCTOS</a>
+      </div>`;
+    return;
+  }
+  cont.innerHTML = orders.map(o => `
+    <div class="order-card">
+      <div class="order-card__head">
+        <div>
+          <div class="order-card__num">${o.numero_orden}</div>
+          <div class="order-card__date">${new Date(o.creado_en).toLocaleDateString('es', {day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+        <span class="order-status order-status--${o.estado}">${o.estado.charAt(0).toUpperCase()+o.estado.slice(1)}</span>
+      </div>
+      <div class="order-card__body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div style="font-size:13px;color:var(--fg-muted)">${o.ciudad}, ${o.pais}</div>
+        <div class="order-card__total">$${parseFloat(o.total).toLocaleString('es')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>

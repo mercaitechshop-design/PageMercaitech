@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Deseos — Mercaitech</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__brand">
+      <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
+      <span class="navbar__wordmark">MERCAI<span>TECH</span></span>
+    </a>
+    <div style="flex:1"></div>
+    <div class="navbar__actions">
+      <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
+      <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="account-page">
+  <div class="container">
+    <div class="account-layout">
+      <aside class="account-sidebar">
+        <div class="account-sidebar__header">
+          <div class="account-sidebar__avatar" id="sidebar-avatar">?</div>
+          <div class="account-sidebar__name" id="sidebar-name">—</div>
+          <div class="account-sidebar__email" id="sidebar-email"></div>
+        </div>
+        <nav class="account-sidebar__nav">
+          <a href="perfil.html" class="account-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Mi perfil
+          </a>
+          <a href="pedidos.html" class="account-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Mis pedidos
+          </a>
+          <a href="favoritos.html" class="account-nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            Lista de deseos
+          </a>
+          <div style="height:1px;background:var(--border);margin:8px 0"></div>
+          <button class="account-nav-item account-nav-item--danger" onclick="MercaitechAuth.logout()" style="width:100%;text-align:left">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            Cerrar sesión
+          </button>
+        </nav>
+      </aside>
+
+      <div class="account-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);padding-bottom:var(--space-4);border-bottom:1px solid var(--border)">
+          <h1 style="font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:-.02em">Lista de deseos</h1>
+          <span id="wish-count" style="font-size:13px;color:var(--fg-subtle)"></span>
+        </div>
+        <div id="wish-container"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/auth.js"></script>
+<script>
+'use strict';
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+function initials(n){return(n||'?').split(' ').filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('');}
+
+function showToast(msg) {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast toast--success';
+  el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span>${msg}</span>`;
+  c.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); el.classList.add('hide'); el.addEventListener('transitionend', () => el.remove(), {once:true}); }, 3000);
+}
+
+function getWishlist() { try { return JSON.parse(localStorage.getItem('mt_wishlist') || '[]'); } catch { return []; } }
+function saveWishlist(list) { localStorage.setItem('mt_wishlist', JSON.stringify(list)); }
+
+function removeFromWishlist(id) {
+  const list = getWishlist().filter(i => i.id !== id);
+  saveWishlist(list);
+  renderWishlist(list);
+  showToast('Producto eliminado de tu lista');
+}
+
+function addToCartFromWish(id) {
+  const p = PRODUCTS.find(p => p.id === id);
+  if (!p) return;
+  window.cart.add(p);
+  showToast(`${p.title} añadido al carrito`);
+}
+
+function renderWishlist(list) {
+  const cont = document.getElementById('wish-container');
+  const count = document.getElementById('wish-count');
+  count.textContent = list.length > 0 ? `${list.length} producto${list.length !== 1 ? 's' : ''}` : '';
+
+  if (list.length === 0) {
+    cont.innerHTML = `
+      <div class="account-empty">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        <div class="account-empty__title">Tu lista de deseos está vacía</div>
+        <p class="account-empty__sub">Guarda productos que te gusten haciendo click en el corazón ♡ en cada producto.</p>
+        <a href="index.html" class="btn btn--primary">EXPLORAR PRODUCTOS</a>
+      </div>`;
+    return;
+  }
+
+  cont.innerHTML = `<div class="wish-grid">${list.map(item => `
+    <div class="product-card" style="cursor:default">
+      <div class="product-card__media" style="background:${item.bg}">
+        <div class="product-card__media-inner">
+          <div class="product-card__icon">${getIcon(item.icon)}</div>
+        </div>
+        ${item.badge ? `<span class="product-card__badge badge--${item.badge.kind}">${item.badge.label}</span>` : ''}
+      </div>
+      <div class="product-card__body">
+        <span class="product-card__cat">${item.categoryLabel}</span>
+        <div class="product-card__title">${item.title}</div>
+        <div class="product-card__row">
+          <div class="product-card__prices">
+            <span class="price-new">$${item.price.toLocaleString('es')}</span>
+            ${item.oldPrice ? `<span class="price-old">$${item.oldPrice.toLocaleString('es')}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn--primary btn--sm" style="flex:1" onclick="addToCartFromWish(${item.id})">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            Añadir
+          </button>
+          <button class="btn btn--secondary btn--sm btn--icon" onclick="removeFromWishlist(${item.id})" aria-label="Eliminar de favoritos">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const user = MercaitechAuth.getUser();
+  if (user) {
+    document.getElementById('sidebar-avatar').textContent = initials(user.nombre);
+    document.getElementById('sidebar-name').textContent   = user.nombre;
+    document.getElementById('sidebar-email').textContent  = user.email;
+  }
+  renderWishlist(getWishlist());
+});
+</script>
+</body>
+</html>

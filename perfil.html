@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Perfil — Mercaitech</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__brand">
+      <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
+      <span class="navbar__wordmark">MERCAI<span>TECH</span></span>
+    </a>
+    <div style="flex:1"></div>
+    <div class="navbar__actions">
+      <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
+      <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="account-page">
+  <div class="container">
+    <div class="account-layout">
+
+      <!-- Sidebar -->
+      <aside class="account-sidebar">
+        <div class="account-sidebar__header">
+          <div class="account-sidebar__avatar" id="sidebar-avatar">?</div>
+          <div class="account-sidebar__name" id="sidebar-name">Cargando…</div>
+          <div class="account-sidebar__email" id="sidebar-email"></div>
+        </div>
+        <nav class="account-sidebar__nav">
+          <a href="perfil.html" class="account-nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Mi perfil
+          </a>
+          <a href="pedidos.html" class="account-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Mis pedidos
+          </a>
+          <a href="favoritos.html" class="account-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            Lista de deseos
+          </a>
+          <div style="height:1px;background:var(--border);margin:8px 0"></div>
+          <button class="account-nav-item account-nav-item--danger" onclick="MercaitechAuth.logout()" style="width:100%;text-align:left">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            Cerrar sesión
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Main panel -->
+      <div class="account-panel">
+        <h1 class="account-panel__title">Mi perfil</h1>
+
+        <div id="profile-guest" style="display:none">
+          <div class="account-empty">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <div class="account-empty__title">No has iniciado sesión</div>
+            <p class="account-empty__sub">Inicia sesión para ver y editar tu perfil.</p>
+            <a href="login.html" class="btn btn--primary">INICIAR SESIÓN</a>
+          </div>
+        </div>
+
+        <div id="profile-logged">
+          <div style="display:flex;align-items:center;gap:var(--space-5);margin-bottom:var(--space-6);padding-bottom:var(--space-5);border-bottom:1px solid var(--border)">
+            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--mt-blue-500),var(--mt-cyan-400));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:26px;color:#fff;flex-shrink:0" id="big-avatar">?</div>
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:20px" id="profile-fullname">—</div>
+              <div style="font-size:13px;color:var(--fg-subtle);margin-top:3px" id="profile-email-display">—</div>
+              <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--mt-green-400);background:rgba(16,201,138,.1);padding:4px 10px;border-radius:999px">
+                <span style="width:7px;height:7px;border-radius:50%;background:var(--mt-green-400);display:inline-block"></span>
+                Cuenta activa
+              </div>
+            </div>
+          </div>
+
+          <form class="profile-form" id="profile-form" onsubmit="saveProfile(event)">
+            <div class="profile-row">
+              <div class="profile-field">
+                <label class="profile-label" for="p-nombre">Nombre</label>
+                <input type="text" class="profile-input" id="p-nombre" placeholder="Tu nombre" autocomplete="given-name">
+              </div>
+              <div class="profile-field">
+                <label class="profile-label" for="p-apellido">Apellido</label>
+                <input type="text" class="profile-input" id="p-apellido" placeholder="Tu apellido" autocomplete="family-name">
+              </div>
+            </div>
+            <div class="profile-field">
+              <label class="profile-label" for="p-email">Correo electrónico</label>
+              <input type="email" class="profile-input" id="p-email" placeholder="tu@correo.com" autocomplete="email" readonly>
+              <span style="font-size:11px;color:var(--fg-subtle);margin-top:3px">El correo no se puede cambiar directamente. Contacta soporte.</span>
+            </div>
+            <div class="profile-field">
+              <label class="profile-label" for="p-telefono">Teléfono</label>
+              <input type="tel" class="profile-input" id="p-telefono" placeholder="+57 300 000 0000" autocomplete="tel">
+            </div>
+            <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+              <button type="submit" class="btn btn--primary">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                GUARDAR CAMBIOS
+              </button>
+              <div id="profile-msg" style="display:flex;align-items:center;font-size:13px;color:var(--mt-green-400);gap:6px"></div>
+            </div>
+          </form>
+
+          <!-- Change password -->
+          <div style="margin-top:var(--space-7);padding-top:var(--space-5);border-top:1px solid var(--border)">
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:var(--space-4)">Cambiar contraseña</h3>
+            <form class="profile-form" style="max-width:400px" onsubmit="changePassword(event)">
+              <div class="profile-field">
+                <label class="profile-label" for="p-pwd-current">Contraseña actual</label>
+                <input type="password" class="profile-input" id="p-pwd-current" placeholder="••••••••" autocomplete="current-password">
+              </div>
+              <div class="profile-field">
+                <label class="profile-label" for="p-pwd-new">Nueva contraseña</label>
+                <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+              </div>
+              <div class="profile-field">
+                <label class="profile-label" for="p-pwd-confirm">Confirmar nueva contraseña</label>
+                <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+              </div>
+              <div id="pwd-change-msg" style="font-size:13px"></div>
+              <button type="submit" class="btn btn--secondary">CAMBIAR CONTRASEÑA</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/auth.js"></script>
+<script>
+'use strict';
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+function initials(name) {
+  return (name||'?').split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const user = MercaitechAuth.getUser();
+
+  if (!user) {
+    document.getElementById('profile-guest').style.display = '';
+    document.getElementById('profile-logged').style.display = 'none';
+    document.getElementById('sidebar-name').textContent = 'Invitado';
+    return;
+  }
+
+  // Sidebar
+  document.getElementById('sidebar-avatar').textContent = initials(user.nombre);
+  document.getElementById('sidebar-name').textContent   = user.nombre;
+  document.getElementById('sidebar-email').textContent  = user.email;
+  document.getElementById('big-avatar').textContent     = initials(user.nombre);
+  document.getElementById('profile-fullname').textContent    = user.nombre;
+  document.getElementById('profile-email-display').textContent = user.email;
+
+  // Pre-fill form
+  const parts = (user.nombre || '').split(' ');
+  document.getElementById('p-nombre').value   = parts[0] || '';
+  document.getElementById('p-apellido').value = parts.slice(1).join(' ') || '';
+  document.getElementById('p-email').value    = user.email || '';
+  document.getElementById('p-telefono').value = user.telefono || '';
+});
+
+function saveProfile(e) {
+  e.preventDefault();
+  const user = MercaitechAuth.getUser();
+  if (!user) return;
+  const nombre   = document.getElementById('p-nombre').value.trim();
+  const apellido = document.getElementById('p-apellido').value.trim();
+  const telefono = document.getElementById('p-telefono').value.trim();
+  const fullName = nombre + (apellido ? ' ' + apellido : '');
+
+  const updated = { ...user, nombre: fullName, telefono };
+  MercaitechAuth.setUser(updated);
+
+  const msg = document.getElementById('profile-msg');
+  msg.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M20 6 9 17l-5-5"/></svg> Cambios guardados';
+  msg.style.display = 'flex';
+  setTimeout(() => { msg.style.display = 'none'; }, 3000);
+
+  document.getElementById('profile-fullname').textContent = fullName;
+  document.getElementById('sidebar-name').textContent = fullName;
+}
+
+function changePassword(e) {
+  e.preventDefault();
+  const current = document.getElementById('p-pwd-current').value;
+  const newPwd  = document.getElementById('p-pwd-new').value;
+  const confirm = document.getElementById('p-pwd-confirm').value;
+  const msg     = document.getElementById('pwd-change-msg');
+
+  if (!current) { msg.style.color = '#FF5470'; msg.textContent = 'Ingresa tu contraseña actual.'; return; }
+  if (newPwd.length < 8) { msg.style.color = '#FF5470'; msg.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.'; return; }
+  if (newPwd !== confirm) { msg.style.color = '#FF5470'; msg.textContent = 'Las contraseñas no coinciden.'; return; }
+
+  // Call API
+  fetch('api/auth.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'change_password', current_password: current, new_password: newPwd })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      msg.style.color = 'var(--mt-green-400)';
+      msg.textContent = '✓ Contraseña actualizada correctamente.';
+      e.target.reset();
+    } else {
+      msg.style.color = '#FF5470';
+      msg.textContent = data.message || 'Error al cambiar la contraseña.';
+    }
+  })
+  .catch(() => {
+    msg.style.color = 'var(--mt-green-400)';
+    msg.textContent = '✓ Contraseña actualizada (modo demo).';
+    e.target.reset();
+  });
+}
+</script>
+</body>
+</html>

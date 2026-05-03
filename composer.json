@@ -1,0 +1,21 @@
+{
+  "name": "mercaitech/tienda",
+  "description": "Mercaitech — E-commerce premium con IA · PHP + MySQL",
+  "type": "project",
+  "license": "proprietary",
+  "authors": [{ "name": "Mercaitech", "email": "mercaitechshop@gmail.com" }],
+  "require": {
+    "php": ">=8.1",
+    "phpmailer/phpmailer": "^7.0"
+  },
+  "autoload": {
+    "psr-4": { "Mercaitech\\": "api/" }
+  },
+  "scripts": {
+    "serve": "php -S localhost:8080 -t ."
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist"
+  }
+}
