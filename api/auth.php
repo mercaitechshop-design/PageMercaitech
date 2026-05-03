@@ -33,9 +33,11 @@ match ($action) {
     'forgot'       => handleForgot($body),
     'reset'        => handleReset($body),
     'verify'       => handleVerify($body),
-    'google'       => handleGoogleSignIn($body),
-    'google_code'  => handleGoogleCode($body),
-    default        => jsonResponse(['success' => false, 'error' => "Acción '$action' no encontrada."], 404),
+    'google'          => handleGoogleSignIn($body),
+    'google_code'     => handleGoogleCode($body),
+    'change_password'      => handleChangePassword($body),
+    'validate_reset_token' => handleValidateResetToken($body),
+    default                => jsonResponse(['success' => false, 'error' => "Acción '$action' no encontrada."], 404),
 };
 
 // ============================================================================
@@ -338,33 +340,23 @@ function handleForgot(array $body): void {
     // ENVIAR CORREO REAL
     // ==========================
     try {
-        require_once __DIR__ . '/Mail.php';
+        require_once __DIR__ . '/helpers/Mail.php';
 
-        $resetUrl = APP_URL . "/reset-password.html?token=" . $token;
+        $resetUrl = APP_URL . '/reset-password.html?token=' . $token;
 
-        $subject = "Restablecer contraseña - Mercaitech";
+        $sent = (new Mail())
+            ->to($email, $user['nombre'])
+            ->subject('Restablecer contraseña — Mercaitech')
+            ->body(Mail::templateReset($user['nombre'], $resetUrl))
+            ->send();
 
-        $message = "
-        <h2>Hola {$user['nombre']}</h2>
-        <p>Recibimos una solicitud para restablecer tu contraseña.</p>
-        <p>Haz clic en el siguiente botón:</p>
-        <p>
-            <a href='{$resetUrl}' 
-               style='display:inline-block;padding:12px 20px;background:#0066ff;color:#fff;text-decoration:none;border-radius:8px'>
-               Restablecer contraseña
-            </a>
-        </p>
-        <p>Este enlace expirará en 1 hora.</p>
-        <p>Si no solicitaste esto, ignora este mensaje.</p>
-        ";
-
-        sendMail($email, $subject, $message);
-
+        if (!$sent) {
+            error_log('Mail::send() returned false for forgot-password to ' . $email);
+        }
     } catch (Throwable $e) {
-        // Log error sin romper flujo
         file_put_contents(
             __DIR__ . '/mail_error.log',
-            date('Y-m-d H:i:s') . " - " . $e->getMessage() . PHP_EOL,
+            date('Y-m-d H:i:s') . ' [forgot] ' . $e->getMessage() . PHP_EOL,
             FILE_APPEND
         );
     }
@@ -493,10 +485,56 @@ function handleGoogleSignIn(array $body): void {
 // GOOGLE AUTH CODE EXCHANGE (alternative flow)
 // ============================================================================
 function handleGoogleCode(array $body): void {
-    // In production: exchange $body['code'] for tokens using Google OAuth2 API
-    // POST https://oauth2.googleapis.com/token with client_id, client_secret, code, redirect_uri
-    // Then fetch user info from https://www.googleapis.com/oauth2/v3/userinfo
-    // For now, return an error prompting server-side configuration
     jsonResponse(['success' => false,
         'message' => 'Configura GOOGLE_CLIENT_SECRET en el servidor para el flujo de código.'], 501);
+}
+
+// ============================================================================
+// CHANGE PASSWORD (authenticated)
+// ============================================================================
+function handleChangePassword(array $body): void {
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['success' => false, 'message' => 'Sesión no válida. Inicia sesión de nuevo.'], 401);
+    }
+
+    $currentPwd = $body['current_password'] ?? '';
+    $newPwd     = $body['new_password']     ?? '';
+
+    if (!$currentPwd || !$newPwd) {
+        jsonResponse(['success' => false, 'message' => 'Datos incompletos.'], 422);
+    }
+    if (strlen($newPwd) < 8) {
+        jsonResponse(['success' => false, 'message' => 'La nueva contraseña debe tener al menos 8 caracteres.'], 422);
+    }
+
+    $db   = getDB();
+    $stmt = $db->prepare("SELECT password_hash FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch();
+
+    if (!$user || !password_verify($currentPwd, $user['password_hash'])) {
+        jsonResponse(['success' => false, 'message' => 'La contraseña actual es incorrecta.'], 400);
+    }
+
+    $hash = password_hash($newPwd, PASSWORD_BCRYPT, ['cost' => 12]);
+    $db->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?")
+       ->execute([$hash, $_SESSION['user_id']]);
+
+    jsonResponse(['success' => true, 'message' => 'Contraseña actualizada correctamente.']);
+}
+
+// ============================================================================
+// VALIDATE RESET TOKEN (used by reset-password.html on load)
+// ============================================================================
+function handleValidateResetToken(array $body): void {
+    $token = sanitize($body['token'] ?? '');
+    if (!$token) {
+        jsonResponse(['success' => false, 'message' => 'Token requerido.'], 422);
+    }
+
+    $db   = getDB();
+    $stmt = $db->prepare("SELECT id FROM usuarios WHERE token_reset = ? AND token_reset_exp > NOW() AND activo = 1 LIMIT 1");
+    $stmt->execute([$token]);
+
+    jsonResponse(['success' => (bool) $stmt->fetch()]);
 }

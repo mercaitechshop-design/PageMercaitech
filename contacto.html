@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contáctanos — Mercaitech</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar" role="navigation" aria-label="Navegación principal">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__brand" aria-label="Mercaitech — inicio">
+      <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
+    </a>
+    <div class="navbar__right">
+      <div class="navbar__actions">
+        <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
+        <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main style="padding: calc(var(--nav-h) + var(--space-6)) 0 var(--space-10); min-height: 100vh;">
+  <div class="container">
+
+    <div class="contacto__grid">
+
+      <!-- Left column -->
+      <div class="contacto__left">
+        <span class="overline text-cyan">Solicita nuestros servicios</span>
+        <h1 class="contacto__title">Haz Crecer tu <span class="text-cyan">Negocio</span> Ahora Mismo</h1>
+        <p class="contacto__desc">Descubre cómo nuestras soluciones inteligentes optimizan tu operativa y te permiten enfocarte en lo que realmente impulsa tu empresa.</p>
+        <ul class="contacto__bullets">
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Soluciones pensadas para escalar contigo
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Integraciones a Medida
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Soporte y Acompañamiento
+          </li>
+        </ul>
+
+        <!-- Service cards -->
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:var(--space-5)">
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(0,102,255,.06);border:1px solid rgba(0,102,255,.2);border-radius:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(0,102,255,.12);border:1px solid rgba(0,102,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--mt-blue-300)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--fg)">Desarrollo a Medida</div><div style="font-size:12px;color:var(--fg-subtle)">Apps web, plataformas e integraciones</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(31,214,255,.05);border:1px solid rgba(31,214,255,.15);border-radius:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(31,214,255,.08);border:1px solid rgba(31,214,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--mt-cyan-400)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--fg)">Consultoría Estratégica</div><div style="font-size:12px;color:var(--fg-subtle)">Hoja de ruta de IA y automatización</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(16,201,138,.05);border:1px solid rgba(16,201,138,.15);border-radius:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(16,201,138,.08);border:1px solid rgba(16,201,138,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--mt-green-400)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--fg)">Automatización de Procesos</div><div style="font-size:12px;color:var(--fg-subtle)">Flujos 24/7, reducción de costos hasta 80%</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(130,80,255,.05);border:1px solid rgba(130,80,255,.15);border-radius:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(130,80,255,.08);border:1px solid rgba(130,80,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#A78BFA"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><path d="m8 18-4 4V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2Z"/><path d="M9.5 12h.01"/><path d="M14.5 12h.01"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--fg)">Agentes de IA</div><div style="font-size:12px;color:var(--fg-subtle)">Chat, WhatsApp, voz y web 24/7</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: form -->
+      <div class="contacto__form-wrap">
+        <h2 class="contacto__form-title">Pongámonos en marcha</h2>
+
+        <div id="contact-success" style="display:none;text-align:center;padding:40px 20px">
+          <div style="width:64px;height:64px;border-radius:50%;background:rgba(16,201,138,.12);border:1px solid rgba(16,201,138,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--mt-green-400)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--fg);margin-bottom:8px">¡Consulta enviada!</h3>
+          <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">Tu consulta ha sido registrada. Te contactaremos en menos de 24 horas por correo o teléfono.</p>
+          <button class="btn btn--secondary" style="margin-top:20px" onclick="document.getElementById('contact-success').style.display='none';document.getElementById('contact-form').style.display=''">Enviar otra consulta</button>
+        </div>
+
+        <form id="contact-form" onsubmit="submitContact(event)">
+          <div class="contacto__fields">
+            <input class="contacto__input" type="text" id="cf-nombre" name="nombre" placeholder="Nombre" required autocomplete="given-name">
+            <input class="contacto__input" type="text" id="cf-empresa" name="empresa" placeholder="Empresa o proyecto" autocomplete="organization">
+            <input class="contacto__input" type="email" id="cf-email" name="email" placeholder="Correo electrónico" required autocomplete="email">
+            <div class="contacto__phone-row">
+              <div class="contacto__phone-prefix">
+                <span>🇨🇴</span>
+                <span>+57</span>
+              </div>
+              <input class="contacto__input contacto__phone-input" type="tel" id="cf-telefono" name="telefono" placeholder="Número de teléfono" autocomplete="tel-national">
+            </div>
+            <select class="contacto__input contacto__select" id="cf-servicio" name="servicio" required>
+              <option value="" disabled selected>Servicio</option>
+              <option>Desarrollo a Medida</option>
+              <option>Consultoría Estratégica</option>
+              <option>Automatización de Procesos</option>
+              <option>Agentes de Inteligencia Artificial</option>
+              <option>Otro</option>
+            </select>
+            <textarea class="contacto__input contacto__textarea" id="cf-mensaje" name="mensaje" placeholder="Cuéntanos con el máximo detalle qué necesitas. Cuanto más especifiques, mejor te ayudaremos." rows="4" required></textarea>
+            <label class="contacto__legal">
+              <input type="checkbox" name="legal" required>
+              <span>He leído el <a href="#" class="text-cyan">Aviso Legal</a> y la <a href="#" class="text-cyan">Política de Privacidad</a> y autorizo el tratamiento de mis datos.</span>
+            </label>
+          </div>
+          <div class="contacto__msg" id="contact-msg"></div>
+          <button type="submit" class="btn btn--primary" id="contact-submit"
+                  style="width:100%;padding:16px;font-size:14px;letter-spacing:.08em;border-radius:12px;justify-content:center;gap:10px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" id="contact-icon"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/></svg>
+            <span id="contact-submit-label">ENVÍA TU CONSULTA</span>
+            <div class="spinner" id="contact-spinner" style="display:none"></div>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/auth.js"></script>
+<script>
+'use strict';
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+async function submitContact(e) {
+  e.preventDefault();
+  const form   = e.target;
+  const btn    = document.getElementById('contact-submit');
+  const label  = document.getElementById('contact-submit-label');
+  const icon   = document.getElementById('contact-icon');
+  const spin   = document.getElementById('contact-spinner');
+  const msgEl  = document.getElementById('contact-msg');
+
+  btn.disabled = true;
+  if (label) label.textContent = 'Enviando…';
+  if (icon)  icon.style.display = 'none';
+  if (spin)  spin.style.display = 'block';
+  msgEl.textContent = '';
+  msgEl.className = 'contacto__msg';
+
+  const data = {
+    nombre:   document.getElementById('cf-nombre').value.trim(),
+    empresa:  document.getElementById('cf-empresa').value.trim(),
+    email:    document.getElementById('cf-email').value.trim(),
+    telefono: document.getElementById('cf-telefono').value.trim(),
+    servicio: document.getElementById('cf-servicio').value,
+    mensaje:  document.getElementById('cf-mensaje').value.trim(),
+  };
+
+  // Demo mode: running via file:// (no server) — show success locally
+  if (window.location.protocol === 'file:') {
+    form.style.display = 'none';
+    document.getElementById('contact-success').style.display = '';
+    // Store locally so owner can review
+    const pending = JSON.parse(localStorage.getItem('mt_contact_pending') || '[]');
+    pending.push({ ...data, fecha: new Date().toISOString() });
+    localStorage.setItem('mt_contact_pending', JSON.stringify(pending));
+    btn.disabled = false;
+    if (label) label.textContent = 'ENVÍA TU CONSULTA';
+    if (icon)  icon.style.display = '';
+    if (spin)  spin.style.display = 'none';
+    return;
+  }
+
+  try {
+    const res  = await fetch('api/contact.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const json = await res.json();
+    if (json.success) {
+      form.style.display = 'none';
+      document.getElementById('contact-success').style.display = '';
+    } else {
+      msgEl.textContent = json.message || 'Error al enviar. Inténtalo de nuevo.';
+      msgEl.classList.add('contacto__msg--err');
+    }
+  } catch {
+    msgEl.textContent = 'Error de conexión. Verifica que el servidor esté activo.';
+    msgEl.classList.add('contacto__msg--err');
+  }
+
+  btn.disabled = false;
+  if (label) label.textContent = 'ENVÍA TU CONSULTA';
+  if (icon)  icon.style.display = '';
+  if (spin)  spin.style.display = 'none';
+}
+</script>
+</body>
+</html>

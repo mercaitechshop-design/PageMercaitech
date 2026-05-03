@@ -85,10 +85,13 @@ function renderCartItems() {
   `).join('');
 
   const subtotal = window.cart.subtotal;
+  const iva      = Math.round(subtotal * 0.19);
+  const total    = subtotal + iva;
   totalsEl.innerHTML = `
     <div class="cart-totals__row"><span>Subtotal</span><span>${window.cart.formatPrice(subtotal)}</span></div>
+    <div class="cart-totals__row"><span>IVA (19%)</span><span>${window.cart.formatPrice(iva)}</span></div>
     <div class="cart-totals__row"><span>Envío</span><span class="text-cyan">Gratis</span></div>
-    <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${window.cart.formatPrice(subtotal)}</span></div>
+    <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${window.cart.formatPrice(total)}</span></div>
   `;
   checkoutBtn.disabled = false;
 }
@@ -117,19 +120,14 @@ function addToCart(product, qty = 1) {
   showToast(`${product.title} añadido al carrito`, 'success');
 }
 
-// ── Product grid ───────────────────────────────────────────────────────────
-function renderProducts(category = 'todos') {
-  const grid = $('product-grid');
-  const filtered = category === 'todos'
-    ? PRODUCTS
-    : PRODUCTS.filter(p => p.category === category);
+// ── Product grid / carousel ────────────────────────────────────────────────
+let carouselPage   = 0;
+let carouselItems  = [];
+const CAROUSEL_PER_PAGE = 4;
+let showingAll = false;
 
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--fg-subtle)">No hay productos en esta categoría aún.</div>';
-    return;
-  }
-
-  grid.innerHTML = filtered.map((p, i) => `
+function productCardHTML(p, i) {
+  return `
     <article class="product-card reveal" role="listitem" tabindex="0"
              data-id="${p.id}" aria-label="${p.title}, ${window.cart.formatPrice(p.price)}"
              style="transition-delay:${i * 60}ms">
@@ -153,17 +151,101 @@ function renderProducts(category = 'todos') {
           </button>
         </div>
       </div>
-    </article>
-  `).join('');
+    </article>`;
+}
 
-  // Click on card → open PDP
+function bindCardClicks(grid) {
   grid.querySelectorAll('.product-card').forEach(card => {
     card.addEventListener('click', () => openPdp(parseInt(card.dataset.id)));
-    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPdp(parseInt(card.dataset.id)); }});
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPdp(parseInt(card.dataset.id)); }
+    });
   });
+}
 
-  // Trigger reveal for freshly rendered cards
+function updateCarouselUI() {
+  const prevBtn  = $('carousel-prev');
+  const nextBtn  = $('carousel-next');
+  const dotsWrap = $('carousel-dots');
+  const totalPages = Math.ceil(carouselItems.length / CAROUSEL_PER_PAGE);
+
+  if (prevBtn) prevBtn.disabled = carouselPage === 0;
+  if (nextBtn) nextBtn.disabled = carouselPage >= totalPages - 1;
+  if (dotsWrap) {
+    dotsWrap.innerHTML = Array.from({ length: totalPages }, (_, i) =>
+      `<button class="carousel-dot${i === carouselPage ? ' active' : ''}" data-page="${i}" aria-label="Página ${i+1}"></button>`
+    ).join('');
+    dotsWrap.querySelectorAll('.carousel-dot').forEach(dot => {
+      dot.addEventListener('click', () => { carouselPage = +dot.dataset.page; renderCarouselPage(); });
+    });
+  }
+}
+
+function renderCarouselPage() {
+  const grid = $('product-grid');
+  const section = $('products');
+  const start = carouselPage * CAROUSEL_PER_PAGE;
+  const page  = carouselItems.slice(start, start + CAROUSEL_PER_PAGE);
+  section?.classList.remove('products-section--all');
+  grid.innerHTML = page.map((p, i) => productCardHTML(p, i)).join('');
+  bindCardClicks(grid);
+  updateCarouselUI();
   setTimeout(observeReveal, 50);
+}
+
+function showAllProducts() {
+  const grid = $('product-grid');
+  const section = $('products');
+  showingAll = true;
+  section?.classList.add('products-section--all');
+  grid.innerHTML = carouselItems.map((p, i) => productCardHTML(p, i)).join('');
+  bindCardClicks(grid);
+  const verTodosLink = $('ver-todos-link');
+  if (verTodosLink) {
+    verTodosLink.innerHTML = `Ver menos <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14"/><path d="m12 19-7-7 7-7"/></svg>`;
+  }
+  // Hide carousel controls
+  const controls = $('carousel-controls');
+  if (controls) controls.style.display = 'none';
+  setTimeout(observeReveal, 50);
+}
+
+function collapseToCarousel() {
+  showingAll = false;
+  carouselPage = 0;
+  renderCarouselPage();
+  const verTodosLink = $('ver-todos-link');
+  if (verTodosLink) {
+    verTodosLink.innerHTML = `Ver todos <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
+  }
+  const controls = $('carousel-controls');
+  if (controls) controls.style.display = '';
+}
+
+function renderProducts(category = 'todos') {
+  carouselPage = 0;
+  showingAll   = false;
+  carouselItems = category === 'todos'
+    ? PRODUCTS
+    : PRODUCTS.filter(p => p.category === category);
+
+  const grid    = $('product-grid');
+  const section = $('products');
+  section?.classList.remove('products-section--all');
+
+  const verTodosLink = $('ver-todos-link');
+  if (verTodosLink) {
+    verTodosLink.innerHTML = `Ver todos <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
+  }
+  const controls = $('carousel-controls');
+  if (controls) controls.style.display = carouselItems.length > CAROUSEL_PER_PAGE ? '' : 'none';
+
+  if (carouselItems.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--fg-subtle)">No hay productos en esta categoría aún.</div>';
+    return;
+  }
+
+  renderCarouselPage();
 }
 
 window.addToCartById = function(id) {
@@ -174,8 +256,8 @@ window.addToCartById = function(id) {
 // ── Category filter ────────────────────────────────────────────────────────
 function setCategory(cat) {
   activeCategory = cat;
-  $$('.cat-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.cat === cat));
   $$('.navbar__link[data-cat]').forEach(link => link.classList.toggle('active', link.dataset.cat === cat));
+  $$('.navbar__dropdown-item[data-cat]').forEach(item => item.classList.toggle('active', item.dataset.cat === cat));
   renderProducts(cat);
 }
 
@@ -491,11 +573,24 @@ function initEvents() {
   $('newsletter-overlay').addEventListener('click', e => { if (e.target === $('newsletter-overlay')) closeNewsletter(); });
   $('ai-cta').addEventListener('click', openNewsletter);
   const offersLink = $('open-newsletter-link');
-  if (offersLink) offersLink.addEventListener('click', e => { e.preventDefault(); openNewsletter(); });
+  if (offersLink) offersLink.addEventListener('click', e => { e.preventDefault(); openNewsletter(); if (catDropMenu) catDropMenu.classList.remove('open'); });
+  const offersLinkMobile = $('open-newsletter-link-mobile');
+  if (offersLinkMobile) offersLinkMobile.addEventListener('click', e => { e.preventDefault(); openNewsletter(); closeMobileMenu(); });
 
   // Search
   $('search-toggle-btn').addEventListener('click', openSearch);
   $('search-overlay').addEventListener('click', e => { if (e.target === $('search-overlay')) closeSearch(); });
+  const searchCloseBtn = $('search-close-btn');
+  if (searchCloseBtn) searchCloseBtn.addEventListener('click', () => {
+    const inp = $('search-input');
+    if (inp && inp.value.length > 0) {
+      inp.value = '';
+      performSearch('');
+      inp.focus();
+    } else {
+      closeSearch();
+    }
+  });
   $('search-input').addEventListener('input', e => performSearch(e.target.value));
 
   // Navbar search (desktop) — typing opens the overlay and mirrors query
@@ -517,13 +612,30 @@ function initEvents() {
     });
   }
 
-  // Categories
-  $$('.cat-chip').forEach(chip => {
-    chip.addEventListener('click', () => setCategory(chip.dataset.cat));
-  });
+  // ── Navbar dropdowns (mutually exclusive) ─────────────────────
+  const catDropBtn = $('cat-dropdown-btn');
+  const catDropMenu = $('cat-dropdown');
+  // svcBtn/svcMenu declared in page-level script; access via DOM here too
+  window.closeCatDrop = function() {
+    catDropMenu?.classList.remove('open');
+    catDropBtn?.setAttribute('aria-expanded', 'false');
+  };
+  window.closeSvcDrop = function() {
+    document.getElementById('svc-dropdown')?.classList.remove('open');
+    document.getElementById('svc-dropdown-btn')?.setAttribute('aria-expanded', 'false');
+  };
+  if (catDropBtn && catDropMenu) {
+    catDropBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      window.closeSvcDrop?.(); // close the other one first
+      const open = catDropMenu.classList.toggle('open');
+      catDropBtn.setAttribute('aria-expanded', open);
+    });
+    document.addEventListener('click', window.closeCatDrop);
+  }
 
-  // Navbar links with data-cat
-  $$('.navbar__link[data-cat], .footer__link[data-cat], .navbar__mobile-link[data-cat]').forEach(link => {
+  // Navbar dropdown items + footer + mobile links with data-cat
+  $$('.navbar__dropdown-item[data-cat], .footer__link[data-cat], .navbar__mobile-link[data-cat], .navbar__link[data-cat]').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
       const cat = link.dataset.cat;
@@ -531,6 +643,7 @@ function initEvents() {
         setCategory(cat);
         document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
         closeMobileMenu();
+        if (catDropMenu) { catDropMenu.classList.remove('open'); catDropBtn?.setAttribute('aria-expanded','false'); }
       }
     });
   });
@@ -539,6 +652,14 @@ function initEvents() {
   $('hero-cta').addEventListener('click', e => {
     e.preventDefault();
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // Servicios nav link
+  const serviciosLink = $('nav-servicios-link');
+  if (serviciosLink) serviciosLink.addEventListener('click', e => {
+    e.preventDefault();
+    if (catDropMenu) { catDropMenu.classList.remove('open'); catDropBtn?.setAttribute('aria-expanded','false'); }
+    document.getElementById('servicios')?.scrollIntoView({ behavior: 'smooth' });
   });
 
   // Mobile menu
@@ -557,6 +678,52 @@ function initEvents() {
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
   });
+}
+
+// ── Carousel controls init ─────────────────────────────────────────────────
+function initCarouselControls() {
+  const prevBtn      = $('carousel-prev');
+  const nextBtn      = $('carousel-next');
+  const verTodosLink = $('ver-todos-link');
+  const heroCTA2     = $('hero-cta-all');
+
+  if (prevBtn) prevBtn.addEventListener('click', () => {
+    if (carouselPage > 0) { carouselPage--; renderCarouselPage(); }
+  });
+  if (nextBtn) nextBtn.addEventListener('click', () => {
+    const totalPages = Math.ceil(carouselItems.length / CAROUSEL_PER_PAGE);
+    if (carouselPage < totalPages - 1) { carouselPage++; renderCarouselPage(); }
+  });
+  if (verTodosLink) verTodosLink.addEventListener('click', e => {
+    e.preventDefault();
+    if (showingAll) collapseToCarousel();
+    else showAllProducts();
+  });
+  if (heroCTA2) heroCTA2.addEventListener('click', e => {
+    e.preventDefault();
+    showAllProducts();
+    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // Start countdown for flash sale
+  initFlashSaleCountdown();
+}
+
+function initFlashSaleCountdown() {
+  const el = $('flash-countdown');
+  if (!el) return;
+  // Count down 3 hours from page load
+  let totalSecs = 3 * 3600 + 47 * 60 + 18;
+  function tick() {
+    if (totalSecs <= 0) { el.textContent = '00:00:00'; return; }
+    const h = Math.floor(totalSecs / 3600);
+    const m = Math.floor((totalSecs % 3600) / 60);
+    const s = totalSecs % 60;
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    totalSecs--;
+  }
+  tick();
+  setInterval(tick, 1000);
 }
 
 // ── Mobile menu ────────────────────────────────────────────────────────────
@@ -589,6 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCartSubscription();
   observeReveal();
   initNewsletterPopup();
+  initCarouselControls();
 
   // Handle ?cat= query param
   const urlParams = new URLSearchParams(window.location.search);
