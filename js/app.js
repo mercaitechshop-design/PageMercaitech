@@ -627,9 +627,8 @@ function initEvents() {
   if (catDropBtn && catDropMenu) {
     catDropBtn.addEventListener('click', e => {
       e.stopPropagation();
-      window.closeSvcDrop?.(); // close the other one first
-      const open = catDropMenu.classList.toggle('open');
-      catDropBtn.setAttribute('aria-expanded', open);
+      window.closeSvcDrop?.();
+      window.location.href = 'productos.html';
     });
     document.addEventListener('click', window.closeCatDrop);
   }

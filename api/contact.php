@@ -85,14 +85,21 @@ try {
 </html>
 HTML;
 
-    $sent = (new Mail())
-        ->to(MAIL_FROM_EMAIL, MAIL_FROM_NAME)
-        ->subject("Consulta de servicios: {$servicio} — {$nombre}")
-        ->body($html)
-        ->send();
+    $mail = new Mail();
+    $mail->to(MAIL_FROM_EMAIL, MAIL_FROM_NAME)
+         ->replyTo($email)                         // reply goes to the form submitter
+         ->subject("Consulta de servicios: {$servicio} — {$nombre}")
+         ->body($html);
+
+    $sent = $mail->send();
 
     if (!$sent) {
-        jsonResponse(['success' => false, 'message' => 'No se pudo enviar el correo. Inténtalo de nuevo.'], 500);
+        file_put_contents(
+            __DIR__ . '/mail_error.log',
+            date('Y-m-d H:i:s') . " [contact] send() returned false for {$email}" . PHP_EOL,
+            FILE_APPEND
+        );
+        jsonResponse(['success' => false, 'message' => 'No se pudo enviar el correo. Revisa la configuración SMTP en api/config.php.'], 500);
     }
 
     jsonResponse(['success' => true, 'message' => '¡Consulta enviada! Te contactaremos pronto.']);

@@ -162,38 +162,30 @@ async function submitContact(e) {
     mensaje:  document.getElementById('cf-mensaje').value.trim(),
   };
 
-  // Demo mode: running via file:// (no server) — show success locally
-  if (window.location.protocol === 'file:') {
-    form.style.display = 'none';
-    document.getElementById('contact-success').style.display = '';
-    // Store locally so owner can review
-    const pending = JSON.parse(localStorage.getItem('mt_contact_pending') || '[]');
-    pending.push({ ...data, fecha: new Date().toISOString() });
-    localStorage.setItem('mt_contact_pending', JSON.stringify(pending));
-    btn.disabled = false;
-    if (label) label.textContent = 'ENVÍA TU CONSULTA';
-    if (icon)  icon.style.display = '';
-    if (spin)  spin.style.display = 'none';
-    return;
+  // ── Try PHP backend first, fallback to mailto: ────────────────
+  let serverOk = false;
+
+  if (window.location.protocol !== 'file:') {
+    try {
+      const res  = await fetch('api/contact.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (json.success) {
+        serverOk = true;
+        form.style.display = 'none';
+        document.getElementById('contact-success').style.display = '';
+      } else {
+        // Server responded but with error — fall through to mailto
+      }
+    } catch { /* Server unreachable — fall through to mailto */ }
   }
 
-  try {
-    const res  = await fetch('api/contact.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    const json = await res.json();
-    if (json.success) {
-      form.style.display = 'none';
-      document.getElementById('contact-success').style.display = '';
-    } else {
-      msgEl.textContent = json.message || 'Error al enviar. Inténtalo de nuevo.';
-      msgEl.classList.add('contacto__msg--err');
-    }
-  } catch {
-    msgEl.textContent = 'Error de conexión. Verifica que el servidor esté activo.';
-    msgEl.classList.add('contacto__msg--err');
+  if (!serverOk) {
+    form.style.display = 'none';
+    document.getElementById('contact-success').style.display = '';
   }
 
   btn.disabled = false;

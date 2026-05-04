@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos — Mercaitech</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .products-page-wrap {
+      padding-top: calc(var(--nav-h) + 40px);
+      padding-bottom: 80px;
+      min-height: 100vh;
+    }
+    .cat-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .cat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg-muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.18s;
+    }
+    .cat-pill svg { width: 14px; height: 14px; }
+    .cat-pill:hover { border-color: var(--mt-blue-400); color: var(--fg); background: rgba(0,102,255,.06); }
+    .cat-pill.is-active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0,102,255,.4);
+    }
+    .full-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .prod-count { font-size: 13px; color: var(--fg-subtle); margin-bottom: 16px; }
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--fg-muted);
+      grid-column: 1/-1;
+    }
+    .empty-state svg { width: 48px; height: 48px; color: var(--border-strong); display: block; margin: 0 auto 12px; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar" role="navigation">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__brand">
+      <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
+    </a>
+    <ul class="navbar__links" role="list">
+      <li><a href="index.html" class="navbar__link">Inicio</a></li>
+      <li class="navbar__dropdown-wrap" id="cat-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn active" id="cat-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Productos
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="cat-dropdown" role="menu">
+          <a href="productos.html" class="navbar__dropdown-item" onclick="return navFilter('todos')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Todos los productos
+          </a>
+          <a href="productos.html#tecnologia" class="navbar__dropdown-item" onclick="return navFilter('tecnologia')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M2 15h2M2 9h2M22 15h-2M22 9h-2M15 22v-2M9 22v-2"/></svg>
+            Tecnología
+          </a>
+          <a href="productos.html#hogar" class="navbar__dropdown-item" onclick="return navFilter('hogar')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Hogar
+          </a>
+          <a href="productos.html#moda" class="navbar__dropdown-item" onclick="return navFilter('moda')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>
+            Moda
+          </a>
+          <a href="productos.html#deportes" class="navbar__dropdown-item" onclick="return navFilter('deportes')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 22H18a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v3"/><polyline points="14 2 14 8 20 8"/><path d="M4.42 15.61a2.1 2.1 0 1 1 2.97 2.97L3 22l-1-4z"/></svg>
+            Deportes
+          </a>
+          <a href="productos.html#gaming" class="navbar__dropdown-item" onclick="return navFilter('gaming')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="2"/></svg>
+            Gaming
+          </a>
+          <a href="productos.html#belleza" class="navbar__dropdown-item" onclick="return navFilter('belleza')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            Belleza
+          </a>
+        </div>
+      </li>
+      <li class="navbar__dropdown-wrap" id="svc-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn" id="svc-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Servicios
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="svc-dropdown" role="menu">
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Desarrollo a Medida
+          </a>
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Consultoría Estratégica
+          </a>
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+            Automatización de Procesos
+          </a>
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 18-4 4V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2Z"/><path d="M9.5 12h.01"/><path d="M14.5 12h.01"/></svg>
+            Agentes de IA
+          </a>
+          <div class="navbar__dropdown-divider"></div>
+          <a href="contacto.html" class="navbar__dropdown-item navbar__dropdown-item--highlight">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Contáctanos
+          </a>
+        </div>
+      </li>
+      <li><a href="contacto.html" class="navbar__link">Contáctanos</a></li>
+    </ul>
+    <div class="navbar__right">
+      <div class="navbar__search">
+        <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="search-input-nav" aria-label="Buscar">
+      </div>
+      <div class="navbar__actions">
+        <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+        <button class="icon-btn" id="cart-btn" aria-label="Carrito">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span class="cart-badge" id="cart-badge">0</span>
+        </button>
+        <button class="icon-btn navbar__mobile-toggle" id="mobile-menu-btn" aria-label="Menú" aria-expanded="false">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- CART DRAWER -->
+<div class="cart-scrim" id="cart-scrim"></div>
+<aside class="cart-drawer" id="cart-drawer" role="dialog" aria-label="Carrito de compras" aria-modal="true">
+  <header class="cart-drawer__head">
+    <h2 class="cart-drawer__title">Tu carrito <span class="text-subtle" id="cart-count-label">(0)</span></h2>
+    <button class="icon-btn" id="close-cart-btn" aria-label="Cerrar carrito">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </header>
+  <div class="cart-drawer__items" id="cart-items"></div>
+  <footer class="cart-drawer__foot" id="cart-footer">
+    <div class="cart-totals" id="cart-totals"></div>
+    <button class="btn btn--primary btn--lg btn--full" id="checkout-btn" disabled>
+      FINALIZAR COMPRA
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
+  </footer>
+</aside>
+
+<!-- MAIN -->
+<main class="products-page-wrap">
+  <div class="container">
+    <div style="margin-bottom:24px">
+      <span class="overline text-cyan" id="pg-overline">Catálogo completo</span>
+      <h1 style="font-family:var(--font-display);font-weight:800;font-size:clamp(26px,4vw,38px);letter-spacing:-.03em;color:var(--fg);margin:4px 0 8px" id="pg-title">Todos los productos</h1>
+    </div>
+
+    <!-- Category filter bar -->
+    <div class="cat-bar" id="cat-bar">
+      <button class="cat-pill is-active" onclick="applyFilter('todos')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Todos
+      </button>
+      <button class="cat-pill" onclick="applyFilter('tecnologia')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M2 15h2M2 9h2M22 15h-2M22 9h-2M15 22v-2M9 22v-2"/></svg>
+        Tecnología
+      </button>
+      <button class="cat-pill" onclick="applyFilter('hogar')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Hogar
+      </button>
+      <button class="cat-pill" onclick="applyFilter('moda')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>
+        Moda
+      </button>
+      <button class="cat-pill" onclick="applyFilter('deportes')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 22H18a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v3"/><polyline points="14 2 14 8 20 8"/><path d="M4.42 15.61a2.1 2.1 0 1 1 2.97 2.97L3 22l-1-4z"/></svg>
+        Deportes
+      </button>
+      <button class="cat-pill" onclick="applyFilter('gaming')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="2"/></svg>
+        Gaming
+      </button>
+      <button class="cat-pill" onclick="applyFilter('belleza')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+        Belleza
+      </button>
+    </div>
+
+    <p class="prod-count" id="prod-count"></p>
+    <div class="full-grid" id="full-grid"></div>
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/auth.js"></script>
+<script>
+'use strict';
+
+// ── Price formatter ────────────────────────────────────────────
+const COP = n => new Intl.NumberFormat('es-CO', {
+  style: 'currency', currency: 'COP',
+  minimumFractionDigits: 0, maximumFractionDigits: 0
+}).format(n);
+
+// ── Cart state ────────────────────────────────────────────────
+const myCart = window.cart || new MercaitechCart();
+window.myCart = myCart;
+
+function updateBadge() {
+  const count = myCart.count;
+  const badge = document.getElementById('cart-badge');
+  const label = document.getElementById('cart-count-label');
+  if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+  if (label) label.textContent = '(' + count + ')';
+}
+
+function renderCartUI() {
+  const items    = document.getElementById('cart-items');
+  const totals   = document.getElementById('cart-totals');
+  const checkout = document.getElementById('checkout-btn');
+  updateBadge();
+
+  if (myCart.isEmpty) {
+    items.innerHTML = '<div class="cart-empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><p>Tu carrito está vacío</p></div>';
+    totals.innerHTML = '';
+    checkout.disabled = true;
+    return;
+  }
+
+  items.innerHTML = myCart.items.map(item => `
+    <div class="cart-line" data-id="${item.id}">
+      <div class="cart-line__img" style="background:${item.bg}">${getIcon(item.icon)}</div>
+      <div class="cart-line__info">
+        <div class="cart-line__name">${item.title}</div>
+        <div class="cart-line__meta">${item.categoryLabel} · Cant. ${item.qty}</div>
+        <div class="cart-line__price">${COP(item.price * item.qty)}</div>
+      </div>
+      <button class="icon-btn" onclick="removeItem(${item.id})" aria-label="Eliminar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>`).join('');
+
+  const sub   = myCart.subtotal;
+  const iva   = Math.round(sub * 0.19);
+  const total = sub + iva;
+  totals.innerHTML = `
+    <div class="cart-totals__row"><span>Subtotal</span><span>${COP(sub)}</span></div>
+    <div class="cart-totals__row"><span>IVA (19%)</span><span>${COP(iva)}</span></div>
+    <div class="cart-totals__row"><span>Envío</span><span class="text-cyan">Gratis</span></div>
+    <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${COP(total)}</span></div>`;
+  checkout.disabled = false;
+}
+
+window.removeItem = id => { myCart.remove(id); renderCartUI(); };
+
+window.addToCart = function(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  myCart.add(p);
+  renderCartUI();
+  showToast(p.title + ' añadido al carrito');
+};
+
+// ── Cart drawer ────────────────────────────────────────────────
+function openCart()  {
+  document.getElementById('cart-drawer').classList.add('open');
+  document.getElementById('cart-scrim').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCartDrawer() {
+  document.getElementById('cart-drawer').classList.remove('open');
+  document.getElementById('cart-scrim').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+function showToast(msg) {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast toast--success';
+  el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span>' + msg + '</span>';
+  c.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 3000);
+}
+
+// ── Category filter ────────────────────────────────────────────
+const CAT_NAMES = {
+  todos: 'Todos los productos',
+  tecnologia: 'Tecnología',
+  hogar: 'Hogar',
+  moda: 'Moda',
+  deportes: 'Deportes',
+  gaming: 'Gaming',
+  belleza: 'Belleza'
+};
+
+function applyFilter(cat) {
+  // Update URL hash
+  if (cat === 'todos') {
+    history.replaceState(null, '', location.pathname);
+  } else {
+    history.replaceState(null, '', '#' + cat);
+  }
+
+  // Update pill states
+  document.querySelectorAll('.cat-pill').forEach(btn => {
+    const btnCat = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+    btn.classList.toggle('is-active', btnCat === cat);
+  });
+
+  // Update heading
+  document.getElementById('pg-title').textContent = CAT_NAMES[cat] || cat;
+  document.getElementById('pg-overline').textContent = cat === 'todos' ? 'Catálogo completo' : 'Categoría';
+
+  // Filter products
+  const list = cat === 'todos' ? PRODUCTS : PRODUCTS.filter(p => p.category === cat);
+  document.getElementById('prod-count').textContent = list.length + ' producto' + (list.length === 1 ? '' : 's');
+
+  const grid = document.getElementById('full-grid');
+  if (list.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>Sin productos en esta categoría.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    const wished = isWished(p.id);
+    return `<div class="product-card" role="listitem">
+      <div class="product-card__media" style="background:${p.bg}" onclick="window.location='index.html#pdp-${p.id}'">
+        <div class="product-card__media-inner">
+          <div class="product-card__icon">${getIcon(p.icon)}</div>
+        </div>
+        ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}">${p.badge.label}</span>` : ''}
+        <button class="product-card__wish${wished ? ' active' : ''}"
+                onclick="toggleWish(event,${p.id})" aria-label="Lista de deseos">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${wished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+      </div>
+      <div class="product-card__body">
+        <span class="product-card__cat">${p.categoryLabel}</span>
+        <div class="product-card__title">${p.title}</div>
+        <div class="product-card__row">
+          <div class="product-card__prices">
+            <span class="price-new">${COP(p.price)}</span>
+            ${p.oldPrice ? `<span class="price-old">${COP(p.oldPrice)}</span>` : ''}
+          </div>
+          <button class="add-btn" onclick="addToCart(${p.id})" aria-label="Añadir al carrito">
+            <svg class="add-btn__cart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <span class="add-btn__plus">+</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Wishlist ───────────────────────────────────────────────────
+function getWL() { try { return JSON.parse(localStorage.getItem('mt_wishlist') || '[]'); } catch { return []; } }
+function isWished(id) { return getWL().some(i => i.id === id); }
+function toggleWish(e, id) {
+  e.stopPropagation();
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  let list = getWL();
+  const idx = list.findIndex(i => i.id === id);
+  if (idx >= 0) { list.splice(idx, 1); showToast('Eliminado de favoritos'); }
+  else { list.push(p); showToast(p.title + ' guardado en favoritos'); }
+  localStorage.setItem('mt_wishlist', JSON.stringify(list));
+  const activeCat = document.querySelector('.cat-pill.is-active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'todos';
+  applyFilter(activeCat);
+}
+
+// ── Navbar dropdown toggle ─────────────────────────────────────
+function navFilter(cat) {
+  document.getElementById('cat-dropdown').classList.remove('open');
+  document.getElementById('cat-dropdown-btn').setAttribute('aria-expanded', 'false');
+  applyFilter(cat);
+  return false; // prevent default link navigation
+}
+
+// ── Init ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Navbar scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // Auth
+  MercaitechAuth.initNavbar();
+
+  // Cart events
+  document.getElementById('cart-btn').addEventListener('click', openCart);
+  document.getElementById('close-cart-btn').addEventListener('click', closeCartDrawer);
+  document.getElementById('cart-scrim').addEventListener('click', closeCartDrawer);
+  renderCartUI();
+
+  // Dropdowns
+  const catBtn  = document.getElementById('cat-dropdown-btn');
+  const catMenu = document.getElementById('cat-dropdown');
+  const svcBtn  = document.getElementById('svc-dropdown-btn');
+  const svcMenu = document.getElementById('svc-dropdown');
+
+  catBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    svcMenu.classList.remove('open'); svcBtn.setAttribute('aria-expanded','false');
+    const o = catMenu.classList.toggle('open');
+    catBtn.setAttribute('aria-expanded', o);
+  });
+  svcBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    catMenu.classList.remove('open'); catBtn.setAttribute('aria-expanded','false');
+    const o = svcMenu.classList.toggle('open');
+    svcBtn.setAttribute('aria-expanded', o);
+  });
+  document.addEventListener('click', () => {
+    catMenu.classList.remove('open'); catBtn.setAttribute('aria-expanded','false');
+    svcMenu.classList.remove('open'); svcBtn.setAttribute('aria-expanded','false');
+  });
+
+  // Mobile menu
+  const mobileBtn  = document.getElementById('mobile-menu-btn');
+  mobileBtn?.addEventListener('click', () => {
+    const open = document.getElementById('cat-dropdown').classList.toggle('open');
+    mobileBtn.setAttribute('aria-expanded', open);
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCartDrawer();
+  });
+
+  // Read hash and apply initial filter
+  const hash = window.location.hash.replace('#', '').toLowerCase();
+  const valid = ['tecnologia','hogar','moda','deportes','gaming','belleza'];
+  applyFilter(valid.includes(hash) ? hash : 'todos');
+});
+</script>
+</body>
+</html>

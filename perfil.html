@@ -121,15 +121,34 @@
             <form class="profile-form" style="max-width:400px" onsubmit="changePassword(event)">
               <div class="profile-field">
                 <label class="profile-label" for="p-pwd-current">Contraseña actual</label>
-                <input type="password" class="profile-input" id="p-pwd-current" placeholder="••••••••" autocomplete="current-password">
+                <div style="position:relative">
+                  <input type="password" class="profile-input" id="p-pwd-current" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px">
+                  <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-current',this)" aria-label="Mostrar contraseña">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
               </div>
               <div class="profile-field">
                 <label class="profile-label" for="p-pwd-new">Nueva contraseña</label>
-                <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+                <div style="position:relative">
+                  <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password" style="padding-right:44px" oninput="pfStrength(this.value)">
+                  <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-new',this)" aria-label="Mostrar contraseña">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <div class="pf-strength">
+                  <div class="pf-strength__bar"><div class="pf-strength__fill" id="pf-pwd-fill"></div></div>
+                  <span class="pf-strength__label" id="pf-pwd-label"></span>
+                </div>
               </div>
               <div class="profile-field">
                 <label class="profile-label" for="p-pwd-confirm">Confirmar nueva contraseña</label>
-                <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+                <div style="position:relative">
+                  <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="padding-right:44px">
+                  <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-confirm',this)" aria-label="Mostrar contraseña">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
               </div>
               <div id="pwd-change-msg" style="font-size:13px"></div>
               <button type="submit" class="btn btn--secondary">CAMBIAR CONTRASEÑA</button>
@@ -146,6 +165,20 @@
 <script src="js/products.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/auth.js"></script>
+<style>
+.pf-eye-btn {
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  width:30px; height:30px; border-radius:8px; background:transparent; border:0;
+  color:var(--fg-subtle); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .15s, color .15s; padding:0;
+}
+.pf-eye-btn:hover { background:rgba(255,255,255,.08); color:var(--fg); }
+.pf-eye-btn svg { width:16px; height:16px; display:block; }
+.pf-strength { margin-top:6px; }
+.pf-strength__bar { height:3px; background:var(--border); border-radius:999px; overflow:hidden; margin-bottom:5px; }
+.pf-strength__fill { height:100%; border-radius:999px; width:0%; transition:width .3s ease, background .3s; }
+.pf-strength__label { font-size:11px; }
+</style>
 <script>
 'use strict';
 window.addEventListener('scroll', () => {
@@ -236,6 +269,41 @@ function changePassword(e) {
     msg.textContent = '✓ Contraseña actualizada (modo demo).';
     e.target.reset();
   });
+}
+
+const PF_EYE_OPEN   = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+const PF_EYE_CLOSED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696A10.75 10.75 0 0 1 6.521 6.5"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`;
+
+function pfToggle(id, btn) {
+  const inp = document.getElementById(id);
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  btn.innerHTML = showing ? PF_EYE_OPEN : PF_EYE_CLOSED;
+}
+
+function pfStrength(pwd) {
+  const fill  = document.getElementById('pf-pwd-fill');
+  const label = document.getElementById('pf-pwd-label');
+  if (!fill) return;
+  if (!pwd) { fill.style.width = '0'; label.textContent = ''; return; }
+  let score = 0;
+  if (pwd.length >= 8)  score++;
+  if (pwd.length >= 12) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  const levels = [
+    { w:'20%',  color:'#FF5470', text:'Muy débil' },
+    { w:'40%',  color:'#FFB020', text:'Débil' },
+    { w:'60%',  color:'#FFB020', text:'Regular' },
+    { w:'80%',  color:'#1A8CFF', text:'Buena' },
+    { w:'100%', color:'#10C98A', text:'Excelente' },
+  ];
+  const lvl = levels[Math.min(score - 1, 4)] || levels[0];
+  fill.style.width = lvl.w;
+  fill.style.background = lvl.color;
+  label.textContent = lvl.text;
+  label.style.color = lvl.color;
 }
 </script>
 </body>
