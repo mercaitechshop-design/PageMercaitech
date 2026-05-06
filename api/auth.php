@@ -6,6 +6,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers/Mail.php';
 
 setCorsHeaders();
 
@@ -36,6 +37,7 @@ match ($action) {
     'google'          => handleGoogleSignIn($body),
     'google_code'     => handleGoogleCode($body),
     'change_password'      => handleChangePassword($body),
+    'verify_reset_code'    => handleVerifyResetCode($body),
     'validate_reset_token' => handleValidateResetToken($body),
     default                => jsonResponse(['success' => false, 'error' => "Acción '$action' no encontrada."], 404),
 };
@@ -294,84 +296,71 @@ function tryRememberMe(string $token): void {
 }
 
 // ============================================================================
-// FORGOT PASSWORD
-// ============================================================================
-// ============================================================================
-// FORGOT PASSWORD (FIXED + EMAIL SENDING)
+// FORGOT PASSWORD — envía código de 6 dígitos al correo
 // ============================================================================
 function handleForgot(array $body): void {
-    checkRateLimit('forgot', 3, 600);
+    checkRateLimit('forgot', 10, 600);
 
     $email = sanitize($body['email'] ?? '');
-
     if (!$email || !validEmail($email)) {
         jsonResponse(['success' => false, 'message' => 'Correo inválido.'], 422);
     }
 
-    $db = getDB();
-
-    // Buscar usuario
+    $db   = getDB();
     $stmt = $db->prepare("SELECT id, nombre FROM usuarios WHERE email = ? AND activo = 1 LIMIT 1");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    // Siempre responder igual (evita enumeración de correos)
-    $genericResponse = [
-        'success' => true,
-        'message' => 'Si ese correo existe, recibirás un enlace en breve.'
-    ];
+    $genericResponse = ['success' => true, 'message' => 'Si ese correo está registrado, recibirás el código en breve.'];
 
     if (!$user) {
         jsonResponse($genericResponse);
     }
 
-    // Generar token seguro
-    $token   = bin2hex(random_bytes(32));
-    $expires = date('Y-m-d H:i:s', time() + 3600); // 1 hora
+    // Código de 6 dígitos, expira en 15 minutos
+    $code    = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+    $expires = date('Y-m-d H:i:s', time() + 900);
 
-    // Guardar token en DB
-    $db->prepare("
-        UPDATE usuarios 
-        SET token_reset = ?, token_reset_exp = ? 
-        WHERE id = ?
-    ")->execute([$token, $expires, $user['id']]);
+    $db->prepare("UPDATE usuarios SET token_reset = ?, token_reset_exp = ? WHERE id = ?")
+       ->execute([$code, $expires, $user['id']]);
 
-    // ==========================
-    // ENVIAR CORREO REAL
-    // ==========================
     try {
-        require_once __DIR__ . '/helpers/Mail.php';
+        $mail = new Mail();
+        $mail->to($email, $user['nombre'])
+             ->subject('Tu código de verificación — Mercaitech')
+             ->body(
+                 Mail::templateCode($user['nombre'], $code),
+                 "Hola {$user['nombre']}, tu código para restablecer la contraseña es: {$code}\nExpira en 15 minutos.\nSi no lo solicitaste, ignora este mensaje."
+             )
+             ->send();
 
-        $resetUrl = APP_URL . '/reset-password.html?token=' . $token;
+        jsonResponse(['success' => true, 'message' => 'Código enviado. Revisa tu bandeja de entrada y la carpeta spam.']);
 
-        $sent = (new Mail())
-            ->to($email, $user['nombre'])
-            ->subject('Restablecer contraseña — Mercaitech')
-            ->body(Mail::templateReset($user['nombre'], $resetUrl))
-            ->send();
-
-        if (!$sent) {
-            error_log('Mail::send() returned false for forgot-password to ' . $email);
-        }
     } catch (Throwable $e) {
+        $errorDetail = $e->getMessage();
         file_put_contents(
             __DIR__ . '/mail_error.log',
-            date('Y-m-d H:i:s') . ' [forgot] ' . $e->getMessage() . PHP_EOL,
+            date('Y-m-d H:i:s') . ' [forgot] ' . $errorDetail . PHP_EOL,
             FILE_APPEND
         );
-    }
 
-    jsonResponse($genericResponse);
+        if (APP_ENV === 'development') {
+            jsonResponse(['success' => false, 'message' => 'Error al enviar el correo: ' . $errorDetail], 500);
+        }
+        jsonResponse($genericResponse);
+    }
 }
+
 // ============================================================================
-// RESET PASSWORD
+// RESET PASSWORD — verifica código + email y cambia contraseña
 // ============================================================================
 function handleReset(array $body): void {
-    $token    = sanitize($body['token']    ?? '');
+    $email    = sanitize($body['email']    ?? '');
+    $code     = sanitize($body['code']     ?? '');
     $password = $body['password'] ?? '';
 
-    if (!$token) {
-        jsonResponse(['success' => false, 'message' => 'Token requerido.'], 422);
+    if (!$email || !$code) {
+        jsonResponse(['success' => false, 'message' => 'Correo y código requeridos.'], 422);
     }
     if (strlen($password) < 8) {
         jsonResponse(['success' => false, 'message' => 'La contraseña debe tener al menos 8 caracteres.'], 422);
@@ -380,24 +369,25 @@ function handleReset(array $body): void {
     $db   = getDB();
     $stmt = $db->prepare("
         SELECT id FROM usuarios
-        WHERE token_reset = ? AND token_reset_exp > NOW() AND activo = 1
+        WHERE email = ? AND token_reset = ? AND token_reset_exp > NOW() AND activo = 1
         LIMIT 1
     ");
-    $stmt->execute([$token]);
+    $stmt->execute([$email, $code]);
     $user = $stmt->fetch();
 
     if (!$user) {
-        jsonResponse(['success' => false, 'message' => 'Token inválido o expirado. Solicita uno nuevo.'], 400);
+        jsonResponse(['success' => false, 'message' => 'Código incorrecto o expirado. Solicita uno nuevo.'], 400);
     }
 
     $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
     $db->prepare("
         UPDATE usuarios
-        SET password_hash = ?, token_reset = NULL, token_reset_exp = NULL, intentos_fallidos = 0, bloqueado_hasta = NULL
+        SET password_hash = ?, token_reset = NULL, token_reset_exp = NULL,
+            intentos_fallidos = 0, bloqueado_hasta = NULL
         WHERE id = ?
     ")->execute([$hash, $user['id']]);
 
-    jsonResponse(['success' => true, 'message' => 'Contraseña actualizada. Ya puedes iniciar sesión.']);
+    jsonResponse(['success' => true, 'message' => '¡Contraseña actualizada! Ya puedes iniciar sesión.']);
 }
 
 // ============================================================================
@@ -490,16 +480,45 @@ function handleGoogleCode(array $body): void {
 }
 
 // ============================================================================
-// CHANGE PASSWORD (authenticated)
+// VERIFY RESET CODE — comprueba código sin cambiar la contraseña (paso 2 del modal)
 // ============================================================================
-function handleChangePassword(array $body): void {
-    if (empty($_SESSION['user_id'])) {
-        jsonResponse(['success' => false, 'message' => 'Sesión no válida. Inicia sesión de nuevo.'], 401);
+function handleVerifyResetCode(array $body): void {
+    $email = sanitize($body['email'] ?? '');
+    $code  = sanitize($body['code']  ?? '');
+
+    if (!$email || !$code) {
+        jsonResponse(['success' => false, 'message' => 'Correo y código requeridos.'], 422);
     }
 
+    $db   = getDB();
+    $stmt = $db->prepare("
+        SELECT id FROM usuarios
+        WHERE email = ? AND token_reset = ? AND token_reset_exp > NOW() AND activo = 1
+        LIMIT 1
+    ");
+    $stmt->execute([$email, $code]);
+
+    if (!$stmt->fetch()) {
+        jsonResponse(['success' => false, 'message' => 'Código incorrecto o expirado. Verifica e inténtalo de nuevo.'], 400);
+    }
+
+    jsonResponse(['success' => true]);
+}
+
+// ============================================================================
+// CHANGE PASSWORD (acepta sesión PHP o email+contraseña actual)
+// ============================================================================
+function handleChangePassword(array $body): void {
     $currentPwd = $body['current_password'] ?? '';
     $newPwd     = $body['new_password']     ?? '';
+    $email      = sanitize($body['email']   ?? '');
 
+    // Admite autenticación por sesión PHP O por email (localStorage-based auth)
+    $userId = $_SESSION['user_id'] ?? null;
+
+    if (!$userId && !$email) {
+        jsonResponse(['success' => false, 'message' => 'Sesión no válida. Inicia sesión de nuevo.'], 401);
+    }
     if (!$currentPwd || !$newPwd) {
         jsonResponse(['success' => false, 'message' => 'Datos incompletos.'], 422);
     }
@@ -507,20 +526,39 @@ function handleChangePassword(array $body): void {
         jsonResponse(['success' => false, 'message' => 'La nueva contraseña debe tener al menos 8 caracteres.'], 422);
     }
 
-    $db   = getDB();
-    $stmt = $db->prepare("SELECT password_hash FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
-    $stmt->execute([$_SESSION['user_id']]);
+    $db = getDB();
+    if ($userId) {
+        $stmt = $db->prepare("SELECT id, password_hash FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
+        $stmt->execute([$userId]);
+    } else {
+        $stmt = $db->prepare("SELECT id, password_hash FROM usuarios WHERE email = ? AND activo = 1 LIMIT 1");
+        $stmt->execute([$email]);
+    }
     $user = $stmt->fetch();
 
-    if (!$user || !password_verify($currentPwd, $user['password_hash'])) {
+    if (!$user) {
+        jsonResponse(['success' => false, 'message' => 'Usuario no encontrado. Verifica que estés iniciado sesión.'], 404);
+    }
+
+    // Verificar contraseña actual — password_hash vacío (usuarios Google sin contraseña)
+    if (empty($user['password_hash'])) {
+        jsonResponse(['success' => false, 'message' => 'Tu cuenta fue creada con Google. No tiene contraseña local.'], 400);
+    }
+
+    if (!password_verify($currentPwd, $user['password_hash'])) {
         jsonResponse(['success' => false, 'message' => 'La contraseña actual es incorrecta.'], 400);
     }
 
+    // Generar nuevo hash y actualizar
     $hash = password_hash($newPwd, PASSWORD_BCRYPT, ['cost' => 12]);
-    $db->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?")
-       ->execute([$hash, $_SESSION['user_id']]);
+    $update = $db->prepare("UPDATE usuarios SET password_hash = ?, actualizado_en = NOW() WHERE id = ?");
+    $update->execute([$hash, $user['id']]);
 
-    jsonResponse(['success' => true, 'message' => 'Contraseña actualizada correctamente.']);
+    if ($update->rowCount() === 0) {
+        jsonResponse(['success' => false, 'message' => 'No se pudo actualizar. Intenta de nuevo.'], 500);
+    }
+
+    jsonResponse(['success' => true, 'message' => '¡Contraseña actualizada! Ya puedes iniciar sesión con la nueva contraseña.']);
 }
 
 // ============================================================================

@@ -1,38 +1,34 @@
 <?php
-// Mercaitech — Database configuration
-// Copy this file to config.local.php and set your real credentials
-// Never commit config.local.php to version control
+// Mercaitech — Configuración base
+// Las credenciales reales van en config.local.php (ignorado por git)
 
-define('DB_HOST', 'localhost');
-define('DB_PORT', '3306');
-define('DB_NAME', 'mercaitech');
-define('DB_USER', 'root');       // Change in production
-define('DB_PASS', '');           // Change in production
-define('DB_CHARSET', 'utf8mb4');
+declare(strict_types=1);
 
-// App settings
-define('APP_ENV', 'development'); // 'production' | 'development'
-define('APP_URL', 'http://localhost');
-define('JWT_SECRET', 'change-this-to-a-random-secret-key-in-production');
-
-// ── Email (Gmail SMTP) ─────────────────────────────────────────────────────
-// 1. Activa verificación en 2 pasos en tu cuenta Google
-// 2. Ve a myaccount.google.com → Seguridad → Contraseñas de aplicación
-// 3. Crea una contraseña de aplicación para "Correo / Otro"
-// 4. Pega la contraseña de 16 caracteres en SMTP_PASS
-define('SMTP_HOST',       'smtp.gmail.com');
-define('SMTP_PORT',       587);
-define('SMTP_USER',       'mercaitechshop@gmail.com');  // Tu Gmail
-define('SMTP_PASS',       'kafhvdrlarpknkyh');          // Contraseña de aplicación (16 chars)
-define('MAIL_FROM_EMAIL', 'mercaitechshop@gmail.com');
-define('MAIL_FROM_NAME',  'Mercaitech');
-
-// Load local overrides if they exist
+// Cargar credenciales locales PRIMERO para que sus define() tengan prioridad
 if (file_exists(__DIR__ . '/config.local.php')) {
     require_once __DIR__ . '/config.local.php';
 }
 
-// PDO connection factory
+// Valores por defecto — solo se aplican si config.local.php no los definió
+if (!defined('DB_HOST'))         define('DB_HOST',         'localhost');
+if (!defined('DB_PORT'))         define('DB_PORT',         '3306');
+if (!defined('DB_NAME'))         define('DB_NAME',         'mercaitech');
+if (!defined('DB_USER'))         define('DB_USER',         'mercaitech');
+if (!defined('DB_PASS'))         define('DB_PASS',         '');
+if (!defined('DB_CHARSET'))      define('DB_CHARSET',      'utf8mb4');
+
+if (!defined('APP_ENV'))         define('APP_ENV',         'production');
+if (!defined('APP_URL'))         define('APP_URL',         'http://localhost:8080');
+if (!defined('JWT_SECRET'))      define('JWT_SECRET',      '');
+
+if (!defined('SMTP_HOST'))       define('SMTP_HOST',       'smtp.gmail.com');
+if (!defined('SMTP_PORT'))       define('SMTP_PORT',       587);
+if (!defined('SMTP_USER'))       define('SMTP_USER',       '');
+if (!defined('SMTP_PASS'))       define('SMTP_PASS',       '');
+if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', '');
+if (!defined('MAIL_FROM_NAME'))  define('MAIL_FROM_NAME',  'Mercaitech');
+
+// ── PDO connection factory ────────────────────────────────────────────────────
 function getDB(): PDO {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
@@ -51,21 +47,16 @@ function getDB(): PDO {
     try {
         $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
     } catch (PDOException $e) {
-        if (APP_ENV === 'development') {
-            http_response_code(500);
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-        } else {
-            http_response_code(500);
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Database connection error.']);
-        }
+        http_response_code(500);
+        header('Content-Type: application/json');
+        $msg = APP_ENV === 'development' ? $e->getMessage() : 'Database connection error.';
+        echo json_encode(['success' => false, 'error' => $msg]);
         exit;
     }
     return $pdo;
 }
 
-// CORS headers — adjust origins for production
+// ── CORS ─────────────────────────────────────────────────────────────────────
 function setCorsHeaders(): void {
     $allowed = APP_ENV === 'production' ? APP_URL : '*';
     header('Access-Control-Allow-Origin: ' . $allowed);
@@ -77,7 +68,7 @@ function setCorsHeaders(): void {
     }
 }
 
-// JSON response helper
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function jsonResponse(array $data, int $status = 200): void {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
@@ -85,19 +76,16 @@ function jsonResponse(array $data, int $status = 200): void {
     exit;
 }
 
-// Sanitize input
 function sanitize(string $input): string {
     return htmlspecialchars(strip_tags(trim($input)), ENT_QUOTES, 'UTF-8');
 }
 
-// Validate email
 function validEmail(string $email): bool {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
-// Get JSON body
 function getJsonBody(): array {
-    $raw = file_get_contents('php://input');
+    $raw  = file_get_contents('php://input');
     if (!$raw) return [];
     $data = json_decode($raw, true);
     return is_array($data) ? $data : [];

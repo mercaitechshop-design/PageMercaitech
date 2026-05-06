@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Perfil — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
-  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
 
@@ -121,8 +121,8 @@
             <form class="profile-form" style="max-width:400px" onsubmit="changePassword(event)">
               <div class="profile-field">
                 <label class="profile-label" for="p-pwd-current">Contraseña actual</label>
-                <div style="position:relative">
-                  <input type="password" class="profile-input" id="p-pwd-current" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px">
+                <div style="position:relative;display:block;width:100%">
+                  <input type="password" class="profile-input" id="p-pwd-current" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px;width:100%;box-sizing:border-box">
                   <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-current',this)" aria-label="Mostrar contraseña">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -130,8 +130,8 @@
               </div>
               <div class="profile-field">
                 <label class="profile-label" for="p-pwd-new">Nueva contraseña</label>
-                <div style="position:relative">
-                  <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password" style="padding-right:44px" oninput="pfStrength(this.value)">
+                <div style="position:relative;display:block;width:100%">
+                  <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box" oninput="pfStrength(this.value)">
                   <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-new',this)" aria-label="Mostrar contraseña">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -143,8 +143,8 @@
               </div>
               <div class="profile-field">
                 <label class="profile-label" for="p-pwd-confirm">Confirmar nueva contraseña</label>
-                <div style="position:relative">
-                  <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="padding-right:44px">
+                <div style="position:relative;display:block;width:100%">
+                  <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box">
                   <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-confirm',this)" aria-label="Mostrar contraseña">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -162,23 +162,9 @@
 
 <div class="toast-container" id="toast-container"></div>
 
-<script src="js/products.js"></script>
-<script src="js/cart.js"></script>
-<script src="js/auth.js"></script>
-<style>
-.pf-eye-btn {
-  position:absolute; right:10px; top:50%; transform:translateY(-50%);
-  width:30px; height:30px; border-radius:8px; background:transparent; border:0;
-  color:var(--fg-subtle); cursor:pointer; display:flex; align-items:center; justify-content:center;
-  transition:background .15s, color .15s; padding:0;
-}
-.pf-eye-btn:hover { background:rgba(255,255,255,.08); color:var(--fg); }
-.pf-eye-btn svg { width:16px; height:16px; display:block; }
-.pf-strength { margin-top:6px; }
-.pf-strength__bar { height:3px; background:var(--border); border-radius:999px; overflow:hidden; margin-bottom:5px; }
-.pf-strength__fill { height:100%; border-radius:999px; width:0%; transition:width .3s ease, background .3s; }
-.pf-strength__label { font-size:11px; }
-</style>
+<script src="assets/js/products.js"></script>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/auth.js"></script>
 <script>
 'use strict';
 window.addEventListener('scroll', () => {
@@ -236,39 +222,64 @@ function saveProfile(e) {
   document.getElementById('sidebar-name').textContent = fullName;
 }
 
-function changePassword(e) {
+async function changePassword(e) {
   e.preventDefault();
-  const current = document.getElementById('p-pwd-current').value;
-  const newPwd  = document.getElementById('p-pwd-new').value;
-  const confirm = document.getElementById('p-pwd-confirm').value;
-  const msg     = document.getElementById('pwd-change-msg');
+  const current  = document.getElementById('p-pwd-current').value;
+  const newPwd   = document.getElementById('p-pwd-new').value;
+  const confirm  = document.getElementById('p-pwd-confirm').value;
+  const msg      = document.getElementById('pwd-change-msg');
+  const submitBtn = e.target.querySelector('[type="submit"]');
+  const user     = MercaitechAuth.getUser();
 
-  if (!current) { msg.style.color = '#FF5470'; msg.textContent = 'Ingresa tu contraseña actual.'; return; }
-  if (newPwd.length < 8) { msg.style.color = '#FF5470'; msg.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.'; return; }
-  if (newPwd !== confirm) { msg.style.color = '#FF5470'; msg.textContent = 'Las contraseñas no coinciden.'; return; }
+  // Validaciones cliente
+  if (!current) { showPwdMsg(msg, 'error', 'Ingresa tu contraseña actual.'); return; }
+  if (newPwd.length < 8) { showPwdMsg(msg, 'error', 'La nueva contraseña debe tener al menos 8 caracteres.'); return; }
+  if (newPwd !== confirm) { showPwdMsg(msg, 'error', 'Las contraseñas no coinciden.'); return; }
+  if (!user?.email) { showPwdMsg(msg, 'error', 'Sesión no válida. Recarga la página e inicia sesión.'); return; }
 
-  // Call API
-  fetch('api/auth.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'change_password', current_password: current, new_password: newPwd })
-  })
-  .then(r => r.json())
-  .then(data => {
+  // Loading state
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Guardando…';
+  showPwdMsg(msg, 'info', 'Actualizando contraseña…');
+
+  try {
+    const res  = await fetch('api/auth.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'change_password',
+        email: user.email,
+        current_password: current,
+        new_password: newPwd
+      })
+    });
+
+    let data;
+    try { data = await res.json(); } catch { throw new Error('Respuesta inválida del servidor.'); }
+
     if (data.success) {
-      msg.style.color = 'var(--mt-green-400)';
-      msg.textContent = '✓ Contraseña actualizada correctamente.';
+      showPwdMsg(msg, 'success', '✓ ' + (data.message || 'Contraseña actualizada correctamente.'));
       e.target.reset();
+      // Limpiar barra de fortaleza
+      const fill = document.getElementById('pf-pwd-fill');
+      const lbl  = document.getElementById('pf-pwd-label');
+      if (fill) fill.style.width = '0';
+      if (lbl)  lbl.textContent  = '';
     } else {
-      msg.style.color = '#FF5470';
-      msg.textContent = data.message || 'Error al cambiar la contraseña.';
+      showPwdMsg(msg, 'error', data.message || 'No se pudo actualizar la contraseña.');
     }
-  })
-  .catch(() => {
-    msg.style.color = 'var(--mt-green-400)';
-    msg.textContent = '✓ Contraseña actualizada (modo demo).';
-    e.target.reset();
-  });
+  } catch (err) {
+    showPwdMsg(msg, 'error', 'Error de conexión: ' + err.message + '. Verifica que el servidor esté activo.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'CAMBIAR CONTRASEÑA';
+  }
+}
+
+function showPwdMsg(el, type, text) {
+  const colors = { error: '#FF5470', success: 'var(--mt-green-400)', info: 'var(--fg-subtle)' };
+  el.style.color = colors[type] || colors.info;
+  el.textContent = text;
 }
 
 const PF_EYE_OPEN   = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;

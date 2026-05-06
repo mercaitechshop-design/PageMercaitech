@@ -1,63 +1,18 @@
-# Mercaitech — Apache configuration
-Options -Indexes
-Options +FollowSymLinks
+Options +FollowSymLinks -Indexes
+DirectoryIndex index.html index.php
+AllowOverride All
 
-# ── Charset ────────────────────────────────────────────────────
-AddDefaultCharset UTF-8
-AddCharset UTF-8 .html .css .js .json .php
+# Security headers
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set X-XSS-Protection "1; mode=block"
 
-# ── Compression ────────────────────────────────────────────────
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/css text/javascript
-    AddOutputFilterByType DEFLATE application/javascript application/json
-    AddOutputFilterByType DEFLATE image/svg+xml font/ttf font/woff font/woff2
-</IfModule>
+# Cache static assets
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|woff|woff2|ttf|ico)$">
+    Header set Cache-Control "max-age=86400, public"
+</FilesMatch>
 
-# ── Cache control ──────────────────────────────────────────────
-<IfModule mod_expires.c>
-    ExpiresActive On
-    ExpiresByType text/css "access plus 1 week"
-    ExpiresByType application/javascript "access plus 1 week"
-    ExpiresByType image/png "access plus 1 month"
-    ExpiresByType image/jpg "access plus 1 month"
-    ExpiresByType image/jpeg "access plus 1 month"
-    ExpiresByType image/webp "access plus 1 month"
-    ExpiresByType font/ttf "access plus 1 year"
-    ExpiresByType font/woff2 "access plus 1 year"
-</IfModule>
-
-# ── Security headers ───────────────────────────────────────────
-<IfModule mod_headers.c>
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set X-XSS-Protection "1; mode=block"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-</IfModule>
-
-# ── Rewrite ────────────────────────────────────────────────────
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-
-    # Force HTTPS (uncomment in production)
-    # RewriteCond %{HTTPS} off
-    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-    # Protect sensitive files
-    RewriteRule ^api/config\.php$ - [F,L]
-    RewriteRule ^api/config\.local\.php$ - [F,L]
-    RewriteRule ^database/.*\.sql$ - [F,L]
-
-    # API routing (optional clean URLs)
-    RewriteRule ^api/products/?$ api/products.php [L]
-    RewriteRule ^api/categories/?$ api/categories.php [L]
-    RewriteRule ^api/newsletter/?$ api/newsletter.php [L]
-    RewriteRule ^api/orders/?$ api/orders.php [L]
-</IfModule>
-
-# ── Deny access to hidden files ────────────────────────────────
-<FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
+# No cache for PHP API
+<FilesMatch "\.php$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
 </FilesMatch>

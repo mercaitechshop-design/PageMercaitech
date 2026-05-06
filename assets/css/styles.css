@@ -1371,6 +1371,7 @@ ul, ol { list-style: none; }
 .profile-field { display: flex; flex-direction: column; gap: 6px; }
 .profile-label { font-size: 12px; font-weight: 600; color: var(--fg-muted); letter-spacing: .04em; text-transform: uppercase; }
 .profile-input {
+  width: 100%; box-sizing: border-box;
   background: var(--bg-raised); border: 1.5px solid var(--border); border-radius: var(--radius-md);
   padding: 12px 14px; color: var(--fg); font-family: inherit; font-size: 14px; outline: none;
   transition: border-color var(--dur-base) var(--ease-standard);
@@ -1571,3 +1572,17 @@ ul, ol { list-style: none; }
 .products-carousel-wrap .carousel-btn { flex-shrink: 0; align-self: center; }
 .products-carousel-wrap .product-grid { flex: 1; min-width: 0; }
 .products-section--all .products-carousel-wrap .carousel-btn { display: none; }
+
+/* ── Password eye-toggle & strength (reusable) ──────────────────────────── */
+.pf-eye-btn {
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  width:30px; height:30px; border-radius:8px; background:transparent; border:0;
+  color:var(--fg-subtle); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .15s, color .15s; padding:0;
+}
+.pf-eye-btn:hover { background:rgba(255,255,255,.08); color:var(--fg); }
+.pf-eye-btn svg { width:16px; height:16px; display:block; }
+.pf-strength { margin-top:6px; }
+.pf-strength__bar { height:3px; background:var(--border); border-radius:999px; overflow:hidden; margin-bottom:4px; }
+.pf-strength__fill { height:100%; border-radius:999px; width:0%; transition:width .3s ease, background .3s; }
+.pf-strength__label { font-size:11px; }

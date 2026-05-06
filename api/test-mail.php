@@ -1,6 +1,10 @@
 <?php
-
 require_once __DIR__ . '/config.php';
+
+if (APP_ENV !== 'development') {
+    http_response_code(403);
+    exit('Acceso denegado.');
+}
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;

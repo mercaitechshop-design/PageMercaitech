@@ -6,8 +6,8 @@
   <title>Acceder — Mercaitech</title>
   <meta name="description" content="Inicia sesión o crea tu cuenta en Mercaitech. Accede a ofertas exclusivas, seguimiento de pedidos y recomendaciones personalizadas con IA.">
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
-  <link rel="preload" href="fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
-  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <link rel="stylesheet" href="assets/css/tokens.css">
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async></script>
 
@@ -647,8 +647,20 @@
       display: flex; align-items: center; justify-content: center;
       transition: all .15s;
     }
-    .forgot-modal__close:hover { background: rgba(255,255,255,.1); color: var(--fg); }
+    .forgot-modal__close:hover { background: rgba(255,84,112,.15); color: #FF5470; }
     .forgot-modal__close svg { width: 16px; height: 16px; }
+    .pf-eye-btn {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px;
+      color: var(--fg-subtle); display: flex; align-items: center; justify-content: center;
+      transition: color .15s;
+    }
+    .pf-eye-btn:hover { color: var(--fg); }
+    .pf-eye-btn svg { width: 17px; height: 17px; }
+    .pf-strength { display: flex; align-items: center; gap: 8px; padding: 2px 2px 4px; }
+    .pf-strength__bar { flex: 1; height: 3px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+    .pf-strength__fill { height: 100%; width: 0; border-radius: 99px; transition: width .3s ease, background .3s ease; }
+    .pf-strength__label { font-size: 11px; font-weight: 600; min-width: 58px; text-align: right; }
     .forgot-modal__icon {
       width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 20px;
       background: rgba(0,102,255,.14); border: 1px solid rgba(0,102,255,.35);
@@ -1477,6 +1489,25 @@ if (params.get('tab') === 'register') switchTab('register');
 </script>
 
 <!-- ══ FORGOT PASSWORD MODAL ══════════════════════════════ -->
+<style>
+  .forgot-code-view { display:none; flex-direction:column; gap:0; }
+  .forgot-code-view.show { display:flex; }
+  .code-inputs { display:flex; gap:8px; justify-content:center; margin:20px 0 4px; }
+  .code-input {
+    width:46px; height:56px; text-align:center; font-size:22px; font-weight:700;
+    background:var(--mt-ink-800); border:1.5px solid var(--border); border-radius:10px;
+    color:var(--fg); outline:none; font-family:var(--font-mono,monospace);
+    transition:border-color .2s, box-shadow .2s; caret-color:transparent;
+  }
+  .code-input:focus { border-color:var(--mt-blue-400); box-shadow:0 0 0 3px rgba(0,102,255,.18); }
+  .code-input.filled { border-color:rgba(31,214,255,.5); }
+  .forgot-resend { font-size:12px; color:var(--fg-subtle); text-align:center; margin-top:6px; }
+  .forgot-resend button { background:0; border:0; color:var(--mt-blue-300); cursor:pointer; font-size:12px; font-family:inherit; font-weight:600; padding:0; }
+  .forgot-resend button:disabled { color:var(--fg-subtle); cursor:default; }
+  .fm-back { background:0; border:0; color:var(--fg-subtle); cursor:pointer; font-size:12px; font-family:inherit; display:inline-flex; align-items:center; gap:4px; margin-bottom:12px; padding:0; }
+  .fm-back:hover { color:var(--fg); }
+  .fm-back svg { width:14px; height:14px; }
+</style>
 <div class="forgot-overlay" id="forgot-overlay" role="dialog" aria-modal="true" aria-label="Restablecer contraseña">
   <div class="forgot-modal">
     <div class="forgot-modal__glow"></div>
@@ -1484,57 +1515,135 @@ if (params.get('tab') === 'register') switchTab('register');
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     </button>
 
+    <!-- PASO 1: correo -->
     <div id="forgot-form-view">
       <div class="forgot-modal__icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><line x1="20" x2="20" y1="4" y2="4"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
       </div>
       <h2 class="forgot-modal__title">Restablecer contraseña</h2>
-      <p class="forgot-modal__sub">Ingresa tu correo y te enviaremos un enlace para crear una nueva contraseña.</p>
+      <p class="forgot-modal__sub">Ingresa tu correo y te enviaremos un código de verificación de 6 dígitos.</p>
       <div class="forgot-modal__form">
-        <input type="email" class="forgot-modal__input" id="forgot-email"
-               placeholder="tu@correo.com" autocomplete="email">
+        <input type="email" class="forgot-modal__input" id="forgot-email" placeholder="tu@correo.com" autocomplete="email">
         <div class="forgot-modal__error" id="forgot-error"></div>
         <button class="forgot-modal__btn" id="forgot-submit-btn" type="button" onclick="submitForgot()">
-          <span class="fm-label">ENVIAR ENLACE</span>
+          <span class="fm-label">ENVIAR CÓDIGO</span>
           <svg class="fm-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           <div class="fm-spinner"></div>
         </button>
       </div>
     </div>
 
+    <!-- PASO 2: verificar código -->
+    <div class="forgot-code-view" id="forgot-code-view">
+      <button class="fm-back" onclick="showStep(1)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Volver
+      </button>
+      <div class="forgot-modal__icon" style="background:rgba(31,214,255,.1);border-color:rgba(31,214,255,.3);color:var(--mt-cyan-400)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      </div>
+      <h2 class="forgot-modal__title">Revisa tu correo</h2>
+      <p class="forgot-modal__sub" id="code-hint">Te enviamos un código de 6 dígitos. Revisa tu bandeja de entrada y la carpeta spam.</p>
+      <div class="code-inputs">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" data-idx="0">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="1">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="2">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="3">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="4">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="5">
+      </div>
+      <div class="forgot-resend"><span id="resend-timer"></span> <button id="resend-btn" onclick="resendCode()" disabled>Reenviar código</button></div>
+      <div class="forgot-modal__error" id="code-error"></div>
+      <div class="forgot-modal__form" style="margin-top:8px">
+        <button class="forgot-modal__btn" id="verify-code-btn" type="button" onclick="verifyCode()">
+          <span class="fm-label">VERIFICAR CÓDIGO</span>
+          <svg class="fm-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          <div class="fm-spinner"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- PASO 3: nueva contraseña -->
+    <div class="forgot-code-view" id="forgot-pwd-view">
+      <button class="fm-back" onclick="showStep(2)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Volver
+      </button>
+      <div class="forgot-modal__icon" style="background:rgba(0,102,255,.12);border-color:rgba(0,102,255,.3);color:var(--mt-blue-300)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h2 class="forgot-modal__title">Nueva contraseña</h2>
+      <p class="forgot-modal__sub">Elige una contraseña segura de al menos 8 caracteres.</p>
+      <div class="forgot-modal__form" style="margin-top:12px">
+        <div style="position:relative">
+          <input type="password" class="forgot-modal__input" id="new-pwd" placeholder="Nueva contraseña (mín. 8 caracteres)" autocomplete="new-password" style="padding-right:44px">
+          <button type="button" class="pf-eye-btn" onclick="fmToggle('new-pwd',this)" aria-label="Mostrar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="pf-strength" style="margin-top:-4px">
+          <div class="pf-strength__bar"><div class="pf-strength__fill" id="fm-pwd-fill"></div></div>
+          <span class="pf-strength__label" id="fm-pwd-label"></span>
+        </div>
+        <div style="position:relative">
+          <input type="password" class="forgot-modal__input" id="new-pwd-confirm" placeholder="Confirmar contraseña" autocomplete="new-password" style="padding-right:44px">
+          <button type="button" class="pf-eye-btn" onclick="fmToggle('new-pwd-confirm',this)" aria-label="Mostrar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="forgot-modal__error" id="reset-error"></div>
+        <button class="forgot-modal__btn" id="reset-submit-btn" type="button" onclick="submitReset()">
+          <span class="fm-label">GUARDAR CONTRASEÑA</span>
+          <svg class="fm-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <div class="fm-spinner"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- PASO 4: éxito -->
     <div class="forgot-success" id="forgot-success-view">
       <div class="forgot-success__check">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
-      <div class="forgot-success__title">¡Correo enviado!</div>
-      <p class="forgot-success__msg" id="forgot-success-msg"></p>
+      <div class="forgot-success__title">¡Contraseña actualizada!</div>
+      <p class="forgot-success__msg">Ya puedes iniciar sesión con tu nueva contraseña.</p>
       <button onclick="closeForgotModal()" style="margin-top:4px;background:transparent;border:0;color:var(--mt-blue-300);font-size:13px;cursor:pointer;font-family:inherit;font-weight:600">
-        Volver al inicio de sesión →
+        Ir al inicio de sesión →
       </button>
     </div>
   </div>
 </div>
 
 <script>
-// ── Forgot password modal logic ─────────────────────────────
+// ── Forgot password — lógica del modal 3 pasos ──────────────
+let _forgotEmail = '';
+let _resendTimer = null;
+
+let _verifiedCode = '';
+
+function showStep(n) {
+  document.getElementById('forgot-form-view').style.display = n === 1 ? '' : 'none';
+  document.getElementById('forgot-code-view').classList.toggle('show', n === 2);
+  document.getElementById('forgot-pwd-view').classList.toggle('show', n === 3);
+  document.getElementById('forgot-success-view').classList.toggle('show', n === 4);
+  if (n === 1) { const e = document.getElementById('forgot-error'); e.textContent=''; e.classList.remove('show'); }
+  if (n === 2) { const e = document.getElementById('code-error'); e.textContent=''; e.classList.remove('show'); setTimeout(() => document.querySelector('.code-input').focus(), 100); }
+  if (n === 3) { const e = document.getElementById('reset-error'); e.textContent=''; e.classList.remove('show'); document.getElementById('new-pwd').value=''; document.getElementById('new-pwd-confirm').value=''; document.getElementById('fm-pwd-fill').style.width='0'; document.getElementById('fm-pwd-label').textContent=''; setTimeout(()=>document.getElementById('new-pwd').focus(),100); }
+}
+
 function showForgot() {
   const email = document.getElementById('login-email').value.trim();
-  // Pre-fill the modal email if user already typed one
+  _forgotEmail = '';
   const modalInput = document.getElementById('forgot-email');
   if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) modalInput.value = email;
-
-  // Reset modal state
-  document.getElementById('forgot-form-view').style.display = '';
-  document.getElementById('forgot-success-view').classList.remove('show');
-  document.getElementById('forgot-error').classList.remove('show');
-  document.getElementById('forgot-error').textContent = '';
-
+  showStep(1);
   document.getElementById('forgot-overlay').classList.add('open');
   setTimeout(() => modalInput.focus(), 250);
 }
 
 function closeForgotModal() {
   document.getElementById('forgot-overlay').classList.remove('open');
+  clearInterval(_resendTimer);
 }
 
 async function submitForgot() {
@@ -1542,57 +1651,127 @@ async function submitForgot() {
   const email = emailInput.value.trim();
   const errEl = document.getElementById('forgot-error');
   const btn   = document.getElementById('forgot-submit-btn');
-
   errEl.classList.remove('show');
-
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errEl.textContent = 'Ingresa un correo electrónico válido.';
     errEl.classList.add('show');
     emailInput.focus();
     return;
   }
-
-  btn.classList.add('loading');
-  btn.disabled = true;
-
+  btn.classList.add('loading'); btn.disabled = true;
   try {
-    const res = await fetch('api/auth.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'forgot', email }),
-    });
+    const res  = await fetch('api/auth.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'forgot', email }) });
     const data = await res.json();
-    showForgotSuccess(email, data.message);
-  } catch {
-    // API not available — always show success (prevent enumeration on demo)
-    showForgotSuccess(email);
-  }
-
-  btn.classList.remove('loading');
-  btn.disabled = false;
+    if (!data.success && data.message && !data.message.includes('registrado')) {
+      errEl.textContent = data.message; errEl.classList.add('show');
+      btn.classList.remove('loading'); btn.disabled = false;
+      return;
+    }
+  } catch { /* continuar aunque falle la red en local */ }
+  _forgotEmail = email;
+  document.getElementById('code-hint').textContent = `Te enviamos un código de 6 dígitos a ${email}. Revisa también la carpeta de spam.`;
+  document.querySelectorAll('.code-input').forEach(i => { i.value = ''; i.classList.remove('filled'); });
+  document.getElementById('new-pwd').value = '';
+  document.getElementById('new-pwd-confirm').value = '';
+  startResendTimer(60);
+  showStep(2);
+  btn.classList.remove('loading'); btn.disabled = false;
 }
 
-function showForgotSuccess(email, msg) {
-  document.getElementById('forgot-form-view').style.display = 'none';
-  document.getElementById('forgot-success-msg').textContent =
-    msg || `Si ${email} está registrado, recibirás un enlace en los próximos minutos. Revisa tu bandeja de entrada y la carpeta de spam.`;
-  document.getElementById('forgot-success-view').classList.add('show');
+async function resendCode() {
+  const btn = document.getElementById('forgot-submit-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+  try { await fetch('api/auth.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'forgot', email: _forgotEmail }) }); } catch {}
+  startResendTimer(60);
+  btn.classList.remove('loading'); btn.disabled = false;
 }
 
-// Close on overlay click / Escape
-document.getElementById('forgot-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('forgot-overlay')) closeForgotModal();
+function startResendTimer(sec) {
+  clearInterval(_resendTimer);
+  const timerEl = document.getElementById('resend-timer');
+  const btn     = document.getElementById('resend-btn');
+  btn.disabled  = true;
+  let s = sec;
+  timerEl.textContent = `Reenviar en ${s}s`;
+  _resendTimer = setInterval(() => {
+    s--;
+    if (s <= 0) { clearInterval(_resendTimer); timerEl.textContent = ''; btn.disabled = false; }
+    else timerEl.textContent = `Reenviar en ${s}s`;
+  }, 1000);
+}
+
+async function verifyCode() {
+  const code  = Array.from(document.querySelectorAll('.code-input')).map(i => i.value).join('');
+  const errEl = document.getElementById('code-error');
+  const btn   = document.getElementById('verify-code-btn');
+  errEl.classList.remove('show');
+  if (!/^\d{6}$/.test(code)) { errEl.textContent = 'Ingresa el código completo de 6 dígitos.'; errEl.classList.add('show'); return; }
+  btn.classList.add('loading'); btn.disabled = true;
+  try {
+    const res  = await fetch('api/auth.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'verify_reset_code', email: _forgotEmail, code }) });
+    const data = await res.json();
+    if (data.success) { _verifiedCode = code; showStep(3); }
+    else { errEl.textContent = data.message || 'Código incorrecto o expirado.'; errEl.classList.add('show'); }
+  } catch { errEl.textContent = 'Error de conexión. Inténtalo de nuevo.'; errEl.classList.add('show'); }
+  btn.classList.remove('loading'); btn.disabled = false;
+}
+
+async function submitReset() {
+  const pwd  = document.getElementById('new-pwd').value;
+  const cpwd = document.getElementById('new-pwd-confirm').value;
+  const errEl = document.getElementById('reset-error');
+  const btn   = document.getElementById('reset-submit-btn');
+  errEl.classList.remove('show');
+  if (pwd.length < 8) { errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.'; errEl.classList.add('show'); return; }
+  if (pwd !== cpwd)   { errEl.textContent = 'Las contraseñas no coinciden.'; errEl.classList.add('show'); return; }
+  btn.classList.add('loading'); btn.disabled = true;
+  try {
+    const res  = await fetch('api/auth.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'reset', email: _forgotEmail, code: _verifiedCode, password: pwd }) });
+    const data = await res.json();
+    if (data.success) { showStep(4); }
+    else { errEl.textContent = data.message || 'Error al cambiar la contraseña.'; errEl.classList.add('show'); }
+  } catch { errEl.textContent = 'Error de conexión. Inténtalo de nuevo.'; errEl.classList.add('show'); }
+  btn.classList.remove('loading'); btn.disabled = false;
+}
+
+// Navegación entre celdas del código
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.code-input').forEach((inp, i, arr) => {
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/\D/g,'').slice(-1);
+      inp.classList.toggle('filled', inp.value !== '');
+      if (inp.value && i < arr.length - 1) arr[i+1].focus();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) { arr[i-1].focus(); arr[i-1].value = ''; arr[i-1].classList.remove('filled'); }
+      if (e.key === 'ArrowLeft'  && i > 0) arr[i-1].focus();
+      if (e.key === 'ArrowRight' && i < arr.length-1) arr[i+1].focus();
+    });
+    inp.addEventListener('paste', e => {
+      const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+      if (txt) { e.preventDefault(); arr.forEach((a,j) => { a.value = txt[j]||''; a.classList.toggle('filled', !!txt[j]); }); if (txt.length >= 6) arr[5].focus(); }
+    });
+  });
+  document.getElementById('new-pwd').addEventListener('input', e => fmStrength(e.target.value));
 });
+
+// Eye toggle + strength (para el modal)
+const FM_EYE_OPEN   = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+const FM_EYE_CLOSED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696A10.75 10.75 0 0 1 6.521 6.5"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`;
+function fmToggle(id, btn) { const i = document.getElementById(id); const s = i.type==='text'; i.type=s?'password':'text'; btn.innerHTML=s?FM_EYE_OPEN:FM_EYE_CLOSED; }
+function fmStrength(pwd) {
+  const fill=document.getElementById('fm-pwd-fill'); const label=document.getElementById('fm-pwd-label');
+  if(!pwd){fill.style.width='0';label.textContent='';return;}
+  let s=0; if(pwd.length>=8)s++; if(pwd.length>=12)s++; if(/[A-Z]/.test(pwd))s++; if(/[0-9]/.test(pwd))s++; if(/[^A-Za-z0-9]/.test(pwd))s++;
+  const lvls=[{w:'20%',c:'#FF5470',t:'Muy débil'},{w:'40%',c:'#FFB020',t:'Débil'},{w:'60%',c:'#FFB020',t:'Regular'},{w:'80%',c:'#1A8CFF',t:'Buena'},{w:'100%',c:'#10C98A',t:'Excelente'}];
+  const l=lvls[Math.min(s-1,4)]||lvls[0]; fill.style.width=l.w; fill.style.background=l.c; label.textContent=l.t; label.style.color=l.c;
+}
+
+// Cerrar modal
+document.getElementById('forgot-overlay').addEventListener('click', e => { if (e.target === document.getElementById('forgot-overlay')) closeForgotModal(); });
 document.getElementById('forgot-close').addEventListener('click', closeForgotModal);
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && document.getElementById('forgot-overlay').classList.contains('open')) {
-    closeForgotModal();
-  }
-});
-// Submit on Enter in email field
-document.getElementById('forgot-email').addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitForgot();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('forgot-overlay').classList.contains('open')) closeForgotModal(); });
+document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') submitForgot(); });
 </script>
 
 </body>
