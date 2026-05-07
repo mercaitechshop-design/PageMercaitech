@@ -13,9 +13,8 @@
   <title>Mercaitech — Todo lo que buscas, en un solo lugar.</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
-  <link rel="stylesheet" href="assets/css/tokens.css">
-  <link rel="stylesheet" href="assets/css/styles.css">
-
+  <link rel="stylesheet" href="assets/css/tokens.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=3">
   <!-- JSON-LD structured data -->
   <script type="application/ld+json">
   {
@@ -310,7 +309,7 @@
       <div class="product-grid" id="oferta-grid">
 
         <!-- Auriculares -->
-        <article class="product-card reveal" role="listitem" onclick="addToCartById(1)" style="cursor:pointer">
+        <article class="product-card reveal" role="listitem" onclick="openPdp(1)" style="cursor:pointer">
           <div class="product-card__media" style="background:radial-gradient(ellipse at 50% 40%,rgba(31,214,255,.22),transparent 60%),linear-gradient(135deg,#0B1124,#001A47)">
             <div class="product-card__media-inner">
               <div class="product-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></div>
@@ -334,7 +333,7 @@
         </article>
 
         <!-- Cámara -->
-        <article class="product-card reveal" role="listitem" onclick="addToCartById(3)" style="cursor:pointer;transition-delay:60ms">
+        <article class="product-card reveal" role="listitem" onclick="openPdp(3)" style="cursor:pointer;transition-delay:60ms">
           <div class="product-card__media" style="background:radial-gradient(ellipse at 50% 40%,rgba(31,214,255,.16),transparent 60%),linear-gradient(135deg,#0B1124,#002C7A)">
             <div class="product-card__media-inner">
               <div class="product-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
@@ -536,12 +535,12 @@
       </div>
       <div>
         <h3 class="footer__col-title">Categorías</h3>
-        <a href="#products" class="footer__link" data-cat="tecnologia">Tecnología</a>
-        <a href="#products" class="footer__link" data-cat="hogar">Hogar</a>
-        <a href="#products" class="footer__link" data-cat="moda">Moda</a>
-        <a href="#products" class="footer__link" data-cat="deportes">Deportes</a>
-        <a href="#products" class="footer__link" data-cat="gaming">Gaming</a>
-        <a href="#products" class="footer__link" data-cat="belleza">Belleza</a>
+        <a href="productos.html#tecnologia" class="footer__link">Tecnología</a>
+        <a href="productos.html#hogar"      class="footer__link">Hogar</a>
+        <a href="productos.html#moda"       class="footer__link">Moda</a>
+        <a href="productos.html#deportes"   class="footer__link">Deportes</a>
+        <a href="productos.html#gaming"     class="footer__link">Gaming</a>
+        <a href="productos.html#belleza"    class="footer__link">Belleza</a>
       </div>
       <div>
         <h3 class="footer__col-title">Ayuda</h3>

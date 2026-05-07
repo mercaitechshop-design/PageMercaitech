@@ -70,10 +70,10 @@ function renderCartItems() {
 
   container.innerHTML = window.cart.items.map(item => `
     <div class="cart-line" data-id="${item.id}">
-      <div class="cart-line__img" style="background:${item.bg}">
+      <div class="cart-line__img" style="background:${item.bg};cursor:pointer" onclick="closeCart();openPdp(${item.id})">
         ${getIcon(item.icon)}
       </div>
-      <div class="cart-line__info">
+      <div class="cart-line__info" style="cursor:pointer" onclick="closeCart();openPdp(${item.id})">
         <div class="cart-line__name">${item.title}</div>
         <div class="cart-line__meta">${item.categoryLabel} · Cant. ${item.qty}</div>
         <div class="cart-line__price">${window.cart.formatPrice(item.price * item.qty)}</div>
@@ -85,13 +85,12 @@ function renderCartItems() {
   `).join('');
 
   const subtotal = window.cart.subtotal;
-  const iva      = Math.round(subtotal * 0.19);
-  const total    = subtotal + iva;
+  const iva      = Math.round(subtotal * 0.19 / 1.19);
   totalsEl.innerHTML = `
     <div class="cart-totals__row"><span>Subtotal</span><span>${window.cart.formatPrice(subtotal)}</span></div>
-    <div class="cart-totals__row"><span>IVA (19%)</span><span>${window.cart.formatPrice(iva)}</span></div>
+    <div class="cart-totals__row" style="font-size:11px;opacity:.6"><span>IVA incluido (19%)</span><span>${window.cart.formatPrice(iva)}</span></div>
     <div class="cart-totals__row"><span>Envío</span><span class="text-cyan">Gratis</span></div>
-    <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${window.cart.formatPrice(total)}</span></div>
+    <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${window.cart.formatPrice(subtotal)}</span></div>
   `;
   checkoutBtn.disabled = false;
 }
@@ -757,10 +756,21 @@ document.addEventListener('DOMContentLoaded', () => {
   initNewsletterPopup();
   initCarouselControls();
 
-  // Handle ?cat= query param
+  // Handle ?cat= query param (desde footer u otros links)
   const urlParams = new URLSearchParams(window.location.search);
-  const catParam = urlParams.get('cat');
-  if (catParam) setCategory(catParam);
+  const catParam  = urlParams.get('cat');
+  if (catParam) {
+    setCategory(catParam);
+    setTimeout(() => {
+      document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+    }, 150);
+  }
+
+  // Handle ?product=ID — open PDP directly (e.g. from wishlist or cart links)
+  const productParam = urlParams.get('product');
+  if (productParam) {
+    setTimeout(() => openPdp(parseInt(productParam)), 300);
+  }
 
   // Handle anchor scrolling
   const hash = window.location.hash;

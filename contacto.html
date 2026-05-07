@@ -6,8 +6,8 @@
   <title>Contáctanos — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
-  <link rel="stylesheet" href="assets/css/tokens.css">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/tokens.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=3">
 </head>
 <body>
 
@@ -16,16 +16,128 @@
     <a href="index.html" class="navbar__brand" aria-label="Mercaitech — inicio">
       <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
     </a>
+    <ul class="navbar__links" role="list">
+      <li><a href="index.html" class="navbar__link">Inicio</a></li>
+      <li class="navbar__dropdown-wrap" id="cat-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn" id="cat-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Productos
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="cat-dropdown" role="menu">
+          <a href="productos.html" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Todos los productos
+          </a>
+          <a href="productos.html#tecnologia" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M2 15h2M2 9h2M22 15h-2M22 9h-2M15 22v-2M9 22v-2"/></svg>
+            Tecnología
+          </a>
+          <a href="productos.html#hogar" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Hogar
+          </a>
+          <a href="productos.html#moda" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>
+            Moda
+          </a>
+          <a href="productos.html#deportes" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 22H18a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v3"/><polyline points="14 2 14 8 20 8"/><path d="M4.42 15.61a2.1 2.1 0 1 1 2.97 2.97L3 22l-1-4z"/></svg>
+            Deportes
+          </a>
+          <a href="productos.html#gaming" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="2"/></svg>
+            Gaming
+          </a>
+          <a href="productos.html#belleza" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            Belleza
+          </a>
+        </div>
+      </li>
+      <li class="navbar__dropdown-wrap" id="svc-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn" id="svc-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Servicios
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="svc-dropdown" role="menu">
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Desarrollo a Medida
+          </a>
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Consultoría Estratégica
+          </a>
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+            Automatización de Procesos
+          </a>
+          <a href="index.html#servicios" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 18-4 4V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2Z"/><path d="M9.5 12h.01"/><path d="M14.5 12h.01"/></svg>
+            Agentes de IA
+          </a>
+          <div class="navbar__dropdown-divider"></div>
+          <a href="contacto.html" class="navbar__dropdown-item navbar__dropdown-item--highlight">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Contáctanos
+          </a>
+        </div>
+      </li>
+      <li><a href="contacto.html" class="navbar__link active">Contáctanos</a></li>
+    </ul>
     <div class="navbar__right">
+      <div class="navbar__search">
+        <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="navbar-search-input" aria-label="Buscar productos" onkeydown="if(event.key==='Enter')window.location.href='productos.html?q='+encodeURIComponent(this.value)">
+      </div>
       <div class="navbar__actions">
-        <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
         <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+        <button class="icon-btn" id="cart-btn" aria-label="Carrito de compras">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span class="cart-badge" id="cart-badge" aria-live="polite">0</span>
+        </button>
+        <button class="icon-btn navbar__mobile-toggle" id="mobile-menu-btn" aria-label="Menú" aria-expanded="false">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
         </button>
       </div>
     </div>
   </div>
 </nav>
+
+<!-- Menú móvil -->
+<div class="navbar__mobile-menu" id="mobile-menu" role="dialog" aria-label="Menú móvil">
+  <a href="index.html" class="navbar__mobile-link">Inicio</a>
+  <div class="navbar__mobile-cat-label">Categorías</div>
+  <a href="productos.html#tecnologia" class="navbar__mobile-link navbar__mobile-cat">Tecnología</a>
+  <a href="productos.html#hogar"      class="navbar__mobile-link navbar__mobile-cat">Hogar</a>
+  <a href="productos.html#moda"       class="navbar__mobile-link navbar__mobile-cat">Moda</a>
+  <a href="productos.html#deportes"   class="navbar__mobile-link navbar__mobile-cat">Deportes</a>
+  <a href="productos.html#gaming"     class="navbar__mobile-link navbar__mobile-cat">Gaming</a>
+  <a href="productos.html#belleza"    class="navbar__mobile-link navbar__mobile-cat">Belleza</a>
+  <a href="index.html#servicios"      class="navbar__mobile-link">Servicios</a>
+  <a href="contacto.html"             class="navbar__mobile-link">Contáctanos</a>
+</div>
+
+<!-- Cart drawer -->
+<div class="cart-scrim" id="cart-scrim" aria-hidden="true"></div>
+<aside class="cart-drawer" id="cart-drawer" role="dialog" aria-label="Carrito de compras" aria-modal="true">
+  <header class="cart-drawer__head">
+    <h2 class="cart-drawer__title">Tu carrito <span class="text-subtle" id="cart-count-label">(0)</span></h2>
+    <button class="icon-btn" id="close-cart-btn" aria-label="Cerrar carrito">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </header>
+  <div class="cart-drawer__items" id="cart-items"></div>
+  <footer class="cart-drawer__foot" id="cart-footer">
+    <div class="cart-totals" id="cart-totals"></div>
+    <button class="btn btn--primary btn--lg btn--full" id="checkout-btn" disabled onclick="window.location.href='checkout.html'">
+      FINALIZAR COMPRA
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
+  </footer>
+</aside>
 
 <main style="padding: calc(var(--nav-h) + var(--space-6)) 0 var(--space-10); min-height: 100vh;">
   <div class="container">
@@ -83,7 +195,7 @@
           </div>
           <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--fg);margin-bottom:8px">¡Consulta enviada!</h3>
           <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">Tu consulta ha sido registrada. Te contactaremos en menos de 24 horas por correo o teléfono.</p>
-          <button class="btn btn--secondary" style="margin-top:20px" onclick="document.getElementById('contact-success').style.display='none';document.getElementById('contact-form').style.display=''">Enviar otra consulta</button>
+          <button class="btn btn--secondary" style="margin-top:20px" onclick="document.getElementById('contact-success').style.display='none';var f=document.getElementById('contact-form');f.reset();f.style.display=''">Enviar otra consulta</button>
         </div>
 
         <form id="contact-form" onsubmit="submitContact(event)">
@@ -133,9 +245,90 @@
 <script src="assets/js/auth.js"></script>
 <script>
 'use strict';
+
+// ── Navbar scroll ──────────────────────────────────────────────
 window.addEventListener('scroll', () => {
   document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
 }, { passive: true });
+
+// ── Cart drawer ────────────────────────────────────────────────
+const fmt = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(n);
+
+function getIcon(icon) {
+  const p = (window.PRODUCTS||[]).find(p=>p.icon===icon);
+  return p ? '' : '';
+}
+
+function renderCartDrawer() {
+  const items    = document.getElementById('cart-items');
+  const totals   = document.getElementById('cart-totals');
+  const btn      = document.getElementById('checkout-btn');
+  const label    = document.getElementById('cart-count-label');
+  const badge    = document.getElementById('cart-badge');
+  const count    = window.cart.count;
+  if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+  if (label) label.textContent = '(' + count + ')';
+  if (window.cart.isEmpty) {
+    items.innerHTML = '<div class="cart-empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><p>Tu carrito está vacío</p></div>';
+    totals.innerHTML = '';
+    btn.disabled = true;
+    return;
+  }
+  items.innerHTML = window.cart.items.map(item => `
+    <div class="cart-line">
+      <div class="cart-line__img" style="background:${item.bg||'var(--bg-raised)'}"></div>
+      <div class="cart-line__info">
+        <div class="cart-line__name">${item.title}</div>
+        <div class="cart-line__meta">${item.categoryLabel||''}</div>
+        <div class="cart-line__price">${fmt(item.price)}</div>
+      </div>
+      <div class="cart-line__actions">
+        <div class="cart-qty">
+          <button class="cart-qty__btn" onclick="window.cart.setQty(${item.id},${item.qty-1});renderCartDrawer()">−</button>
+          <span class="cart-qty__val">${item.qty}</span>
+          <button class="cart-qty__btn" onclick="window.cart.setQty(${item.id},${item.qty+1});renderCartDrawer()">+</button>
+        </div>
+        <button class="icon-btn icon-btn--danger" onclick="window.cart.remove(${item.id});renderCartDrawer()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>`).join('');
+  const sub = window.cart.subtotal;
+  const iva = Math.round(sub * 0.19 / 1.19);
+  totals.innerHTML = `
+    <div class="cart-totals__row"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+    <div class="cart-totals__row" style="font-size:11px;opacity:.6"><span>IVA incluido (19%)</span><span>${fmt(iva)}</span></div>
+    <div class="cart-totals__row"><span>Envío</span><span class="text-cyan">Gratis</span></div>
+    <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${fmt(sub)}</span></div>`;
+  btn.disabled = false;
+}
+
+function openCart()  { document.getElementById('cart-drawer').classList.add('open'); document.getElementById('cart-scrim').classList.add('open'); document.body.style.overflow='hidden'; renderCartDrawer(); }
+function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.getElementById('cart-scrim').classList.remove('open'); document.body.style.overflow=''; }
+
+// ── Navbar dropdowns ───────────────────────────────────────────
+function initNavDropdowns() {
+  const catBtn  = document.getElementById('cat-dropdown-btn');
+  const catMenu = document.getElementById('cat-dropdown');
+  const svcBtn  = document.getElementById('svc-dropdown-btn');
+  const svcMenu = document.getElementById('svc-dropdown');
+  const mobileBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  catBtn?.addEventListener('click', e => { e.stopPropagation(); svcMenu?.classList.remove('open'); catMenu?.classList.toggle('open'); catBtn.setAttribute('aria-expanded', catMenu?.classList.contains('open')); });
+  svcBtn?.addEventListener('click', e => { e.stopPropagation(); catMenu?.classList.remove('open'); svcMenu?.classList.toggle('open'); svcBtn.setAttribute('aria-expanded', svcMenu?.classList.contains('open')); });
+  document.addEventListener('click', () => { catMenu?.classList.remove('open'); svcMenu?.classList.remove('open'); });
+  mobileBtn?.addEventListener('click', () => { const open = mobileMenu?.classList.toggle('open'); mobileBtn.setAttribute('aria-expanded', open); document.body.style.overflow = open ? 'hidden' : ''; });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCartDrawer();
+  window.cart.onChange(renderCartDrawer);
+  document.getElementById('cart-btn')?.addEventListener('click', openCart);
+  document.getElementById('close-cart-btn')?.addEventListener('click', closeCart);
+  document.getElementById('cart-scrim')?.addEventListener('click', closeCart);
+  initNavDropdowns();
+});
 
 async function submitContact(e) {
   e.preventDefault();

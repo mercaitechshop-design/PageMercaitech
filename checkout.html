@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
-  <link rel="stylesheet" href="assets/css/tokens.css">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/tokens.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=3">
   <style>
     .checkout-page { padding: calc(var(--nav-h) + var(--space-8)) 0 var(--space-10); min-height: 100vh; }
     .checkout-grid { display: grid; grid-template-columns: 1fr 400px; gap: var(--space-7); align-items: start; }
@@ -270,6 +270,10 @@ function showToast(message, type = 'success') {
   }, 3000);
 }
 
+const IVA_RATE = 0.19;
+const COUPONS = { 'BIENVENIDO10': 0.10, 'TECH2026': 0.15 };
+let appliedDiscount = 0;
+
 // Render checkout items
 function renderCheckoutSummary() {
   const itemsEl = $('checkout-items');
@@ -294,11 +298,20 @@ function renderCheckoutSummary() {
     </div>
   `).join('');
 
-  const sub = window.cart.subtotal;
+  const sub      = window.cart.subtotal;
+  const discount = Math.round(sub * appliedDiscount);
+  const total    = sub - discount;
+  // IVA ya incluido en el precio — se muestra como desglose informativo
+  const iva      = Math.round(total * IVA_RATE / (1 + IVA_RATE));
+
+  const fmt = window.cart.formatPrice.bind(window.cart);
+
   totalsEl.innerHTML = `
-    <div class="order-totals__row"><span>Subtotal</span><span>${window.cart.formatPrice(sub)}</span></div>
+    <div class="order-totals__row"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+    ${discount > 0 ? `<div class="order-totals__row" style="color:var(--mt-green-400)"><span>Descuento (${appliedDiscount*100}%)</span><span>-${fmt(discount)}</span></div>` : ''}
+    <div class="order-totals__row" style="color:var(--fg-subtle);font-size:11px"><span>IVA incluido (19%)</span><span>${fmt(iva)}</span></div>
     <div class="order-totals__row"><span>Envío</span><span style="color:var(--mt-cyan-400)">Gratis</span></div>
-    <div class="order-totals__row order-totals__final"><span>Total</span><span>${window.cart.formatPrice(sub)}</span></div>
+    <div class="order-totals__row order-totals__final"><span>Total</span><span>${fmt(total)}</span></div>
   `;
   orderBtn.disabled = false;
 }
@@ -328,13 +341,18 @@ $('card-exp').addEventListener('input', e => {
 // Coupon
 $('coupon-btn').addEventListener('click', () => {
   const code = $('coupon-input').value.trim().toUpperCase();
+  const msg  = $('coupon-msg');
   if (!code) return;
-  const valid = ['BIENVENIDO10','TECH2026','ENVIOGRATIS'];
-  const msg = $('coupon-msg');
-  if (valid.includes(code)) {
+
+  if (COUPONS[code] !== undefined) {
+    appliedDiscount = COUPONS[code];
     msg.style.color = 'var(--mt-green-400)';
-    msg.textContent = '✓ Cupón aplicado correctamente';
-    showToast('Cupón aplicado', 'success');
+    msg.textContent = `✓ Cupón aplicado: ${appliedDiscount * 100}% de descuento`;
+    $('coupon-input').disabled = true;
+    $('coupon-btn').disabled   = true;
+    $('coupon-btn').textContent = 'Aplicado';
+    renderCheckoutSummary();
+    showToast(`Cupón aplicado — ${appliedDiscount * 100}% de descuento`, 'success');
   } else {
     msg.style.color = '#FF5470';
     msg.textContent = '✗ Cupón no válido o expirado';

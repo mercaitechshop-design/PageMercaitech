@@ -7,7 +7,7 @@
   <meta name="description" content="Inicia sesión o crea tu cuenta en Mercaitech. Accede a ofertas exclusivas, seguimiento de pedidos y recomendaciones personalizadas con IA.">
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
-  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/tokens.css?v=3">
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async></script>
 
@@ -1199,9 +1199,10 @@ document.getElementById('login-form').addEventListener('submit', async function(
 
   try {
     const res = await fetch('api/auth.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', email, password,
+      method:      'POST',
+      credentials: 'same-origin',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ action: 'login', email, password,
         remember: document.getElementById('remember-me').checked })
     });
     const data = await res.json();
@@ -1398,25 +1399,31 @@ async function handleGoogleUserInfo(info) {
   };
 
   try {
-    const res = await fetch('api/auth.php', {
+    const res  = await fetch('api/auth.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'google', ...googleUser }),
     });
     const data = await res.json();
-    if (data.success) { finishGoogleLogin(data.user); return; }
-  } catch { /* backend not available — demo fallback below */ }
+    if (data.success) {
+      finishGoogleLogin(data.user, data.is_new === true);
+    } else {
+      showGoogleError(data.message || 'No se pudo completar el inicio de sesión con Google.');
+    }
+  } catch {
+    showGoogleError('Error de conexión. Verifica tu internet e inténtalo de nuevo.');
+  }
+}
 
-  // LocalStorage fallback when backend is unreachable
-  const user = {
-    id: 'g_' + googleUser.googleId,
-    nombre: googleUser.nombre,
-    email:  googleUser.email,
-    avatar: googleUser.avatar,
-    provider: 'google',
-  };
-  localStorage.setItem('mt_user', JSON.stringify(user));
-  finishGoogleLogin(user);
+function showGoogleError(msg) {
+  const isLogin = document.getElementById('panel-login').style.display !== 'none';
+  const errId   = isLogin ? 'login-general-err' : 'reg-general-err';
+  const errEl   = document.getElementById(errId);
+  if (errEl) {
+    errEl.querySelector('span').textContent = msg;
+    errEl.classList.add('show');
+  }
+  document.querySelectorAll('.auth-social-btn--google').forEach(b => b.classList.remove('loading'));
 }
 
 // ── JWT credential from GIS One Tap callback ──────────────────────
@@ -1432,21 +1439,21 @@ async function handleGoogleCredential(response) {
   });
 }
 
-function finishGoogleLogin(user) {
+function finishGoogleLogin(user, isNew = false) {
   localStorage.setItem('mt_user', JSON.stringify(user));
 
-  // Show success overlay in whichever tab is active
-  const activePanel = document.getElementById('panel-login').style.display !== 'none'
-    ? 'login' : 'register';
-
-  if (activePanel === 'login') {
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('login-success-msg').textContent =
-      `Bienvenido, ${user.nombre}. Redirigiendo…`;
-    document.getElementById('login-success').classList.add('show');
-  } else {
+  if (isNew) {
+    // Cuenta nueva — mostrar pantalla de registro exitoso independientemente del panel
     document.getElementById('register-form').style.display = 'none';
+    document.getElementById('login-form').style.display = 'none';
     document.getElementById('register-success').classList.add('show');
+  } else {
+    // Cuenta existente — siempre mostrar bienvenida de login
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('login-success-msg').textContent =
+      `Bienvenido de vuelta, ${user.nombre.split(' ')[0]}. Redirigiendo…`;
+    document.getElementById('login-success').classList.add('show');
   }
   setTimeout(() => { window.location.href = 'index.html'; }, 1800);
 }
@@ -1736,6 +1743,18 @@ async function submitReset() {
 
 // Navegación entre celdas del código
 document.addEventListener('DOMContentLoaded', () => {
+  // Pre-llenar email si el usuario hizo logout recientemente (Recordarme UX)
+  const lastEmail = localStorage.getItem('mt_last_email');
+  if (lastEmail) {
+    const emailField = document.getElementById('login-email');
+    if (emailField && !emailField.value) {
+      emailField.value = lastEmail;
+      // Marcar Recordarme automáticamente si ya había iniciado con esa opción
+      const rememberBox = document.getElementById('remember-me');
+      if (rememberBox) rememberBox.checked = true;
+    }
+  }
+
   document.querySelectorAll('.code-input').forEach((inp, i, arr) => {
     inp.addEventListener('input', () => {
       inp.value = inp.value.replace(/\D/g,'').slice(-1);

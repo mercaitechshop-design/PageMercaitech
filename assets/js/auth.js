@@ -32,11 +32,17 @@ const MercaitechAuth = {
 
   // ── Logout ───────────────────────────────────────────────────
   async logout() {
+    // Guardar el email antes de limpiar, para pre-llenarlo en el login
+    const user = this.getUser();
+    if (user?.email) {
+      localStorage.setItem('mt_last_email', user.email);
+    }
     try {
       await fetch('api/auth.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'logout' })
+        method:      'POST',
+        credentials: 'same-origin',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ action: 'logout' })
       });
     } catch { /* API not available — still clear local session */ }
     this.clearUser();
@@ -46,22 +52,23 @@ const MercaitechAuth = {
   // ── Verify session with server ───────────────────────────────
   async verifySession() {
     try {
-      const res = await fetch('api/auth.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'me' })
+      const res  = await fetch('api/auth.php', {
+        method:      'POST',
+        credentials: 'same-origin',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ action: 'me' })
       });
       const data = await res.json();
       if (data.success && data.user) {
         this.setUser(data.user);
         return data.user;
-      } else {
-        this.clearUser();
-        return null;
       }
+      // Servidor respondió sin sesión — solo limpiar si NO había usuario local
+      // (evitar borrar sesión válida por errores temporales del servidor)
+      if (!this.getUser()) this.clearUser();
+      return null;
     } catch {
-      // API not available — trust localStorage
-      return this.getUser();
+      return this.getUser(); // servidor no disponible → confiar en localStorage
     }
   },
 
@@ -116,9 +123,18 @@ const MercaitechAuth = {
     }
   },
 
+  _avatarHTML(user, cls = 'user-avatar') {
+    if (user.avatar_url) {
+      return `<img src="${user.avatar_url}" alt="${user.nombre}" class="${cls}" style="object-fit:cover;border-radius:50%" onerror="this.outerHTML='<span class=\\'${cls}\\'>${this.initials(user.nombre)}</span>'">`;
+    }
+    return `<span class="${cls}" aria-hidden="true">${this.initials(user.nombre)}</span>`;
+  },
+
   _renderUserMenu(container, user) {
     const ini = this.initials(user.nombre);
     const firstName = user.nombre.split(' ')[0];
+    const avatarBtn = this._avatarHTML(user, 'user-avatar');
+    const avatarLg  = this._avatarHTML(user, 'user-avatar user-avatar--lg');
 
     const wrapper = document.createElement('div');
     wrapper.className = 'user-menu';
@@ -126,7 +142,7 @@ const MercaitechAuth = {
     wrapper.innerHTML = `
       <button class="user-avatar-btn" id="user-menu-btn"
               aria-haspopup="true" aria-expanded="false" aria-label="Menú de usuario">
-        <span class="user-avatar" aria-hidden="true">${ini}</span>
+        ${avatarBtn}
         <span class="user-name">${firstName}</span>
         <svg class="user-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2.5"
@@ -137,7 +153,7 @@ const MercaitechAuth = {
 
       <div class="user-dropdown" id="user-dropdown" role="menu">
         <div class="user-dropdown__header">
-          <span class="user-avatar user-avatar--lg" aria-hidden="true">${ini}</span>
+          ${avatarLg}
           <div class="user-dropdown__info">
             <div class="user-dropdown__name">${user.nombre}</div>
             <div class="user-dropdown__email">${user.email}</div>
@@ -225,5 +241,20 @@ window.MercaitechAuth = MercaitechAuth;
 
 // Auto-init on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
+  // Capturar estado ANTES de verificar con el servidor
+  const wasLoggedIn = MercaitechAuth.isLoggedIn();
+
+  // Renderizar navbar inmediatamente con datos de localStorage (sin parpadeo)
   MercaitechAuth.initNavbar();
+
+  // Verificar sesión con el servidor en segundo plano.
+  // Si hay cookie "Recordarme" válida, el servidor restaura la sesión PHP
+  // y actualiza localStorage con datos frescos.
+  MercaitechAuth.verifySession().then(serverUser => {
+    const nowLoggedIn = !!serverUser;
+    if (wasLoggedIn !== nowLoggedIn) {
+      // Estado cambió → re-renderizar navbar
+      MercaitechAuth.initNavbar();
+    }
+  }).catch(() => { /* servidor no disponible — mantener estado local */ });
 });

@@ -6,8 +6,8 @@
   <title>Mi Perfil — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
-  <link rel="stylesheet" href="assets/css/tokens.css">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/tokens.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=3">
 </head>
 <body>
 
@@ -75,7 +75,21 @@
 
         <div id="profile-logged">
           <div style="display:flex;align-items:center;gap:var(--space-5);margin-bottom:var(--space-6);padding-bottom:var(--space-5);border-bottom:1px solid var(--border)">
-            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--mt-blue-500),var(--mt-cyan-400));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:26px;color:#fff;flex-shrink:0" id="big-avatar">?</div>
+            <!-- Avatar con botones de cambiar/eliminar foto -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0">
+              <div style="position:relative;width:72px;height:72px">
+                <div id="big-avatar" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--mt-blue-500),var(--mt-cyan-400));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:26px;color:#fff;overflow:hidden">?</div>
+                <label for="avatar-upload" title="Cambiar foto de perfil"
+                  style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--mt-blue-500);border:2px solid var(--bg-base);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                </label>
+                <input type="file" id="avatar-upload" accept="image/*" style="display:none" onchange="uploadAvatar(event)">
+              </div>
+              <button type="button" id="delete-avatar-btn" onclick="deleteAvatar()"
+                style="display:none;background:none;border:none;color:#FF5470;font-size:11px;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline;line-height:1">
+                Eliminar foto
+              </button>
+            </div>
             <div>
               <div style="font-family:var(--font-display);font-weight:700;font-size:20px" id="profile-fullname">—</div>
               <div style="font-size:13px;color:var(--fg-subtle);margin-top:3px" id="profile-email-display">—</div>
@@ -115,45 +129,8 @@
             </div>
           </form>
 
-          <!-- Change password -->
-          <div style="margin-top:var(--space-7);padding-top:var(--space-5);border-top:1px solid var(--border)">
-            <h3 style="font-size:16px;font-weight:700;margin-bottom:var(--space-4)">Cambiar contraseña</h3>
-            <form class="profile-form" style="max-width:400px" onsubmit="changePassword(event)">
-              <div class="profile-field">
-                <label class="profile-label" for="p-pwd-current">Contraseña actual</label>
-                <div style="position:relative;display:block;width:100%">
-                  <input type="password" class="profile-input" id="p-pwd-current" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px;width:100%;box-sizing:border-box">
-                  <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-current',this)" aria-label="Mostrar contraseña">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="profile-field">
-                <label class="profile-label" for="p-pwd-new">Nueva contraseña</label>
-                <div style="position:relative;display:block;width:100%">
-                  <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box" oninput="pfStrength(this.value)">
-                  <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-new',this)" aria-label="Mostrar contraseña">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                </div>
-                <div class="pf-strength">
-                  <div class="pf-strength__bar"><div class="pf-strength__fill" id="pf-pwd-fill"></div></div>
-                  <span class="pf-strength__label" id="pf-pwd-label"></span>
-                </div>
-              </div>
-              <div class="profile-field">
-                <label class="profile-label" for="p-pwd-confirm">Confirmar nueva contraseña</label>
-                <div style="position:relative;display:block;width:100%">
-                  <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box">
-                  <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-confirm',this)" aria-label="Mostrar contraseña">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div id="pwd-change-msg" style="font-size:13px"></div>
-              <button type="submit" class="btn btn--secondary">CAMBIAR CONTRASEÑA</button>
-            </form>
-          </div>
+          <!-- Password section — se renderiza dinámicamente según tipo de cuenta -->
+          <div id="pwd-section" style="margin-top:var(--space-7);padding-top:var(--space-5);border-top:1px solid var(--border)"></div>
         </div>
       </div>
     </div>
@@ -161,6 +138,67 @@
 </main>
 
 <div class="toast-container" id="toast-container"></div>
+
+<!-- Modal crop de foto de perfil -->
+<div id="crop-overlay" style="display:none;position:fixed;inset:0;background:rgba(3,6,13,.85);backdrop-filter:blur(8px);z-index:10000;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:#0B1124;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px;max-width:420px;width:94%;box-shadow:0 32px 80px rgba(0,0,0,.6)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="color:#fff;font-size:16px;font-weight:700;margin:0">Ajustar foto de perfil</h3>
+      <button onclick="closeCropModal()" style="background:none;border:none;color:var(--fg-subtle);cursor:pointer;padding:4px;border-radius:6px;font-size:18px;line-height:1">✕</button>
+    </div>
+    <!-- Canvas de recorte circular -->
+    <div id="crop-container" style="position:relative;width:320px;height:320px;border-radius:12px;overflow:hidden;background:#03060D;cursor:grab;margin:0 auto;touch-action:none">
+      <canvas id="crop-canvas" width="320" height="320" style="display:block"></canvas>
+      <!-- Overlay circular -->
+      <div style="position:absolute;inset:0;pointer-events:none">
+        <svg width="320" height="320" viewBox="0 0 320 320">
+          <defs>
+            <mask id="hole">
+              <rect width="320" height="320" fill="white"/>
+              <circle cx="160" cy="160" r="138" fill="black"/>
+            </mask>
+          </defs>
+          <rect width="320" height="320" fill="rgba(11,17,36,.75)" mask="url(#hole)"/>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+    <!-- Zoom slider -->
+    <div style="margin:18px 0 6px;display:flex;align-items:center;gap:10px">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--fg-subtle);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6M11 8v6"/></svg>
+      <input type="range" id="crop-zoom" min="1" max="4" step="0.05" value="1"
+        style="flex:1;accent-color:#0066FF;cursor:pointer;height:4px">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:var(--fg-subtle);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6"/></svg>
+    </div>
+    <p style="text-align:center;font-size:11px;color:var(--fg-subtle);margin:0 0 18px">Arrastra para mover · Rueda del mouse para zoom</p>
+    <!-- Botones -->
+    <div style="display:flex;gap:10px">
+      <button onclick="closeCropModal()" style="flex:1;padding:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--fg);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+      <button onclick="applyCrop()" style="flex:1;padding:12px;border:0;background:#0066FF;color:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Aplicar foto</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación personalizado -->
+<div id="confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(3,6,13,.75);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#0B1124;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px 28px;max-width:360px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.5);text-align:center">
+    <div id="confirm-icon" style="width:52px;height:52px;border-radius:14px;background:rgba(255,84,112,.1);border:1px solid rgba(255,84,112,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:#FF5470">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+    </div>
+    <h3 id="confirm-title" style="color:#fff;font-size:17px;font-weight:700;margin:0 0 8px"></h3>
+    <p id="confirm-message" style="color:#8593B2;font-size:13px;line-height:1.6;margin:0 0 24px"></p>
+    <div style="display:flex;gap:10px">
+      <button id="confirm-cancel" style="flex:1;padding:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--fg);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s"
+        onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.05)'">
+        Cancelar
+      </button>
+      <button id="confirm-ok" style="flex:1;padding:11px;border:0;background:#FF5470;color:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s"
+        onmouseover="this.style.background='#e8405f'" onmouseout="this.style.background='#FF5470'">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
 
 <script src="assets/js/products.js"></script>
 <script src="assets/js/cart.js"></script>
@@ -175,8 +213,214 @@ function initials(name) {
   return (name||'?').split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function setAvatarDisplay(avatarUrl, nombre) {
+  const bigEl     = document.getElementById('big-avatar');
+  const sideEl    = document.getElementById('sidebar-avatar');
+  const deleteBtn = document.getElementById('delete-avatar-btn');
+
+  if (avatarUrl) {
+    bigEl.innerHTML = `<img src="${avatarUrl}" alt="${nombre}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent='${initials(nombre)}'">`;
+    if (sideEl) sideEl.innerHTML = `<img src="${avatarUrl}" alt="${nombre}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent='${initials(nombre)}'">`;
+    if (deleteBtn) deleteBtn.style.display = 'block';
+  } else {
+    bigEl.textContent = initials(nombre);
+    if (sideEl) sideEl.textContent = initials(nombre);
+    if (deleteBtn) deleteBtn.style.display = 'none';
+  }
+}
+
+function showConfirm(title, message) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirm-overlay');
+    document.getElementById('confirm-title').textContent   = title;
+    document.getElementById('confirm-message').textContent = message;
+    overlay.style.display = 'flex';
+    const ok     = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
+    const close  = (result) => { overlay.style.display = 'none'; resolve(result); };
+    ok.onclick     = () => close(true);
+    cancel.onclick = () => close(false);
+    overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+  });
+}
+
+async function deleteAvatar() {
+  const confirmed = await showConfirm('Eliminar foto de perfil', '¿Estás seguro? Tu avatar volverá a las iniciales de tu nombre.');
+  if (!confirmed) return;
   const user = MercaitechAuth.getUser();
+  try {
+    // Asegurar sesión activa
+    await fetch('api/auth.php', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'me'}) });
+
+    const res  = await fetch('api/auth.php', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'delete_avatar'}) });
+    const data = await res.json();
+    if (data.success) {
+      MercaitechAuth.setUser({ ...user, avatar_url: '' });
+      setAvatarDisplay('', user?.nombre || '');
+      profileNotify('✓ Foto de perfil eliminada', 'success');
+    } else {
+      profileNotify(data.message || 'Error al eliminar la foto.', 'error');
+    }
+  } catch {
+    profileNotify('Error de conexión.', 'error');
+  }
+}
+
+// Notificación inline para perfil (showToast no existe en esta página)
+function profileNotify(msg, type = 'success') {
+  const colors = { success: '#10C98A', error: '#FF5470', info: '#1A8CFF' };
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:#0B1124;border:1px solid ${colors[type]};color:${colors[type]};padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s`;
+  n.textContent = msg;
+  document.body.appendChild(n);
+  setTimeout(() => { n.style.opacity = '0'; setTimeout(() => n.remove(), 300); }, 3000);
+}
+
+// ── Crop system ──────────────────────────────────────────────────────────────
+let _cropImg = null, _cropX = 0, _cropY = 0, _cropZoom = 1;
+let _cropDragging = false, _cropLastX = 0, _cropLastY = 0;
+const CROP_SIZE = 320, CROP_RADIUS = 138;
+
+function uploadAvatar(e) {
+  const file = e.target.files[0];
+  e.target.value = ''; // reset input for re-selection
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { profileNotify('Solo se permiten imágenes.', 'error'); return; }
+  if (file.size > 1000000) { profileNotify('Imagen demasiado grande. Máximo 1MB.', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = ev => openCropModal(ev.target.result);
+  reader.readAsDataURL(file);
+}
+
+function openCropModal(src) {
+  const img = new Image();
+  img.onload = () => {
+    _cropImg   = img;
+    _cropZoom  = Math.max(CROP_SIZE / img.width, CROP_SIZE / img.height);
+    _cropX     = (CROP_SIZE - img.width  * _cropZoom) / 2;
+    _cropY     = (CROP_SIZE - img.height * _cropZoom) / 2;
+    document.getElementById('crop-zoom').value = _cropZoom;
+    document.getElementById('crop-zoom').min   = _cropZoom;
+    drawCrop();
+    document.getElementById('crop-overlay').style.display = 'flex';
+  };
+  img.src = src;
+}
+
+function closeCropModal() {
+  document.getElementById('crop-overlay').style.display = 'none';
+  _cropImg = null;
+}
+
+function drawCrop() {
+  if (!_cropImg) return;
+  const canvas = document.getElementById('crop-canvas');
+  const ctx    = canvas.getContext('2d');
+  ctx.clearRect(0, 0, CROP_SIZE, CROP_SIZE);
+  ctx.drawImage(_cropImg, _cropX, _cropY, _cropImg.width * _cropZoom, _cropImg.height * _cropZoom);
+}
+
+// Zoom slider
+document.addEventListener('DOMContentLoaded', () => {
+  const zoomSlider = document.getElementById('crop-zoom');
+  if (zoomSlider) {
+    zoomSlider.addEventListener('input', () => {
+      const newZoom = parseFloat(zoomSlider.value);
+      const cx = CROP_SIZE / 2, cy = CROP_SIZE / 2;
+      _cropX = cx - (cx - _cropX) * (newZoom / _cropZoom);
+      _cropY = cy - (cy - _cropY) * (newZoom / _cropZoom);
+      _cropZoom = newZoom;
+      clampCrop();
+      drawCrop();
+    });
+  }
+
+  // Drag to move
+  const container = document.getElementById('crop-container');
+  if (!container) return;
+
+  const startDrag = (x, y) => { _cropDragging = true; _cropLastX = x; _cropLastY = y; container.style.cursor = 'grabbing'; };
+  const moveDrag  = (x, y) => {
+    if (!_cropDragging) return;
+    _cropX += x - _cropLastX; _cropY += y - _cropLastY;
+    _cropLastX = x; _cropLastY = y;
+    clampCrop(); drawCrop();
+  };
+  const endDrag = () => { _cropDragging = false; container.style.cursor = 'grab'; };
+
+  container.addEventListener('mousedown',  e => startDrag(e.clientX, e.clientY));
+  document.addEventListener('mousemove',   e => moveDrag(e.clientX, e.clientY));
+  document.addEventListener('mouseup',     endDrag);
+  container.addEventListener('touchstart', e => { const t = e.touches[0]; startDrag(t.clientX, t.clientY); }, { passive: true });
+  document.addEventListener('touchmove',   e => { const t = e.touches[0]; moveDrag(t.clientX, t.clientY); }, { passive: true });
+  document.addEventListener('touchend',    endDrag);
+
+  // Wheel zoom
+  container.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const newZoom = Math.max(parseFloat(zoomSlider?.min || 1), Math.min(4, _cropZoom + delta));
+    const cx = CROP_SIZE / 2, cy = CROP_SIZE / 2;
+    _cropX = cx - (cx - _cropX) * (newZoom / _cropZoom);
+    _cropY = cy - (cy - _cropY) * (newZoom / _cropZoom);
+    _cropZoom = newZoom;
+    if (zoomSlider) zoomSlider.value = _cropZoom;
+    clampCrop(); drawCrop();
+  }, { passive: false });
+});
+
+function clampCrop() {
+  if (!_cropImg) return;
+  const w = _cropImg.width * _cropZoom, h = _cropImg.height * _cropZoom;
+  const circleLeft = (CROP_SIZE - CROP_RADIUS * 2) / 2;
+  const circleTop  = (CROP_SIZE - CROP_RADIUS * 2) / 2;
+  _cropX = Math.min(circleLeft, Math.max(circleLeft + CROP_RADIUS * 2 - w, _cropX));
+  _cropY = Math.min(circleTop,  Math.max(circleTop  + CROP_RADIUS * 2 - h, _cropY));
+}
+
+async function applyCrop() {
+  if (!_cropImg) return;
+  // Extraer el círculo en alta resolución (300x300 px)
+  const OUT = 300;
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width = offCanvas.height = OUT;
+  const ctx = offCanvas.getContext('2d');
+  ctx.beginPath(); ctx.arc(OUT/2, OUT/2, OUT/2, 0, Math.PI * 2);
+  ctx.clip();
+  const circleLeft = (CROP_SIZE - CROP_RADIUS * 2) / 2;
+  const srcX = (circleLeft - _cropX) / _cropZoom;
+  const srcY = (circleLeft - _cropY) / _cropZoom;
+  const srcW = CROP_RADIUS * 2 / _cropZoom;
+  ctx.drawImage(_cropImg, srcX, srcY, srcW, srcW, 0, 0, OUT, OUT);
+
+  const base64 = offCanvas.toDataURL('image/jpeg', 0.92);
+  closeCropModal();
+
+  const user = MercaitechAuth.getUser();
+  setAvatarDisplay(base64, (user?.nombre || '') + (user?.apellido ? ' ' + user.apellido : ''));
+
+  try {
+    await fetch('api/auth.php', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'me'}) });
+    const res  = await fetch('api/auth.php', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'upload_avatar', avatar_url: base64}) });
+    const data = await res.json();
+    if (data.success) {
+      MercaitechAuth.setUser({ ...user, avatar_url: base64 });
+      profileNotify('✓ Foto de perfil actualizada', 'success');
+    } else {
+      setAvatarDisplay(user?.avatar_url || '', user?.nombre || '');
+      profileNotify(data.message || 'Error al guardar.', 'error');
+    }
+  } catch (err) {
+    setAvatarDisplay(user?.avatar_url || '', user?.nombre || '');
+    profileNotify('Error de conexión.', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Usar verifySession (misma llamada que auth.js, no duplicar)
+  // Esperamos el resultado para tener datos frescos del servidor
+  let user = await MercaitechAuth.verifySession().catch(() => MercaitechAuth.getUser());
 
   if (!user) {
     document.getElementById('profile-guest').style.display = '';
@@ -185,41 +429,175 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Sidebar
-  document.getElementById('sidebar-avatar').textContent = initials(user.nombre);
-  document.getElementById('sidebar-name').textContent   = user.nombre;
-  document.getElementById('sidebar-email').textContent  = user.email;
-  document.getElementById('big-avatar').textContent     = initials(user.nombre);
-  document.getElementById('profile-fullname').textContent    = user.nombre;
-  document.getElementById('profile-email-display').textContent = user.email;
-
-  // Pre-fill form
-  const parts = (user.nombre || '').split(' ');
-  document.getElementById('p-nombre').value   = parts[0] || '';
-  document.getElementById('p-apellido').value = parts.slice(1).join(' ') || '';
-  document.getElementById('p-email').value    = user.email || '';
-  document.getElementById('p-telefono').value = user.telefono || '';
+  renderProfile(user);
 });
 
-function saveProfile(e) {
+function renderProfile(user) {
+  const fullName = (user.nombre || '') + (user.apellido ? ' ' + user.apellido : '');
+  // Sidebar
+  document.getElementById('sidebar-name').textContent          = fullName || user.nombre;
+  document.getElementById('sidebar-email').textContent         = user.email;
+  document.getElementById('profile-fullname').textContent      = fullName || user.nombre;
+  document.getElementById('profile-email-display').textContent = user.email;
+  setAvatarDisplay(user.avatar_url, fullName || user.nombre);
+
+  // Pre-fill nombre / apellido directamente desde los campos separados
+  document.getElementById('p-nombre').value   = user.nombre   || '';
+  document.getElementById('p-apellido').value = user.apellido || '';
+  document.getElementById('p-email').value    = user.email || '';
+  document.getElementById('p-telefono').value = user.telefono || '';
+
+  // Sección de contraseña según tipo de cuenta
+  renderPasswordSection(user.has_password === true);
+}
+
+async function saveProfile(e) {
   e.preventDefault();
   const user = MercaitechAuth.getUser();
   if (!user) return;
+
   const nombre   = document.getElementById('p-nombre').value.trim();
   const apellido = document.getElementById('p-apellido').value.trim();
   const telefono = document.getElementById('p-telefono').value.trim();
-  const fullName = nombre + (apellido ? ' ' + apellido : '');
+  const fullName = nombre + (apellido ? ' ' + apellido : ''); // para mostrar en UI
+  const msg      = document.getElementById('profile-msg');
+  const btn      = e.target.querySelector('[type="submit"]');
 
-  const updated = { ...user, nombre: fullName, telefono };
-  MercaitechAuth.setUser(updated);
+  if (!nombre) {
+    msg.innerHTML = '<span style="color:#FF5470">El nombre es obligatorio.</span>';
+    msg.style.display = 'flex';
+    return;
+  }
 
-  const msg = document.getElementById('profile-msg');
-  msg.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M20 6 9 17l-5-5"/></svg> Cambios guardados';
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try {
+    const res  = await fetch('api/auth.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_profile', nombre, apellido, telefono })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const updated = { ...user, nombre, apellido, telefono };
+      MercaitechAuth.setUser(updated);
+      document.getElementById('profile-fullname').textContent = fullName;
+      document.getElementById('sidebar-name').textContent     = fullName;
+      setAvatarDisplay(MercaitechAuth.getUser()?.avatar_url, fullName);
+      msg.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:#10C98A"><path d="M20 6 9 17l-5-5"/></svg> <span style="color:#10C98A">Cambios guardados</span>';
+    } else {
+      msg.innerHTML = `<span style="color:#FF5470">${data.message || 'Error al guardar.'}</span>`;
+    }
+  } catch {
+    msg.innerHTML = '<span style="color:#FF5470">Error de conexión. Inténtalo de nuevo.</span>';
+  }
+
   msg.style.display = 'flex';
   setTimeout(() => { msg.style.display = 'none'; }, 3000);
+  btn.disabled = false;
+  btn.textContent = '✓ GUARDAR CAMBIOS';
+}
 
-  document.getElementById('profile-fullname').textContent = fullName;
-  document.getElementById('sidebar-name').textContent = fullName;
+// ── Renderiza sección de contraseña según si ya tiene una o no ──────────────
+function renderPasswordSection(hasPassword) {
+  const EYE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+
+  const section = document.getElementById('pwd-section');
+
+  if (hasPassword) {
+    section.innerHTML = `
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:var(--space-4)">Cambiar contraseña</h3>
+      <form class="profile-form" style="max-width:400px" onsubmit="changePassword(event)">
+        <div class="profile-field">
+          <label class="profile-label" for="p-pwd-current">Contraseña actual</label>
+          <div style="position:relative;display:block;width:100%">
+            <input type="password" class="profile-input" id="p-pwd-current" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px;width:100%;box-sizing:border-box">
+            <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-current',this)" aria-label="Mostrar">${EYE_SVG}</button>
+          </div>
+        </div>
+        <div class="profile-field">
+          <label class="profile-label" for="p-pwd-new">Nueva contraseña</label>
+          <div style="position:relative;display:block;width:100%">
+            <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box" oninput="pfStrength(this.value)">
+            <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-new',this)" aria-label="Mostrar">${EYE_SVG}</button>
+          </div>
+          <div class="pf-strength"><div class="pf-strength__bar"><div class="pf-strength__fill" id="pf-pwd-fill"></div></div><span class="pf-strength__label" id="pf-pwd-label"></span></div>
+        </div>
+        <div class="profile-field">
+          <label class="profile-label" for="p-pwd-confirm">Confirmar nueva contraseña</label>
+          <div style="position:relative;display:block;width:100%">
+            <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box">
+            <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-confirm',this)" aria-label="Mostrar">${EYE_SVG}</button>
+          </div>
+        </div>
+        <div id="pwd-change-msg" style="font-size:13px"></div>
+        <button type="submit" class="btn btn--secondary">CAMBIAR CONTRASEÑA</button>
+      </form>`;
+  } else {
+    // Usuario de Google — sin contraseña local
+    section.innerHTML = `
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:6px">Establecer contraseña</h3>
+      <p style="font-size:13px;color:var(--fg-muted);margin-bottom:var(--space-4);line-height:1.5">
+        Tu cuenta fue creada con Google. Puedes añadir una contraseña para también iniciar sesión con tu correo.
+      </p>
+      <form class="profile-form" style="max-width:400px" onsubmit="setPassword(event)">
+        <div class="profile-field">
+          <label class="profile-label" for="p-pwd-new">Nueva contraseña</label>
+          <div style="position:relative;display:block;width:100%">
+            <input type="password" class="profile-input" id="p-pwd-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box" oninput="pfStrength(this.value)">
+            <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-new',this)" aria-label="Mostrar">${EYE_SVG}</button>
+          </div>
+          <div class="pf-strength"><div class="pf-strength__bar"><div class="pf-strength__fill" id="pf-pwd-fill"></div></div><span class="pf-strength__label" id="pf-pwd-label"></span></div>
+        </div>
+        <div class="profile-field">
+          <label class="profile-label" for="p-pwd-confirm">Confirmar contraseña</label>
+          <div style="position:relative;display:block;width:100%">
+            <input type="password" class="profile-input" id="p-pwd-confirm" placeholder="Repite la contraseña" autocomplete="new-password" style="padding-right:44px;width:100%;box-sizing:border-box">
+            <button type="button" class="pf-eye-btn" onclick="pfToggle('p-pwd-confirm',this)" aria-label="Mostrar">${EYE_SVG}</button>
+          </div>
+        </div>
+        <div id="pwd-change-msg" style="font-size:13px"></div>
+        <button type="submit" class="btn btn--primary" style="width:auto;padding:12px 24px">ESTABLECER CONTRASEÑA</button>
+      </form>`;
+  }
+}
+
+async function setPassword(e) {
+  e.preventDefault();
+  const newPwd  = document.getElementById('p-pwd-new').value;
+  const confirm = document.getElementById('p-pwd-confirm').value;
+  const msg     = document.getElementById('pwd-change-msg');
+  const btn     = e.target.querySelector('[type="submit"]');
+
+  if (newPwd.length < 8)    { showPwdMsg(msg, 'error', 'La contraseña debe tener al menos 8 caracteres.'); return; }
+  if (newPwd !== confirm)   { showPwdMsg(msg, 'error', 'Las contraseñas no coinciden.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  showPwdMsg(msg, 'info', 'Creando contraseña…');
+
+  try {
+    const res  = await fetch('api/auth.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_password', new_password: newPwd, confirm_password: confirm })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPwdMsg(msg, 'success', '✓ ' + data.message);
+      e.target.reset();
+      // Actualizar sección a "Cambiar contraseña" ya que ahora tiene una
+      const user = MercaitechAuth.getUser();
+      MercaitechAuth.setUser({ ...user, has_password: true });
+      setTimeout(() => renderPasswordSection(true), 1500);
+    } else {
+      showPwdMsg(msg, 'error', data.message || 'No se pudo crear la contraseña.');
+    }
+  } catch {
+    showPwdMsg(msg, 'error', 'Error de conexión. Verifica que el servidor esté activo.');
+  }
+  btn.disabled = false; btn.textContent = 'ESTABLECER CONTRASEÑA';
 }
 
 async function changePassword(e) {

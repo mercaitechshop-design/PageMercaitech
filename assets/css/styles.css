@@ -171,7 +171,7 @@ ul, ol { list-style: none; }
 .icon-btn--danger:hover,
 .cart-line .icon-btn:hover,
 #close-cart-btn:hover,
-#pdp-close-btn:hover,
+#pdp-x-btn:hover,
 .forgot-modal__close:hover,
 .modal-close:hover {
   color: #FF5470 !important;
@@ -179,6 +179,7 @@ ul, ol { list-style: none; }
   background: rgba(255,84,112,.08) !important;
   box-shadow: 0 0 12px rgba(255,84,112,.25) !important;
 }
+
 .icon-btn svg { width: 18px; height: 18px; }
 .cart-badge {
   position: absolute; top: -5px; right: -5px;
@@ -671,12 +672,16 @@ ul, ol { list-style: none; }
 }
 .pdp-modal__back {
   display: inline-flex; align-items: center; gap: 6px;
-  background: transparent; border: 0; color: var(--fg-muted);
+  background: transparent; border: 0; color: var(--mt-blue-500) !important;
   font-size: var(--fs-body-sm); cursor: pointer;
-  transition: color var(--dur-fast) var(--ease-standard); padding: 4px 0;
+  transition: color .15s ease, background .15s ease; padding: 4px 8px; border-radius: 6px;
+  outline: none;
 }
 .pdp-modal__back svg { width: 16px; height: 16px; }
-.pdp-modal__back:hover { color: #FF5470; background: rgba(255,84,112,.08); }
+.pdp-modal__back:hover,
+.pdp-modal__back:focus { color: var(--mt-blue-400) !important; background: var(--accent-soft) !important; outline: none; }
+.pdp-modal__back:active { color: var(--mt-blue-600) !important; background: rgba(0,102,255,.22) !important; }
+#pdp-x-btn:hover { color: #FF5470 !important; border-color: rgba(255,84,112,.4) !important; background: rgba(255,84,112,.1) !important; }
 .pdp-modal__body { padding: var(--space-6); }
 .pdp-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-7); }
 .pdp-gallery__main {
@@ -883,7 +888,7 @@ ul, ol { list-style: none; }
   margin-top: var(--space-8); padding: var(--space-8) 0 var(--space-5);
 }
 .footer__grid {
-  display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.4fr;
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.4fr;
   gap: var(--space-7); padding-bottom: var(--space-7);
   border-bottom: 1px solid var(--border);
 }

@@ -6,8 +6,8 @@
   <title>Lista de Deseos — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
-  <link rel="stylesheet" href="assets/css/tokens.css">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/tokens.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=3">
 </head>
 <body>
 
@@ -124,8 +124,9 @@ function renderWishlist(list) {
     return;
   }
 
+  const fmt = p => window.cart ? window.cart.formatPrice(p) : new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(p);
   cont.innerHTML = `<div class="wish-grid">${list.map(item => `
-    <div class="product-card" style="cursor:default">
+    <div class="product-card" style="cursor:pointer" onclick="window.location.href='index.html?product=${item.id}'">
       <div class="product-card__media" style="background:${item.bg}">
         <div class="product-card__media-inner">
           <div class="product-card__icon">${getIcon(item.icon)}</div>
@@ -137,16 +138,16 @@ function renderWishlist(list) {
         <div class="product-card__title">${item.title}</div>
         <div class="product-card__row">
           <div class="product-card__prices">
-            <span class="price-new">${window.cart ? window.cart.formatPrice(item.price) : new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(item.price)}</span>
-            ${item.oldPrice ? `<span class="price-old">${window.cart ? window.cart.formatPrice(item.oldPrice) : new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(item.oldPrice)}</span>` : ''}
+            <span class="price-new">${fmt(item.price)}</span>
+            ${item.oldPrice ? `<span class="price-old">${fmt(item.oldPrice)}</span>` : ''}
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn--primary btn--sm" style="flex:1" onclick="addToCartFromWish(${item.id})">
+          <button class="btn btn--primary btn--sm" style="flex:1" onclick="event.stopPropagation();addToCartFromWish(${item.id})">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
             Añadir
           </button>
-          <button class="icon-btn icon-btn--danger" onclick="removeFromWishlist(${item.id})" aria-label="Eliminar de favoritos" title="Eliminar de favoritos">
+          <button class="icon-btn icon-btn--danger" onclick="event.stopPropagation();removeFromWishlist(${item.id})" aria-label="Eliminar de favoritos" title="Eliminar de favoritos">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>

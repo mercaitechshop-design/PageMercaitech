@@ -39,6 +39,10 @@ match ($action) {
     'change_password'      => handleChangePassword($body),
     'verify_reset_code'    => handleVerifyResetCode($body),
     'validate_reset_token' => handleValidateResetToken($body),
+    'update_profile'       => handleUpdateProfile($body),
+    'set_password'         => handleSetPassword($body),
+    'upload_avatar'        => handleUploadAvatar($body),
+    'delete_avatar'        => handleDeleteAvatar(),
     default                => jsonResponse(['success' => false, 'error' => "Acción '$action' no encontrada."], 404),
 };
 
@@ -146,7 +150,8 @@ function handleLogin(array $body): void {
 
     $db = getDB();
     $stmt = $db->prepare("
-        SELECT id, nombre, email, password_hash, rol, activo, intentos_fallidos, bloqueado_hasta
+        SELECT id, nombre, apellido, email, password_hash, rol, activo, intentos_fallidos, bloqueado_hasta,
+               avatar_url, telefono
         FROM usuarios WHERE email = ? LIMIT 1
     ");
     $stmt->execute([$email]);
@@ -209,10 +214,14 @@ function handleLogin(array $body): void {
     unset($_SESSION['rl_login']);
 
     $userData = [
-        'id'     => $user['id'],
-        'nombre' => $user['nombre'],
-        'email'  => $user['email'],
-        'rol'    => $user['rol'],
+        'id'           => $user['id'],
+        'nombre'       => $user['nombre'],
+        'apellido'     => $user['apellido'] ?? '',
+        'email'        => $user['email'],
+        'rol'          => $user['rol'],
+        'telefono'     => $user['telefono'] ?? '',
+        'avatar_url'   => $user['avatar_url'] ?? '',
+        'has_password' => true,
     ];
     jsonResponse(['success' => true, 'user' => $userData, 'redirect' => 'index.html']);
 }
@@ -262,7 +271,7 @@ function handleMe(): void {
     }
 
     $db   = getDB();
-    $stmt = $db->prepare("SELECT id, nombre, email, rol FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
+    $stmt = $db->prepare("SELECT id, nombre, apellido, email, rol, telefono, avatar_url, password_hash FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch();
 
@@ -271,7 +280,17 @@ function handleMe(): void {
         jsonResponse(['success' => false, 'message' => 'Sesión inválida.'], 401);
     }
 
-    jsonResponse(['success' => true, 'user' => $user]);
+    $userData = [
+        'id'           => $user['id'],
+        'nombre'       => $user['nombre'],
+        'apellido'     => $user['apellido'] ?? '',
+        'email'        => $user['email'],
+        'rol'          => $user['rol'],
+        'telefono'     => $user['telefono'] ?? '',
+        'avatar_url'   => $user['avatar_url'] ?? '',
+        'has_password' => !empty($user['password_hash']),
+    ];
+    jsonResponse(['success' => true, 'user' => $userData]);
 }
 
 function tryRememberMe(string $token): void {
@@ -418,46 +437,67 @@ function handleVerify(array $body): void {
 // GOOGLE SIGN-IN (credential JWT from GIS)
 // ============================================================================
 function handleGoogleSignIn(array $body): void {
-    $credential = $body['credential'] ?? '';
-    $email      = sanitize($body['email']    ?? '');
-    $nombre     = sanitize($body['nombre']   ?? '');
-    $googleId   = sanitize($body['googleId'] ?? '');
-    $avatar     = sanitize($body['avatar']   ?? '');
-
-    // --- Verify the JWT signature in production ---
-    // For production, verify with Google's public keys:
-    // GET https://www.googleapis.com/oauth2/v3/certs
-    // Here we trust the decoded payload sent from the frontend (acceptable when
-    // the request comes from your own JS, but add server-side JWT verification
-    // before going live: https://developers.google.com/identity/gsi/web/guides/verify-google-id-token)
+    $email    = sanitize($body['email']    ?? '');
+    $nombre   = sanitize($body['nombre']   ?? '');
+    $googleId = sanitize($body['googleId'] ?? '');
 
     if (!$email || !validEmail($email)) {
         jsonResponse(['success' => false, 'message' => 'No se pudo obtener el email de Google.'], 422);
     }
+    if (!$googleId) {
+        jsonResponse(['success' => false, 'message' => 'No se pudo verificar la identidad de Google.'], 422);
+    }
 
-    $db = getDB();
+    $db    = getDB();
+    $isNew = false;
 
-    // Find existing account by email
-    $stmt = $db->prepare("SELECT id, nombre, email, rol, activo FROM usuarios WHERE email = ? LIMIT 1");
-    $stmt->execute([$email]);
+    // 1. Buscar por google_id (identificador único de Google)
+    $stmt = $db->prepare("SELECT id, nombre, email, rol, activo FROM usuarios WHERE google_id = ? LIMIT 1");
+    $stmt->execute([$googleId]);
     $user = $stmt->fetch();
 
-    if ($user) {
-        // Existing user — log them in
-        if (!$user['activo']) {
-            jsonResponse(['success' => false, 'message' => 'Esta cuenta está desactivada.'], 403);
+    // 2. Si no encontró por google_id, buscar por email (cuenta existente por email/password)
+    if (!$user) {
+        $stmt = $db->prepare("SELECT id, nombre, email, rol, activo FROM usuarios WHERE email = ? LIMIT 1");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            // Vincular el google_id a la cuenta existente
+            if (!$user['activo']) {
+                jsonResponse(['success' => false, 'message' => 'Esta cuenta está desactivada. Contacta soporte.'], 403);
+            }
+            $db->prepare("UPDATE usuarios SET google_id = ?, ultimo_login = NOW() WHERE id = ?")
+               ->execute([$googleId, $user['id']]);
         }
-        $db->prepare("UPDATE usuarios SET ultimo_login = NOW() WHERE id = ?")->execute([$user['id']]);
-    } else {
-        // New user — create account (no password required for Google users)
-        $stmt = $db->prepare("
+    }
+
+    $avatar = sanitize($body['avatar'] ?? '');
+
+    // 3. Si tampoco existe → crear cuenta nueva
+    if (!$user) {
+        $isNew  = true;
+        $nombre = $nombre ?: explode('@', $email)[0];
+        $db->prepare("
             INSERT INTO usuarios
-              (nombre, email, password_hash, rol, activo, email_verificado, creado_en)
-            VALUES (?, ?, '', 'cliente', 1, 1, NOW())
-        ");
-        $stmt->execute([$nombre ?: explode('@', $email)[0], $email]);
+              (nombre, email, password_hash, rol, activo, email_verificado, google_id, avatar_url, creado_en)
+            VALUES (?, ?, '', 'cliente', 1, 1, ?, ?, NOW())
+        ")->execute([$nombre, $email, $googleId, $avatar ?: null]);
+
         $userId = (int) $db->lastInsertId();
-        $user   = ['id' => $userId, 'nombre' => $nombre, 'email' => $email, 'rol' => 'cliente'];
+        $user   = ['id' => $userId, 'nombre' => $nombre, 'email' => $email, 'rol' => 'cliente', 'avatar_url' => $avatar];
+    } else {
+        if (!$user['activo']) {
+            jsonResponse(['success' => false, 'message' => 'Esta cuenta está desactivada. Contacta soporte.'], 403);
+        }
+        // Actualizar avatar si viene uno nuevo
+        if ($avatar && empty($user['avatar_url'])) {
+            $db->prepare("UPDATE usuarios SET avatar_url = ?, ultimo_login = NOW() WHERE id = ?")
+               ->execute([$avatar, $user['id']]);
+            $user['avatar_url'] = $avatar;
+        } else {
+            $db->prepare("UPDATE usuarios SET ultimo_login = NOW() WHERE id = ?")->execute([$user['id']]);
+        }
     }
 
     session_regenerate_id(true);
@@ -465,10 +505,12 @@ function handleGoogleSignIn(array $body): void {
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role']  = $user['rol'];
 
-    $userData = ['id' => $user['id'], 'nombre' => $user['nombre'],
-                 'email' => $user['email'], 'rol' => $user['rol']];
-
-    jsonResponse(['success' => true, 'user' => $userData, 'redirect' => 'index.html']);
+    jsonResponse([
+        'success'  => true,
+        'is_new'   => $isNew,
+        'user'     => ['id' => $user['id'], 'nombre' => $user['nombre'], 'email' => $user['email'], 'rol' => $user['rol']],
+        'redirect' => 'index.html',
+    ]);
 }
 
 // ============================================================================
@@ -575,4 +617,116 @@ function handleValidateResetToken(array $body): void {
     $stmt->execute([$token]);
 
     jsonResponse(['success' => (bool) $stmt->fetch()]);
+}
+
+// ============================================================================
+// UPDATE PROFILE — guarda nombre y teléfono en la BD
+// ============================================================================
+function handleUpdateProfile(array $body): void {
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['success' => false, 'message' => 'No autenticado.'], 401);
+    }
+
+    $nombre   = sanitize($body['nombre']   ?? '');
+    $apellido = sanitize($body['apellido'] ?? '');
+    $telefono = sanitize($body['telefono'] ?? '');
+
+    if (!$nombre) {
+        jsonResponse(['success' => false, 'message' => 'El nombre es obligatorio.'], 422);
+    }
+
+    $db = getDB();
+    $db->prepare("UPDATE usuarios SET nombre = ?, apellido = ?, telefono = ?, actualizado_en = NOW() WHERE id = ? AND activo = 1")
+       ->execute([$nombre, $apellido ?: null, $telefono ?: null, $_SESSION['user_id']]);
+
+    jsonResponse([
+        'success'  => true,
+        'message'  => 'Perfil actualizado correctamente.',
+        'nombre'   => $nombre,
+        'apellido' => $apellido,
+        'telefono' => $telefono,
+    ]);
+}
+
+// ============================================================================
+// SET PASSWORD — permite a usuarios Google crear una contraseña por primera vez
+// ============================================================================
+function handleSetPassword(array $body): void {
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['success' => false, 'message' => 'No autenticado.'], 401);
+    }
+
+    $newPwd  = $body['new_password']     ?? '';
+    $confirm = $body['confirm_password'] ?? '';
+
+    if (strlen($newPwd) < 8) {
+        jsonResponse(['success' => false, 'message' => 'La contraseña debe tener al menos 8 caracteres.'], 422);
+    }
+    if ($newPwd !== $confirm) {
+        jsonResponse(['success' => false, 'message' => 'Las contraseñas no coinciden.'], 422);
+    }
+
+    $db   = getDB();
+    $stmt = $db->prepare("SELECT id, password_hash FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        jsonResponse(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
+    }
+    if (!empty($user['password_hash'])) {
+        jsonResponse(['success' => false, 'message' => 'Esta cuenta ya tiene contraseña. Usa "Cambiar contraseña".'], 400);
+    }
+
+    $hash = password_hash($newPwd, PASSWORD_BCRYPT, ['cost' => 12]);
+    $db->prepare("UPDATE usuarios SET password_hash = ?, actualizado_en = NOW() WHERE id = ?")
+       ->execute([$hash, $user['id']]);
+
+    jsonResponse(['success' => true, 'message' => '¡Contraseña creada! Ya puedes iniciar sesión con email y contraseña.']);
+}
+
+// ============================================================================
+// UPLOAD AVATAR — guarda avatar como URL externa o base64 en avatar_url
+// ============================================================================
+function handleUploadAvatar(array $body): void {
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['success' => false, 'message' => 'No autenticado.'], 401);
+    }
+
+    $avatarUrl = $body['avatar_url'] ?? '';
+    if (!$avatarUrl) {
+        jsonResponse(['success' => false, 'message' => 'No se recibió imagen.'], 422);
+    }
+
+    // Aceptar URL https o base64 data:image
+    $isBase64 = str_starts_with($avatarUrl, 'data:image/');
+    $isUrl    = str_starts_with($avatarUrl, 'https://') || str_starts_with($avatarUrl, 'http://');
+
+    if (!$isBase64 && !$isUrl) {
+        jsonResponse(['success' => false, 'message' => 'Formato de imagen no válido.'], 422);
+    }
+
+    // Limitar tamaño de base64 (~1MB)
+    if ($isBase64 && strlen($avatarUrl) > 1400000) {
+        jsonResponse(['success' => false, 'message' => 'La imagen es demasiado grande. Máximo 1MB.'], 422);
+    }
+
+    $db = getDB();
+    $db->prepare("UPDATE usuarios SET avatar_url = ?, actualizado_en = NOW() WHERE id = ?")
+       ->execute([$avatarUrl, $_SESSION['user_id']]);
+
+    jsonResponse(['success' => true, 'avatar_url' => $avatarUrl, 'message' => 'Foto de perfil actualizada.']);
+}
+
+// ============================================================================
+// DELETE AVATAR — elimina la foto de perfil
+// ============================================================================
+function handleDeleteAvatar(): void {
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['success' => false, 'message' => 'No autenticado.'], 401);
+    }
+    $db = getDB();
+    $db->prepare("UPDATE usuarios SET avatar_url = NULL, actualizado_en = NOW() WHERE id = ?")
+       ->execute([$_SESSION['user_id']]);
+    jsonResponse(['success' => true, 'message' => 'Foto de perfil eliminada.']);
 }

@@ -35,6 +35,11 @@ if ($path !== '/' && file_exists($file) && !is_dir($file)) {
     if (isset($mimeTypes[$ext])) {
         header('Content-Type: ' . $mimeTypes[$ext]);
     }
+    // Evitar caché en CSS y JS para que los cambios se reflejen inmediatamente
+    if ($ext === 'css' || $ext === 'js') {
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
+    }
     if ($ext === 'php') {
         // Ejecutar el archivo PHP en el contexto actual
         include $file;
