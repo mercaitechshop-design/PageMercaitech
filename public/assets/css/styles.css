@@ -16,7 +16,22 @@ button { font-family: inherit; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 input, textarea, select { font-family: inherit; }
 ul, ol { list-style: none; }
-::selection { background: var(--accent-soft); color: var(--mt-white); }
+/* Selección de texto — contraste alto para fondos oscuros */
+::selection         { background: rgba(0,102,255,.55); color: #fff; }
+::-moz-selection    { background: rgba(0,102,255,.55); color: #fff; }
+
+/* Selección visible dentro de inputs / textareas / selects */
+input::selection,
+input::-moz-selection,
+textarea::selection,
+textarea::-moz-selection,
+select::selection,
+select::-moz-selection { background: rgba(26,140,255,.65); color: #fff; }
+
+/* Cursor visible en todos los campos */
+input, textarea, select {
+  caret-color: var(--mt-blue-400);
+}
 
 /* ── Scrollbar ────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }

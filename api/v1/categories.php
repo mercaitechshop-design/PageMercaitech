@@ -2,7 +2,7 @@
 // Mercaitech — Categories API
 // GET /api/categories.php → list all active categories with product count
 
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../../config/app.php';
 setCorsHeaders();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {

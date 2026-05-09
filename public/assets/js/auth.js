@@ -11,9 +11,13 @@ const MercaitechAuth = {
   },
   setUser(user) {
     localStorage.setItem('mt_user', JSON.stringify(user));
+    // Cambiar al carrito del usuario (si cart.js ya está cargado)
+    if (window.cart && user?.id) window.cart.switchUser(user.id);
   },
   clearUser() {
     localStorage.removeItem('mt_user');
+    // Volver al carrito de invitado (vacío)
+    if (window.cart) window.cart.switchToGuest();
   },
   isLoggedIn() {
     const u = this.getUser();
@@ -60,15 +64,16 @@ const MercaitechAuth = {
       });
       const data = await res.json();
       if (data.success && data.user) {
-        this.setUser(data.user);
+        this.setUser(data.user); // también hace switchUser internamente
         return data.user;
       }
-      // Servidor respondió sin sesión — solo limpiar si NO había usuario local
-      // (evitar borrar sesión válida por errores temporales del servidor)
       if (!this.getUser()) this.clearUser();
       return null;
     } catch {
-      return this.getUser(); // servidor no disponible → confiar en localStorage
+      // Servidor no disponible → confiar en localStorage y restaurar carrito
+      const localUser = this.getUser();
+      if (localUser?.id && window.cart) window.cart.switchUser(localUser.id);
+      return localUser;
     }
   },
 

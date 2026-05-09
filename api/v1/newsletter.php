@@ -2,8 +2,8 @@
 // Mercaitech — Newsletter subscription API
 // POST /api/newsletter.php  body: { email, nombre?, source? }
 
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/helpers/Mail.php';
+require_once __DIR__ . '/../../config/app.php';
+require_once __DIR__ . '/../../app/Helpers/Mail.php';
 setCorsHeaders();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -95,7 +95,7 @@ HTML;
 } catch (Throwable $e) {
     // Log el error pero no fallar la suscripción
     file_put_contents(
-        __DIR__ . '/mail_error.log',
+        __DIR__ . '/../../storage/logs/mail.log',
         date('Y-m-d H:i:s') . ' [newsletter] ' . $e->getMessage() . PHP_EOL,
         FILE_APPEND
     );

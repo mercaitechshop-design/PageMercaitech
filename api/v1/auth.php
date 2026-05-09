@@ -5,8 +5,8 @@
 // Actions: register · login · logout · me · forgot · reset · verify
 
 declare(strict_types=1);
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/helpers/Mail.php';
+require_once __DIR__ . '/../../config/app.php';
+require_once __DIR__ . '/../../app/Helpers/Mail.php';
 
 setCorsHeaders();
 
@@ -118,6 +118,9 @@ function handleRegister(array $body): void {
     ");
     $stmt->execute([$fullName, $email, $hash, $verifyTok]);
     $userId = (int) $db->lastInsertId();
+
+    // Guardar contraseña inicial en historial
+    savePasswordHistory($db, $userId, $hash);
 
     // Open session
     $_SESSION['user_id']    = $userId;
@@ -358,7 +361,7 @@ function handleForgot(array $body): void {
     } catch (Throwable $e) {
         $errorDetail = $e->getMessage();
         file_put_contents(
-            __DIR__ . '/mail_error.log',
+            __DIR__ . '/../../storage/logs/mail.log',
             date('Y-m-d H:i:s') . ' [forgot] ' . $errorDetail . PHP_EOL,
             FILE_APPEND
         );
@@ -373,6 +376,35 @@ function handleForgot(array $body): void {
 // ============================================================================
 // RESET PASSWORD — verifica código + email y cambia contraseña
 // ============================================================================
+// ── Historial de contraseñas ─────────────────────────────────────────────────
+function isPasswordInHistory(PDO $db, int $userId, string $newPwd): bool {
+    $stmt = $db->prepare(
+        "SELECT password_hash FROM password_historial WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT 5"
+    );
+    $stmt->execute([$userId]);
+    foreach ($stmt->fetchAll() as $row) {
+        if (password_verify($newPwd, $row['password_hash'])) return true;
+    }
+    return false;
+}
+
+function savePasswordHistory(PDO $db, int $userId, string $hash): void {
+    $db->prepare("INSERT INTO password_historial (usuario_id, password_hash) VALUES (?, ?)")
+       ->execute([$userId, $hash]);
+    // Conservar solo las últimas 5
+    $db->prepare("
+        DELETE FROM password_historial
+        WHERE usuario_id = ?
+          AND id NOT IN (
+              SELECT id FROM (
+                  SELECT id FROM password_historial
+                  WHERE usuario_id = ?
+                  ORDER BY creado_en DESC LIMIT 5
+              ) t
+          )
+    ")->execute([$userId, $userId]);
+}
+
 function handleReset(array $body): void {
     $email    = sanitize($body['email']    ?? '');
     $code     = sanitize($body['code']     ?? '');
@@ -387,7 +419,7 @@ function handleReset(array $body): void {
 
     $db   = getDB();
     $stmt = $db->prepare("
-        SELECT id FROM usuarios
+        SELECT id, password_hash FROM usuarios
         WHERE email = ? AND token_reset = ? AND token_reset_exp > NOW() AND activo = 1
         LIMIT 1
     ");
@@ -398,13 +430,24 @@ function handleReset(array $body): void {
         jsonResponse(['success' => false, 'message' => 'Código incorrecto o expirado. Solicita uno nuevo.'], 400);
     }
 
-    $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+    // Verificar que no sea una contraseña ya usada
+    if (isPasswordInHistory($db, (int)$user['id'], $password)) {
+        jsonResponse(['success' => false, 'message' => 'No puedes usar una contraseña que ya usaste anteriormente. Elige una nueva.'], 400);
+    }
+
+    $oldHash = $user['password_hash'];
+    $hash    = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+
     $db->prepare("
         UPDATE usuarios
         SET password_hash = ?, token_reset = NULL, token_reset_exp = NULL,
             intentos_fallidos = 0, bloqueado_hasta = NULL
         WHERE id = ?
     ")->execute([$hash, $user['id']]);
+
+    // Guardar contraseña anterior en historial
+    if (!empty($oldHash)) savePasswordHistory($db, (int)$user['id'], $oldHash);
+    savePasswordHistory($db, (int)$user['id'], $hash);
 
     jsonResponse(['success' => true, 'message' => '¡Contraseña actualizada! Ya puedes iniciar sesión.']);
 }
@@ -452,18 +495,17 @@ function handleGoogleSignIn(array $body): void {
     $isNew = false;
 
     // 1. Buscar por google_id (identificador único de Google)
-    $stmt = $db->prepare("SELECT id, nombre, email, rol, activo FROM usuarios WHERE google_id = ? LIMIT 1");
+    $stmt = $db->prepare("SELECT id, nombre, apellido, email, rol, activo, avatar_url, telefono, password_hash FROM usuarios WHERE google_id = ? LIMIT 1");
     $stmt->execute([$googleId]);
     $user = $stmt->fetch();
 
     // 2. Si no encontró por google_id, buscar por email (cuenta existente por email/password)
     if (!$user) {
-        $stmt = $db->prepare("SELECT id, nombre, email, rol, activo FROM usuarios WHERE email = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT id, nombre, apellido, email, rol, activo, avatar_url, telefono, password_hash FROM usuarios WHERE email = ? LIMIT 1");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
         if ($user) {
-            // Vincular el google_id a la cuenta existente
             if (!$user['activo']) {
                 jsonResponse(['success' => false, 'message' => 'Esta cuenta está desactivada. Contacta soporte.'], 403);
             }
@@ -485,13 +527,15 @@ function handleGoogleSignIn(array $body): void {
         ")->execute([$nombre, $email, $googleId, $avatar ?: null]);
 
         $userId = (int) $db->lastInsertId();
-        $user   = ['id' => $userId, 'nombre' => $nombre, 'email' => $email, 'rol' => 'cliente', 'avatar_url' => $avatar];
+        $user   = ['id' => $userId, 'nombre' => $nombre, 'apellido' => '', 'email' => $email,
+                   'rol' => 'cliente', 'avatar_url' => $avatar, 'telefono' => '', 'password_hash' => ''];
     } else {
         if (!$user['activo']) {
             jsonResponse(['success' => false, 'message' => 'Esta cuenta está desactivada. Contacta soporte.'], 403);
         }
-        // Actualizar avatar si viene uno nuevo
-        if ($avatar && empty($user['avatar_url'])) {
+        // Solo actualizar avatar con el de Google si el usuario NO tiene un avatar personalizado
+        $hasCustomAvatar = !empty($user['avatar_url']) && str_starts_with($user['avatar_url'], 'data:');
+        if ($avatar && !$hasCustomAvatar) {
             $db->prepare("UPDATE usuarios SET avatar_url = ?, ultimo_login = NOW() WHERE id = ?")
                ->execute([$avatar, $user['id']]);
             $user['avatar_url'] = $avatar;
@@ -508,7 +552,16 @@ function handleGoogleSignIn(array $body): void {
     jsonResponse([
         'success'  => true,
         'is_new'   => $isNew,
-        'user'     => ['id' => $user['id'], 'nombre' => $user['nombre'], 'email' => $user['email'], 'rol' => $user['rol']],
+        'user'     => [
+            'id'           => $user['id'],
+            'nombre'       => $user['nombre'],
+            'apellido'     => $user['apellido'] ?? '',
+            'email'        => $user['email'],
+            'rol'          => $user['rol'],
+            'telefono'     => $user['telefono'] ?? '',
+            'avatar_url'   => $user['avatar_url'] ?? '',
+            'has_password' => !empty($user['password_hash']),
+        ],
         'redirect' => 'index.html',
     ]);
 }
@@ -591,14 +644,23 @@ function handleChangePassword(array $body): void {
         jsonResponse(['success' => false, 'message' => 'La contraseña actual es incorrecta.'], 400);
     }
 
-    // Generar nuevo hash y actualizar
-    $hash = password_hash($newPwd, PASSWORD_BCRYPT, ['cost' => 12]);
-    $update = $db->prepare("UPDATE usuarios SET password_hash = ?, actualizado_en = NOW() WHERE id = ?");
+    // Verificar que no sea una contraseña ya usada
+    if (isPasswordInHistory($db, (int)$user['id'], $newPwd)) {
+        jsonResponse(['success' => false, 'message' => 'No puedes usar una contraseña que ya usaste anteriormente. Elige una nueva.'], 400);
+    }
+
+    $oldHash = $user['password_hash'];
+    $hash    = password_hash($newPwd, PASSWORD_BCRYPT, ['cost' => 12]);
+    $update  = $db->prepare("UPDATE usuarios SET password_hash = ?, actualizado_en = NOW() WHERE id = ?");
     $update->execute([$hash, $user['id']]);
 
     if ($update->rowCount() === 0) {
         jsonResponse(['success' => false, 'message' => 'No se pudo actualizar. Intenta de nuevo.'], 500);
     }
+
+    // Guardar contraseña anterior y nueva en historial
+    savePasswordHistory($db, (int)$user['id'], $oldHash);
+    savePasswordHistory($db, (int)$user['id'], $hash);
 
     jsonResponse(['success' => true, 'message' => '¡Contraseña actualizada! Ya puedes iniciar sesión con la nueva contraseña.']);
 }
@@ -678,9 +740,16 @@ function handleSetPassword(array $body): void {
         jsonResponse(['success' => false, 'message' => 'Esta cuenta ya tiene contraseña. Usa "Cambiar contraseña".'], 400);
     }
 
+    // Para set_password (primera vez) también verificar historial por si acaso
+    if (isPasswordInHistory($db, (int)$user['id'], $newPwd)) {
+        jsonResponse(['success' => false, 'message' => 'No puedes usar una contraseña que ya usaste anteriormente. Elige una nueva.'], 400);
+    }
+
     $hash = password_hash($newPwd, PASSWORD_BCRYPT, ['cost' => 12]);
     $db->prepare("UPDATE usuarios SET password_hash = ?, actualizado_en = NOW() WHERE id = ?")
        ->execute([$hash, $user['id']]);
+
+    savePasswordHistory($db, (int)$user['id'], $hash);
 
     jsonResponse(['success' => true, 'message' => '¡Contraseña creada! Ya puedes iniciar sesión con email y contraseña.']);
 }

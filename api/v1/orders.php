@@ -3,7 +3,7 @@
 // POST /api/orders.php   → create order
 // GET  /api/orders.php?id=XXX → get order status (with token)
 
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../../config/app.php';
 setCorsHeaders();
 
 $method = $_SERVER['REQUEST_METHOD'];

@@ -138,9 +138,12 @@
     <div class="navbar__right">
       <div class="navbar__search">
         <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="search-input-nav" aria-label="Buscar">
+        <input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="navbar-search-input" aria-label="Buscar productos">
       </div>
       <div class="navbar__actions">
+        <button class="icon-btn" id="search-toggle-btn" aria-label="Buscar">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
         <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
@@ -222,9 +225,41 @@
 
 <div class="toast-container" id="toast-container"></div>
 
+<!-- PDP Modal -->
+<div class="pdp-overlay" id="pdp-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalle de producto">
+  <div class="pdp-modal" id="pdp-modal">
+    <div class="pdp-modal__header">
+      <button class="pdp-modal__back" id="pdp-close-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Volver a productos
+      </button>
+      <button class="icon-btn" id="pdp-x-btn" aria-label="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="pdp-modal__body">
+      <div id="pdp-content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="search-overlay" id="search-overlay" role="search" aria-label="Buscar productos">
+  <div class="search-box">
+    <div class="search-box__input-wrap">
+      <svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías…" aria-label="Buscar productos">
+      <button class="search-box__close icon-btn icon-btn--danger" id="search-close-btn" aria-label="Borrar / Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+</div>
+
 <script src="assets/js/products.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/js/search.js"></script>
 <script>
 'use strict';
 
@@ -358,7 +393,7 @@ function applyFilter(cat) {
   grid.innerHTML = list.map(p => {
     const wished = isWished(p.id);
     return `<div class="product-card" role="listitem">
-      <div class="product-card__media" style="background:${p.bg}" onclick="window.location='index.html#pdp-${p.id}'">
+      <div class="product-card__media" style="background:${p.bg};cursor:pointer" onclick="openPdp(${p.id})">
         <div class="product-card__media-inner">
           <div class="product-card__icon">${getIcon(p.icon)}</div>
         </div>
@@ -461,13 +496,156 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Keyboard
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeCartDrawer();
+    if (e.key === 'Escape') {
+      if (!document.getElementById('pdp-overlay').classList.contains('open')) closeCartDrawer();
+      else closePdp();
+    }
   });
 
   // Read hash and apply initial filter
   const hash = window.location.hash.replace('#', '').toLowerCase();
   const valid = ['tecnologia','hogar','moda','deportes','gaming','belleza'];
   applyFilter(valid.includes(hash) ? hash : 'todos');
+});
+</script>
+
+<script>
+// ── PDP Modal para productos.html ──────────────────────────────────
+let _pdpProduct = null;
+let _pdpQty = 1;
+
+function openPdp(id) {
+  const p = (window.PRODUCTS || []).find(p => p.id === id);
+  if (!p) return;
+  _pdpProduct = p;
+  _pdpQty = 1;
+
+  document.getElementById('pdp-content').innerHTML = `
+    <div class="pdp-grid">
+      <div class="pdp-gallery">
+        <div class="pdp-gallery__main" style="background:${p.bg}">
+          <div class="pdp-gallery__glow"></div>
+          <div class="pdp-gallery__icon">${window.getIcon(p.icon)}</div>
+          ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2">${p.badge.label}</span>` : ''}
+        </div>
+        <div class="pdp-gallery__thumbs">
+          ${[0,1,2,3].map(i => `
+            <div class="pdp-thumb ${i===0?'active':''}" style="background:${p.bg}" tabindex="0">
+              <div style="width:32%;height:32%;color:rgba(255,255,255,.55)">${window.getIcon(p.icon)}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="pdp-info">
+        <span class="overline text-cyan">${p.categoryLabel}</span>
+        <h2 class="pdp-info__title">${p.title}</h2>
+        <div class="pdp-info__rating">
+          <span class="pdp-info__rating-stars">★★★★${p.rating >= 4.8 ? '★' : '½'}</span>
+          <span>${p.rating} · ${p.reviews.toLocaleString('es')} reseñas</span>
+        </div>
+        <div class="pdp-info__prices">
+          <span class="pdp-price-main">${COP(p.price)}</span>
+          ${p.oldPrice ? `<span class="price-old">${COP(p.oldPrice)}</span>` : ''}
+          ${p.oldPrice ? `<span class="pdp-save">Ahorras ${COP(p.oldPrice - p.price)}</span>` : ''}
+        </div>
+        <div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${p.description}</p>
+        <div class="pdp-specs">
+          ${Object.entries(p.specs).map(([k,v]) => `
+            <div class="pdp-spec">
+              <span class="pdp-spec-label">${k}</span>
+              <span class="pdp-spec-value">${v}</span>
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="pdp-qty">
+            <button class="pdp-qty__btn" id="pdp-minus">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+            </button>
+            <span class="pdp-qty__val" id="pdp-qty-val">1</span>
+            <button class="pdp-qty__btn" id="pdp-plus">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="pdp-actions">
+          <button class="btn btn--primary btn--lg" id="pdp-add-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            AÑADIR AL CARRITO
+          </button>
+          <button class="btn btn--secondary btn--lg btn--icon" id="pdp-wish-btn" aria-label="Favoritos">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          </button>
+        </div>
+        <div class="pdp-trust">
+          <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Compra segura</div>
+          <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Envío rápido</div>
+          <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>30 días devolución</div>
+        </div>
+      </div>
+    </div>`;
+
+  // Qty
+  document.getElementById('pdp-minus').addEventListener('click', () => {
+    if (_pdpQty > 1) { _pdpQty--; document.getElementById('pdp-qty-val').textContent = _pdpQty; }
+  });
+  document.getElementById('pdp-plus').addEventListener('click', () => {
+    _pdpQty++; document.getElementById('pdp-qty-val').textContent = _pdpQty;
+  });
+
+  // Add to cart
+  document.getElementById('pdp-add-btn').addEventListener('click', () => {
+    for (let i = 0; i < _pdpQty; i++) myCart.add(_pdpProduct);
+    renderCartUI();
+    closePdp();
+    showToast(_pdpProduct.title + ' añadido al carrito ✓');
+  });
+
+  // Wishlist
+  const wishBtn = document.getElementById('pdp-wish-btn');
+  const getWL   = () => { try { return JSON.parse(localStorage.getItem('mt_wishlist') || '[]'); } catch { return []; } };
+  const syncWish = () => {
+    const wished = getWL().some(i => i.id === p.id);
+    wishBtn.style.color = wished ? '#FF5470' : '';
+    wishBtn.style.borderColor = wished ? 'rgba(255,84,112,.5)' : '';
+    wishBtn.querySelector('svg').style.fill = wished ? '#FF5470' : 'none';
+  };
+  syncWish();
+  wishBtn.addEventListener('click', () => {
+    const list = getWL();
+    const idx  = list.findIndex(i => i.id === p.id);
+    if (idx >= 0) { list.splice(idx, 1); showToast('Eliminado de favoritos'); }
+    else          { list.push(p);        showToast('Añadido a favoritos ♥'); }
+    localStorage.setItem('mt_wishlist', JSON.stringify(list));
+    syncWish();
+  });
+
+  // Thumbs
+  document.querySelectorAll('.pdp-thumb').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.pdp-thumb').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+
+  const overlay = document.getElementById('pdp-overlay');
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePdp() {
+  const overlay = document.getElementById('pdp-overlay');
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('pdp-close-btn').addEventListener('click', closePdp);
+  document.getElementById('pdp-x-btn').addEventListener('click', closePdp);
+  document.getElementById('pdp-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('pdp-overlay')) closePdp();
+  });
 });
 </script>
 </body>

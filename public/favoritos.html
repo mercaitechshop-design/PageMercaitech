@@ -18,9 +18,11 @@
       
     </a>
     <div style="flex:1"></div>
-    <div class="navbar__actions">
+    <div class="navbar__search"><svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="navbar-search-input" aria-label="Buscar productos"></div>
+      <div class="navbar__actions">
       <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
-      <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+      <button class="icon-btn" id="search-toggle-btn" aria-label="Buscar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
+        <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>
     </div>
@@ -166,5 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWishlist(getWishlist());
 });
 </script>
+<div class="search-overlay" id="search-overlay" role="search"><div class="search-box"><div class="search-box__input-wrap"><svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías..." aria-label="Buscar productos"><button class="search-box__close icon-btn icon-btn--danger" id="search-close-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="search-results" id="search-results"></div></div></div>
+<script src="assets/js/search.js"></script>
 </body>
 </html>

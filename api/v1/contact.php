@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../../config/app.php';
 
 setCorsHeaders();
 
@@ -27,7 +27,7 @@ if (strlen($mensaje) < 10) {
 }
 
 try {
-    require_once __DIR__ . '/helpers/Mail.php';
+    require_once __DIR__ . '/../../app/Helpers/Mail.php';
 
     $html = <<<HTML
 <!DOCTYPE html>
@@ -95,7 +95,7 @@ HTML;
 
     if (!$sent) {
         file_put_contents(
-            __DIR__ . '/mail_error.log',
+            __DIR__ . '/../../storage/logs/mail.log',
             date('Y-m-d H:i:s') . " [contact] send() returned false for {$email}" . PHP_EOL,
             FILE_APPEND
         );

@@ -1,20 +1,27 @@
-# Composer
-vendor/
-composer.lock
+# Dependencias
+/vendor/
 
-# Configuración local con credenciales reales
-api/config.local.php
+# Configuración local con credenciales (NUNCA subir)
+/config/local.php
+/.env
 
-# Logs de errores
-api/*.log
-*.log
+# Logs
+/storage/logs/*.log
 
-# IDE / OS
+# Archivos temporales
+/storage/cache/
+/storage/sessions/
+/storage/temp/
+
+# IDE
 .vscode/
 .idea/
+*.swp
+
+# OS
 .DS_Store
 Thumbs.db
 
-# Entorno
-.env
-.env.local
+# Archivos de diagnóstico (no subir a producción)
+/api/diagnostico.php
+/api/test-mail.php

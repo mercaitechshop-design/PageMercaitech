@@ -25,7 +25,11 @@
     a { color: inherit; text-decoration: none; }
     button { font-family: inherit; cursor: pointer; border: 0; }
     input { font-family: inherit; }
-    ::selection { background: var(--accent-soft); color: #fff; }
+    ::selection      { background: rgba(0,102,255,.55); color: #fff; }
+    ::-moz-selection { background: rgba(0,102,255,.55); color: #fff; }
+    input::selection, textarea::selection { background: rgba(26,140,255,.65); color: #fff; }
+    input::-moz-selection, textarea::-moz-selection { background: rgba(26,140,255,.65); color: #fff; }
+    input, textarea, select { caret-color: var(--mt-blue-400); }
 
     /* ── Layout — left panel fixed, right panel scrolls ─── */
     .auth-layout {
@@ -936,6 +940,25 @@
 
         <div class="auth-divider"><span>o regístrate con email</span></div>
 
+        <!-- Email ya registrado -->
+        <div id="register-exists" style="display:none;text-align:center;padding:8px 0 4px">
+          <div style="width:64px;height:64px;border-radius:18px;background:rgba(0,102,255,.1);border:1px solid rgba(0,102,255,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--mt-blue-400)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="m16 11 2 2 4-4" style="stroke:var(--mt-cyan-400)"/></svg>
+          </div>
+          <h3 style="font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--fg);margin:0 0 8px;letter-spacing:-.02em">¡Ya tienes una cuenta!</h3>
+          <p style="font-size:13px;color:var(--fg-muted);line-height:1.6;margin:0 0 6px">El correo</p>
+          <p id="exists-email" style="font-size:14px;font-weight:700;color:var(--mt-blue-300);margin:0 0 16px;word-break:break-all"></p>
+          <p style="font-size:13px;color:var(--fg-muted);line-height:1.6;margin:0 0 24px">ya está registrado en Mercaitech.<br>Por favor inicia sesión para continuar.</p>
+          <button onclick="goToLoginFromExists()" class="auth-submit" style="margin-top:0;margin-bottom:12px;border:none">
+            INICIAR SESIÓN
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+          <button onclick="backToRegister()" class="auth-submit" style="background:transparent;box-shadow:none;border:1px solid rgba(255,255,255,.15);color:var(--fg-muted);margin-top:0"
+            onmouseover="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='var(--fg)'" onmouseout="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='var(--fg-muted)'">
+            Usar otro correo
+          </button>
+        </div>
+
         <!-- Success state -->
         <div class="auth-success" id="register-success">
           <div class="auth-success__icon">
@@ -1208,8 +1231,8 @@ document.getElementById('login-form').addEventListener('submit', async function(
     const data = await res.json();
 
     if (data.success) {
-      // Save session
       localStorage.setItem('mt_user', JSON.stringify(data.user));
+      if (window.cart && data.user?.id) window.cart.switchUser(data.user.id);
       document.getElementById('login-form').style.display = 'none';
       const successMsg = document.getElementById('login-success-msg');
       successMsg.textContent = `Bienvenido, ${data.user.nombre}. Redirigiendo…`;
@@ -1276,38 +1299,57 @@ document.getElementById('register-form').addEventListener('submit', async functi
 
     if (data.success) {
       const u = data.user || { nombre: nombre+(apellido?' '+apellido:''), email };
-      // Also save to localStorage so login works even if session expires
-      const localUsers = JSON.parse(localStorage.getItem('mt_users') || '[]');
-      if (!localUsers.find(x => x.email === email)) {
-        localUsers.push({ id: u.id || Date.now(), nombre: u.nombre, email, telefono, _pw: btoa(password) });
-        localStorage.setItem('mt_users', JSON.stringify(localUsers));
-      }
-      localStorage.setItem('mt_user', JSON.stringify({ id: u.id, nombre: u.nombre, email, telefono }));
+      const userToSave = { id: u.id, nombre: u.nombre, apellido: u.apellido||'', email, telefono };
+      localStorage.setItem('mt_user', JSON.stringify(userToSave));
+      if (window.cart && u.id) window.cart.switchUser(u.id);
       document.getElementById('register-form').style.display = 'none';
       document.getElementById('register-success').classList.add('show');
+    } else if (res.status === 409 || (data.message && data.message.includes('registrado'))) {
+      document.getElementById('register-form').style.display = 'none';
+      document.getElementById('exists-email').textContent = email;
+      document.getElementById('register-exists').style.display = 'block';
+      btn.classList.remove('loading');
+      btn.disabled = false;
     } else {
-      // If API says "already registered", show the message; otherwise try local
-      if (data.message && data.message.includes('registrado')) {
-        showErr('reg-general-err', data.message);
-        btn.classList.remove('loading');
-        btn.disabled = false;
-      } else {
-        // DB might be unavailable — try localStorage fallback
-        localRegister(nombre, apellido, telefono, email, password, btn);
-      }
+      showErr('reg-general-err', data.message || 'No se pudo crear la cuenta. Inténtalo de nuevo.');
+      btn.classList.remove('loading');
+      btn.disabled = false;
     }
   } catch {
-    // Network unavailable — use localStorage demo
-    localRegister(nombre, apellido, telefono, email, password, btn);
+    showErr('reg-general-err', 'Error de conexión. Verifica que el servidor esté activo.');
+    btn.classList.remove('loading');
+    btn.disabled = false;
   }
 });
 
-// Shared localStorage register (called from catch + API error fallback)
+function goToLoginFromExists() {
+  const email = document.getElementById('exists-email').textContent;
+  // Volver al panel de login, pre-rellenar el email
+  document.getElementById('register-exists').style.display = 'none';
+  document.getElementById('register-form').style.display = '';
+  switchTab('login');
+  const loginEmail = document.getElementById('login-email');
+  if (loginEmail) { loginEmail.value = email; loginEmail.focus(); }
+}
+
+function backToRegister() {
+  document.getElementById('register-exists').style.display = 'none';
+  document.getElementById('register-form').style.display = '';
+  // Limpiar el campo email para que use otro correo
+  const regEmail = document.getElementById('reg-email');
+  if (regEmail) { regEmail.value = ''; regEmail.focus(); }
+}
+
 function localRegister(nombre, apellido, telefono, email, password, btn) {
   try {
     const users = JSON.parse(localStorage.getItem('mt_users') || '[]');
     if (users.find(u => u.email === email)) {
-      showErr('reg-general-err', 'Este correo ya está registrado. Inicia sesión.');
+      const form = document.getElementById('register-form');
+      if (form) form.style.display = 'none';
+      const emailEl = document.getElementById('exists-email');
+      if (emailEl) emailEl.textContent = email;
+      const existsPanel = document.getElementById('register-exists');
+      if (existsPanel) existsPanel.style.display = 'block';
       if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
       return;
     }
@@ -1350,10 +1392,15 @@ window.addEventListener('load', () => {
   googleReady = true;
 });
 
+// Guarda desde qué tab se hizo click en Google
+let _googleFromRegister = false;
+
 // Called when user clicks "Continuar con Google"
 function signInWithGoogle(btn) {
+  // Detectar si el botón está en el panel de registro
+  _googleFromRegister = !!btn.closest('#panel-register');
+
   if (!googleReady || typeof google === 'undefined') {
-    // GIS library still loading — retry once after 1 s
     btn.classList.add('loading');
     setTimeout(() => {
       btn.classList.remove('loading');
@@ -1364,17 +1411,14 @@ function signInWithGoogle(btn) {
 
   btn.classList.add('loading');
 
-  // Try One Tap first; fall back to OAuth popup
   google.accounts.id.prompt(notification => {
     if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
       btn.classList.remove('loading');
-      // One Tap was suppressed — use the token-client popup flow instead
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: 'openid email profile',
         callback: tokenResponse => {
           if (tokenResponse.error) { btn.classList.remove('loading'); return; }
-          // Exchange token for user info
           fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
           })
@@ -1385,7 +1429,6 @@ function signInWithGoogle(btn) {
       });
       client.requestAccessToken({ prompt: 'select_account' });
     }
-    // If One Tap shows, handleGoogleCredential fires via the callback
   });
 }
 
@@ -1406,6 +1449,14 @@ async function handleGoogleUserInfo(info) {
     });
     const data = await res.json();
     if (data.success) {
+      // Si vino del tab Registro y la cuenta YA EXISTÍA → bloquear e informar
+      if (_googleFromRegister && data.is_new === false) {
+        document.querySelectorAll('.auth-social-btn--google').forEach(b => b.classList.remove('loading'));
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('exists-email').textContent = googleUser.email;
+        document.getElementById('register-exists').style.display = 'block';
+        return;
+      }
       finishGoogleLogin(data.user, data.is_new === true);
     } else {
       showGoogleError(data.message || 'No se pudo completar el inicio de sesión con Google.');
@@ -1441,6 +1492,7 @@ async function handleGoogleCredential(response) {
 
 function finishGoogleLogin(user, isNew = false) {
   localStorage.setItem('mt_user', JSON.stringify(user));
+  if (window.cart && user?.id) window.cart.switchUser(user.id);
 
   if (isNew) {
     // Cuenta nueva — mostrar pantalla de registro exitoso independientemente del panel
@@ -1792,6 +1844,6 @@ document.getElementById('forgot-close').addEventListener('click', closeForgotMod
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('forgot-overlay').classList.contains('open')) closeForgotModal(); });
 document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') submitForgot(); });
 </script>
-
+<script src="assets/js/cart.js"></script>
 </body>
 </html>

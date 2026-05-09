@@ -4,7 +4,7 @@
 // GET  /api/products.php?id=1         → single product
 // GET  /api/products.php?cat=gaming   → by category slug
 
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../../config/app.php';
 setCorsHeaders();
 header('Content-Type: application/json; charset=utf-8');
 

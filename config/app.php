@@ -5,8 +5,8 @@
 declare(strict_types=1);
 
 // Cargar credenciales locales PRIMERO para que sus define() tengan prioridad
-if (file_exists(__DIR__ . '/config.local.php')) {
-    require_once __DIR__ . '/config.local.php';
+if (file_exists(__DIR__ . '/local.php')) {
+    require_once __DIR__ . '/local.php';
 }
 
 // Valores por defecto — solo se aplican si config.local.php no los definió

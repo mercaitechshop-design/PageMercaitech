@@ -91,6 +91,7 @@
         <input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="navbar-search-input" aria-label="Buscar productos" onkeydown="if(event.key==='Enter')window.location.href='productos.html?q='+encodeURIComponent(this.value)">
       </div>
       <div class="navbar__actions">
+        <button class="icon-btn" id="search-toggle-btn" aria-label="Buscar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
         <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
@@ -201,14 +202,14 @@
         <form id="contact-form" onsubmit="submitContact(event)">
           <div class="contacto__fields">
             <input class="contacto__input" type="text" id="cf-nombre" name="nombre" placeholder="Nombre" required autocomplete="given-name">
-            <input class="contacto__input" type="text" id="cf-empresa" name="empresa" placeholder="Empresa o proyecto" autocomplete="organization">
+            <input class="contacto__input" type="text" id="cf-empresa" name="empresa" placeholder="Empresa o proyecto" required autocomplete="organization">
             <input class="contacto__input" type="email" id="cf-email" name="email" placeholder="Correo electrónico" required autocomplete="email">
             <div class="contacto__phone-row">
               <div class="contacto__phone-prefix">
                 <span>🇨🇴</span>
                 <span>+57</span>
               </div>
-              <input class="contacto__input contacto__phone-input" type="tel" id="cf-telefono" name="telefono" placeholder="Número de teléfono" autocomplete="tel-national">
+              <input class="contacto__input contacto__phone-input" type="tel" id="cf-telefono" name="telefono" placeholder="Número de teléfono" required autocomplete="tel-national">
             </div>
             <select class="contacto__input contacto__select" id="cf-servicio" name="servicio" required>
               <option value="" disabled selected>Servicio</option>
@@ -339,14 +340,6 @@ async function submitContact(e) {
   const spin   = document.getElementById('contact-spinner');
   const msgEl  = document.getElementById('contact-msg');
 
-  btn.disabled = true;
-  if (label) label.textContent = 'Enviando…';
-  if (icon)  icon.style.display = 'none';
-  if (spin)  spin.style.display = 'block';
-  msgEl.textContent = '';
-  msgEl.style.display = 'none';
-  msgEl.className = 'contacto__msg';
-
   const data = {
     nombre:   document.getElementById('cf-nombre').value.trim(),
     empresa:  document.getElementById('cf-empresa').value.trim(),
@@ -355,6 +348,31 @@ async function submitContact(e) {
     servicio: document.getElementById('cf-servicio').value,
     mensaje:  document.getElementById('cf-mensaje').value.trim(),
   };
+
+  // Validación manual con mensajes en español
+  const campos = [
+    { val: data.nombre,   msg: 'El nombre es obligatorio.' },
+    { val: data.empresa,  msg: 'La empresa o proyecto es obligatorio.' },
+    { val: data.email,    msg: 'El correo electrónico es obligatorio.' },
+    { val: data.telefono, msg: 'El número de teléfono es obligatorio.' },
+    { val: data.servicio, msg: 'Selecciona el servicio que necesitas.' },
+    { val: data.mensaje,  msg: 'Cuéntanos qué necesitas (campo obligatorio).' },
+  ];
+  for (const c of campos) {
+    if (!c.val) {
+      msgEl.textContent = c.msg;
+      msgEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:4px;background:rgba(255,84,112,.12);border:1px solid rgba(255,84,112,.3);color:#FF5470';
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  if (label) label.textContent = 'Enviando…';
+  if (icon)  icon.style.display = 'none';
+  if (spin)  spin.style.display = 'block';
+  msgEl.textContent = '';
+  msgEl.style.display = 'none';
+  msgEl.className = 'contacto__msg';
 
   // ── Try PHP backend first, fallback to mailto: ────────────────
   try {
@@ -382,5 +400,7 @@ async function submitContact(e) {
   if (spin)  spin.style.display = 'none';
 }
 </script>
+<div class="search-overlay" id="search-overlay" role="search"><div class="search-box"><div class="search-box__input-wrap"><svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías..." aria-label="Buscar productos"><button class="search-box__close icon-btn icon-btn--danger" id="search-close-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="search-results" id="search-results"></div></div></div>
+<script src="assets/js/search.js"></script>
 </body>
 </html>
