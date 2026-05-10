@@ -244,6 +244,69 @@
   </div>
 </main>
 
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__brand-logo">
+          <img src="assets/logo.png" alt="" class="footer__logo-mark" aria-hidden="true">
+          <span class="footer__wordmark-text">MERCAI<span>TECH</span></span>
+        </div>
+        <p class="footer__brand-copy">Mercancía · IA · Tecnología. Todo lo que buscas, en un solo lugar.</p>
+        <div class="footer__socials">
+          <a href="#" class="icon-btn" aria-label="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61565192997606" target="_blank" rel="noopener noreferrer" class="icon-btn" aria-label="Facebook de Mercaitech">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="#" class="icon-btn" aria-label="Twitter / X">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+          </a>
+          <a href="#" class="icon-btn" aria-label="YouTube">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h3 class="footer__col-title">Categorías</h3>
+        <a href="productos.html#tecnologia" class="footer__link">Tecnología</a>
+        <a href="productos.html#hogar"      class="footer__link">Hogar</a>
+        <a href="productos.html#moda"       class="footer__link">Moda</a>
+        <a href="productos.html#deportes"   class="footer__link">Deportes</a>
+        <a href="productos.html#gaming"     class="footer__link">Gaming</a>
+        <a href="productos.html#belleza"    class="footer__link">Belleza</a>
+      </div>
+      <div>
+        <h3 class="footer__col-title">Ayuda</h3>
+        <a href="#" class="footer__link">Soporte 24/7</a>
+        <a href="#" class="footer__link">Seguimiento de pedido</a>
+        <a href="#" class="footer__link">Devoluciones</a>
+        <a href="#" class="footer__link">Garantía</a>
+        <a href="contacto.html" class="footer__link">Contacto</a>
+      </div>
+      <div>
+        <h3 class="footer__col-title">Newsletter</h3>
+        <p class="footer__newsletter-copy">Ofertas exclusivas y novedades directo a tu correo.</p>
+        <form class="footer__newsletter-form" id="footer-newsletter" onsubmit="handleNewsletterSubmit(event, 'footer')">
+          <input type="email" class="footer__newsletter-input" placeholder="tu@correo.com" required aria-label="Correo electrónico para newsletter">
+          <button type="submit" class="btn btn--primary btn--icon" aria-label="Suscribirse">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 Mercaitech. Todos los derechos reservados.</span>
+      <div class="footer__bottom-links">
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
 <div class="toast-container" id="toast-container"></div>
 
 <script src="assets/js/products.js?v=10"></script>
@@ -275,30 +338,49 @@ function renderCartDrawer() {
   if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
   if (label) label.textContent = '(' + count + ')';
   if (window.cart.isEmpty) {
-    items.innerHTML = '<div class="cart-empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><p>Tu carrito está vacío</p></div>';
+    items.innerHTML = '<div class="cart-empty"><div class="cart-empty__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div><p class="cart-empty__title">Tu carrito está vacío</p><p class="cart-empty__sub">Descubre lo que tenemos para ti</p><a href="productos.html" class="btn btn--primary btn--sm"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Explorar productos</a></div>';
     totals.innerHTML = '';
     btn.disabled = true;
     return;
   }
-  items.innerHTML = window.cart.items.map(item => `
-    <div class="cart-line">
-      <div class="cart-line__img" style="background:${item.bg||'var(--bg-raised)'}"></div>
+  items.innerHTML = window.cart.items.map(item => {
+    const full = (window.PRODUCTS||[]).find(p => p.id === item.id);
+    const imageUrl = full?.image_url || item.image_url;
+    const imgContent = imageUrl ? `<img src="${imageUrl}" alt="${item.title}">` : '';
+    const imgBg = imageUrl ? 'background:#111827' : `background:${item.bg||'#0B1124'}`;
+    const atMax = isFinite(MercaitechCart.maxQty(item.stock)) && item.qty >= MercaitechCart.maxQty(item.stock);
+    return `<div class="cart-line" data-pid="${item.id}">
+      <div class="cart-line__img" style="${imgBg};cursor:pointer" data-action="open">${imgContent}</div>
       <div class="cart-line__info">
-        <div class="cart-line__name">${item.title}</div>
+        <div class="cart-line__name" style="cursor:pointer" data-action="open">${item.title}</div>
         <div class="cart-line__meta">${item.categoryLabel||''}</div>
-        <div class="cart-line__price">${fmt(item.price)}</div>
-      </div>
-      <div class="cart-line__actions">
-        <div class="cart-qty">
-          <button class="cart-qty__btn" onclick="window.cart.setQty(${item.id},${item.qty-1});renderCartDrawer()">−</button>
-          <span class="cart-qty__val">${item.qty}</span>
-          <button class="cart-qty__btn" onclick="window.cart.setQty(${item.id},${item.qty+1});renderCartDrawer()">+</button>
+        <div class="cart-line__bottom">
+          <div class="cart-qty">
+            <button class="cart-qty__btn" data-action="dec" aria-label="Reducir">−</button>
+            <span class="cart-qty__val">${item.qty}</span>
+            <button class="cart-qty__btn" data-action="inc" aria-label="Aumentar"${atMax?' disabled style="opacity:.4;cursor:not-allowed"':''}>+</button>
+          </div>
+          <div class="cart-line__price">${fmt(item.price * item.qty)}</div>
         </div>
-        <button class="icon-btn icon-btn--danger" onclick="window.cart.remove(${item.id});renderCartDrawer()">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-        </button>
       </div>
-    </div>`).join('');
+      <button class="icon-btn" data-action="remove" aria-label="Eliminar" style="flex-shrink:0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+  items.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const line = el.closest('[data-pid]');
+      const id = parseInt(line?.dataset.pid);
+      if (!id) return;
+      const action = el.dataset.action;
+      if (action === 'open') { closeCart(); window.openPdp(id); }
+      else if (action === 'remove') { window.cart.remove(id); renderCartDrawer(); }
+      else if (action === 'dec') { const cur = window.cart.items.find(i=>i.id===id)?.qty||1; window.cart.setQty(id, cur-1); renderCartDrawer(); }
+      else if (action === 'inc') { const cur = window.cart.items.find(i=>i.id===id)?.qty||1; window.cart.setQty(id, cur+1); renderCartDrawer(); }
+    });
+  });
   const sub = window.cart.subtotal;
   const iva = Math.round(sub * 0.19 / 1.19);
   totals.innerHTML = `
@@ -311,6 +393,7 @@ function renderCartDrawer() {
 
 function openCart()  { document.getElementById('cart-drawer').classList.add('open'); document.getElementById('cart-scrim').classList.add('open'); document.body.style.overflow='hidden'; renderCartDrawer(); }
 function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.getElementById('cart-scrim').classList.remove('open'); document.body.style.overflow=''; }
+window.openCart = openCart;
 
 // ── Navbar dropdowns ───────────────────────────────────────────
 function initNavDropdowns() {
@@ -407,5 +490,198 @@ async function submitContact(e) {
 </script>
 <div class="search-overlay" id="search-overlay" role="search"><div class="search-box"><div class="search-box__input-wrap"><svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías..." aria-label="Buscar productos"><button class="search-box__close icon-btn icon-btn--danger" id="search-close-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="search-results" id="search-results"></div></div></div>
 <script src="assets/js/search.js?v=10"></script>
+
+<!-- PDP Modal -->
+<div class="pdp-overlay" id="pdp-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalle de producto">
+  <div class="pdp-modal" id="pdp-modal">
+    <div class="pdp-modal__header">
+      <button class="btn btn--secondary btn--sm" id="pdp-close-btn">← Volver a contáctanos</button>
+      <button class="icon-btn" id="pdp-x-btn" aria-label="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="pdp-modal__body"><div id="pdp-content"></div></div>
+  </div>
+</div>
+<script>
+'use strict';
+(function pdpModule() {
+  const _COP = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(n);
+  function _bvp(url) {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const vi = url.match(/vimeo\.com\/(\d+)/);
+    if (yt) return `<iframe src="https://www.youtube.com/embed/${yt[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+    if (vi) return `<iframe src="https://player.vimeo.com/video/${vi[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+    return `<video src="${url}" controls autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit"></video>`;
+  }
+  function _bvt(url) {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const ov = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,0,0,.32)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,255,255,.95)" style="width:26px;height:26px"><polygon points="5 3 19 12 5 21 5 3"/></svg><span style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);text-transform:uppercase">Video</span></div>`;
+    if (yt) return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0"><img src="https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" alt="Video" loading="lazy">${ov}</div>`;
+    return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0"><video src="${url}#t=0.5" muted preload="metadata" playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none"></video>${ov}</div>`;
+  }
+  let _qty = 1;
+  window.openPdp = function(id) {
+    const p = (window.PRODUCTS||[]).find(x => x.id === id) || (window.cart?.items||[]).find(x => x.id === id);
+    if (!p) return;
+    _qty = 1;
+    const oos = p.stock === false || p.stock === 0;
+    const _imgs = Array.isArray(p.images) && p.images.length > 0 ? p.images : null;
+    const _vids = Array.isArray(p.video_urls) && p.video_urls.length > 0 ? p.video_urls : (p.video_url ? [p.video_url] : []);
+    const _vid = _vids[0] || null;
+    const _main = _imgs ? _imgs[0].url : null;
+    const _vt = _vids.map(v => _bvt(v)).join('');
+    const bg = p.bg || '#0B1124';
+    document.getElementById('pdp-content').innerHTML = `
+      <div class="pdp-grid">
+        <div class="pdp-gallery">
+          <div class="pdp-gallery__main" id="pdp-main-media" style="${_main?'background:#111827':_vid&&!_main?'background:#000':'background:'+bg}">
+            ${_main||(_vid&&!_main)?'':'<div class="pdp-gallery__glow"></div>'}
+            ${_vid&&!_main?_bvp(_vid):_main?`<img src="${_main}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`:'' }
+            ${p.badge?`<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2;position:absolute;top:12px;left:12px">${p.badge.label}</span>`:''}
+          </div>
+          <div class="pdp-gallery__thumbs">
+            ${_imgs?_imgs.map((img,i)=>`<div class="pdp-thumb ${i===0?'active':''}" data-img="${img.url}" style="background:#111827;overflow:hidden" tabindex="0"><img src="${img.url}" style="width:100%;height:100%;object-fit:cover" alt="${img.alt||p.title}"></div>`).join('')+_vt:_vid?_vt:''}
+          </div>
+        </div>
+        <div class="pdp-info">
+          <span class="overline text-cyan">${p.categoryLabel||''}</span>
+          <h2 class="pdp-info__title">${p.title}</h2>
+          <div class="pdp-info__rating"><span class="pdp-info__rating-stars">★★★★${(p.rating||0)>=4.8?'★':'½'}</span><span>${p.rating||0} · ${(p.reviews||0).toLocaleString('es')} reseñas</span></div>
+          <div class="pdp-info__prices">
+            <span class="pdp-price-main">${_COP(p.price)}</span>
+            ${p.oldPrice?`<span class="price-old">${_COP(p.oldPrice)}</span>`:''}
+            ${p.oldPrice?`<span class="pdp-save">Ahorras ${_COP(p.oldPrice-p.price)}</span>`:''}
+          </div>
+          ${oos?`<div class="pdp-stock pdp-stock--oos"><span class="stock-dot stock-dot--oos"></span>Sin stock</div>`:`<div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>`}
+          <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${p.description||''}</p>
+          <div class="pdp-specs">${Object.entries(p.specs||{}).map(([k,v])=>`<div class="pdp-spec"><span class="pdp-spec-label">${k}</span><span class="pdp-spec-value">${v}</span></div>`).join('')}</div>
+          ${!oos?`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="pdp-qty">
+              <button class="pdp-qty__btn" id="pdp-minus"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg></button>
+              <span class="pdp-qty__val" id="pdp-qty-val">1</span>
+              <button class="pdp-qty__btn" id="pdp-plus"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+            </div>
+            <span style="font-size:12px;color:var(--fg-subtle)">Stock: ${typeof p.stock==='boolean'?'Disponible':p.stock+' unidades'}</span>
+          </div>`:''}
+          <div class="pdp-actions">
+            <button class="btn btn--primary btn--lg" id="pdp-add-btn" ${oos?'disabled style="opacity:.45;cursor:not-allowed"':''}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              ${oos?'SIN STOCK':'AÑADIR AL CARRITO'}
+            </button>
+            <button class="btn btn--secondary btn--lg btn--icon" id="pdp-wish-btn" aria-label="Lista de deseos" title="Añadir a lista de deseos">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            </button>
+          </div>
+          <div class="pdp-trust">
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Compra segura</div>
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Envío rápido</div>
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>30 días devolución</div>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('pdp-minus')?.addEventListener('click',()=>{if(_qty>1){_qty--;document.getElementById('pdp-qty-val').textContent=_qty;}});
+    document.getElementById('pdp-plus')?.addEventListener('click',()=>{const _max=MercaitechCart.maxQty(p?.stock);if(_qty<_max){_qty++;document.getElementById('pdp-qty-val').textContent=_qty;}});
+    document.getElementById('pdp-add-btn').addEventListener('click',()=>{
+      if(oos)return;
+      for(let i=0;i<_qty;i++) window.cart.add(p);
+      window.closePdp();
+      if (typeof window.openCart === 'function') window.openCart();
+    });
+    const _wishBtn = document.getElementById('pdp-wish-btn');
+    if (_wishBtn) {
+      const _wlKey = () => { try { const u=JSON.parse(localStorage.getItem('mt_user')||'null'); return u?.id?'mt_wishlist_u'+u.id:'mt_wishlist_guest'; } catch { return 'mt_wishlist_guest'; } };
+      const _getWL = () => { try { return JSON.parse(localStorage.getItem(_wlKey())||'[]'); } catch { return []; } };
+      const _syncWish = () => {
+        const w = _getWL().some(i => i.id === p.id);
+        _wishBtn.style.color = w ? '#FF5470' : '';
+        _wishBtn.style.borderColor = w ? 'rgba(255,84,112,.5)' : '';
+        _wishBtn.querySelector('svg').style.fill = w ? '#FF5470' : 'none';
+        _wishBtn.title = w ? 'En tu lista de deseos' : 'Añadir a lista de deseos';
+      };
+      _syncWish();
+      _wishBtn.addEventListener('click', () => {
+        const list = _getWL();
+        const idx = list.findIndex(i => i.id === p.id);
+        if (idx >= 0) { list.splice(idx, 1); }
+        else { const { image_url, images, video_url, video_urls, ...slim } = p; list.push(slim); }
+        try { localStorage.setItem(_wlKey(), JSON.stringify(list)); } catch(e) { return; }
+        _syncWish();
+      });
+    }
+    document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(t=>{
+      t.addEventListener('click',()=>{
+        document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        const mm=document.getElementById('pdp-main-media');
+        if(mm){
+          mm.querySelectorAll('video').forEach(v=>{try{v.pause();v.src='';}catch(e){}});
+          mm.querySelectorAll('iframe').forEach(f=>{try{f.src='';}catch(e){}});
+          if(t.dataset.video){mm.style.background='#000';mm.innerHTML=_bvp(t.dataset.video);}
+          else if(t.dataset.img){mm.style.background='#111827';mm.innerHTML=`<img src="${t.dataset.img}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`;}
+        }
+      });
+    });
+    const ov=document.getElementById('pdp-overlay');
+    ov.classList.add('open');ov.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  };
+  window.closePdp = function() {
+    const c=document.getElementById('pdp-content');
+    if(c){c.querySelectorAll('video').forEach(v=>{try{v.pause();v.src='';v.load();}catch(e){}});c.querySelectorAll('iframe').forEach(f=>{try{f.src='';}catch(e){}});}
+    const ov=document.getElementById('pdp-overlay');
+    ov.classList.remove('open');ov.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+  };
+  window._openProduct = id => window.openPdp(id);
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('pdp-close-btn').addEventListener('click',window.closePdp);
+    document.getElementById('pdp-x-btn').addEventListener('click',window.closePdp);
+    document.getElementById('pdp-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('pdp-overlay'))window.closePdp();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('pdp-overlay').classList.contains('open'))window.closePdp();});
+  });
+})();
+</script>
+
+<!-- WhatsApp Widget -->
+<div class="wa-widget" id="wa-widget" aria-label="Chat WhatsApp" role="dialog">
+  <div class="wa-widget__head">
+    <div class="wa-widget__avatar">M<span class="wa-widget__online-dot"></span></div>
+    <div class="wa-widget__head-info">
+      <div class="wa-widget__name">Mercaitech</div>
+      <div class="wa-widget__status">En línea</div>
+    </div>
+    <button class="wa-widget__close" id="wa-close" aria-label="Cerrar chat">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+  <div class="wa-widget__body">
+    <div class="wa-bubble"><div class="wa-bubble__text">¡Hola! 👋 Bienvenido/a a <strong>Mercaitech</strong>.</div><div class="wa-bubble__time" id="wa-time-1"></div></div>
+    <div class="wa-bubble"><div class="wa-bubble__text">¿En qué podemos ayudarte hoy?</div><div class="wa-bubble__time" id="wa-time-2"></div></div>
+  </div>
+  <div class="wa-widget__foot">
+    <a href="https://wa.me/573214961354?text=Hola%20Mercaitech%2C%20me%20gustaría%20obtener%20información%20sobre%20sus%20productos." class="wa-widget__cta" target="_blank" rel="noopener noreferrer" id="wa-start">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+      Iniciar conversación
+    </a>
+    <div class="wa-widget__note">Respuesta habitual en minutos</div>
+  </div>
+</div>
+<button class="whatsapp-float" id="wa-fab" aria-label="Abrir chat de WhatsApp" aria-expanded="false">
+  <svg class="whatsapp-float__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+  <span class="whatsapp-float__dot"></span>
+</button>
+<script>
+(function(){
+  const fab=document.getElementById('wa-fab'),widget=document.getElementById('wa-widget'),close=document.getElementById('wa-close');
+  const now=new Date(),t=now.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  ['wa-time-1','wa-time-2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t;});
+  function open(){widget.classList.add('open');fab.setAttribute('aria-expanded','true');}
+  function closeW(){widget.classList.remove('open');fab.setAttribute('aria-expanded','false');}
+  fab.addEventListener('click',()=>widget.classList.contains('open')?closeW():open());
+  close.addEventListener('click',closeW);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&widget.classList.contains('open'))closeW();});
+})();
+</script>
 </body>
 </html>

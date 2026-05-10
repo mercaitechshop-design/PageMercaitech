@@ -16,6 +16,7 @@
     <a href="index.html" class="navbar__brand">
       <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
     </a>
+    <a href="index.html" class="btn btn--secondary btn--sm" style="margin-left:-4px;flex-shrink:0">← Volver a la tienda</a>
     <div style="flex:1"></div>
     <div class="navbar__actions">
       <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
@@ -31,9 +32,6 @@
 
 <main class="account-page">
   <div class="container">
-    <div style="margin-bottom:16px">
-      <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
-    </div>
     <div class="account-layout">
       <aside class="account-sidebar">
         <div class="account-sidebar__header">
@@ -163,10 +161,7 @@ function renderOrders(orders) {
 <div class="pdp-overlay" id="pdp-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalle de producto">
   <div class="pdp-modal" id="pdp-modal">
     <div class="pdp-modal__header">
-      <button class="pdp-modal__back" id="pdp-close-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-        Volver
-      </button>
+      <button class="btn btn--secondary btn--sm" id="pdp-close-btn">← Volver a mis pedidos</button>
       <button class="icon-btn" id="pdp-x-btn" aria-label="Cerrar">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
@@ -241,6 +236,9 @@ function renderOrders(orders) {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
               ${oos?'SIN STOCK':'AÑADIR AL CARRITO'}
             </button>
+            <button class="btn btn--secondary btn--lg btn--icon" id="pdp-wish-btn" aria-label="Lista de deseos" title="Añadir a lista de deseos">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            </button>
           </div>
           <div class="pdp-trust">
             <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Compra segura</div>
@@ -250,13 +248,34 @@ function renderOrders(orders) {
         </div>
       </div>`;
     document.getElementById('pdp-minus')?.addEventListener('click',()=>{if(_qty>1){_qty--;document.getElementById('pdp-qty-val').textContent=_qty;}});
-    document.getElementById('pdp-plus')?.addEventListener('click',()=>{_qty++;document.getElementById('pdp-qty-val').textContent=_qty;});
+    document.getElementById('pdp-plus')?.addEventListener('click',()=>{const _max=MercaitechCart.maxQty(p?.stock);if(_qty<_max){_qty++;document.getElementById('pdp-qty-val').textContent=_qty;}});
     document.getElementById('pdp-add-btn').addEventListener('click',()=>{
       if(oos)return;
       for(let i=0;i<_qty;i++) window.cart.add(p);
       window.closePdp();
-      window.location.href='checkout.html';
+      if (typeof window.openCart === 'function') window.openCart();
     });
+    const _wishBtn = document.getElementById('pdp-wish-btn');
+    if (_wishBtn) {
+      const _wlKey = () => { try { const u=JSON.parse(localStorage.getItem('mt_user')||'null'); return u?.id?'mt_wishlist_u'+u.id:'mt_wishlist_guest'; } catch { return 'mt_wishlist_guest'; } };
+      const _getWL = () => { try { return JSON.parse(localStorage.getItem(_wlKey())||'[]'); } catch { return []; } };
+      const _syncWish = () => {
+        const w = _getWL().some(i => i.id === p.id);
+        _wishBtn.style.color = w ? '#FF5470' : '';
+        _wishBtn.style.borderColor = w ? 'rgba(255,84,112,.5)' : '';
+        _wishBtn.querySelector('svg').style.fill = w ? '#FF5470' : 'none';
+        _wishBtn.title = w ? 'En tu lista de deseos' : 'Añadir a lista de deseos';
+      };
+      _syncWish();
+      _wishBtn.addEventListener('click', () => {
+        const list = _getWL();
+        const idx = list.findIndex(i => i.id === p.id);
+        if (idx >= 0) { list.splice(idx, 1); }
+        else { const { image_url, images, video_url, video_urls, ...slim } = p; list.push(slim); }
+        try { localStorage.setItem(_wlKey(), JSON.stringify(list)); } catch(e) { return; }
+        _syncWish();
+      });
+    }
     document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(t=>{
       t.addEventListener('click',()=>{
         document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(x=>x.classList.remove('active'));
@@ -310,7 +329,7 @@ function renderOrders(orders) {
     const checkout = document.getElementById('checkout-btn');
     updateBadge();
     if (window.cart.isEmpty) {
-      items.innerHTML = '<div class="cart-empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><p>Tu carrito está vacío</p></div>';
+      items.innerHTML = '<div class="cart-empty"><div class="cart-empty__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div><p class="cart-empty__title">Tu carrito está vacío</p><p class="cart-empty__sub">Descubre lo que tenemos para ti</p><a href="productos.html" class="btn btn--primary btn--sm"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Explorar productos</a></div>';
       totals.innerHTML = ''; checkout.disabled = true; return;
     }
     items.innerHTML = window.cart.items.map(item => {
@@ -318,35 +337,51 @@ function renderOrders(orders) {
       const imageUrl = full?.image_url || item.image_url;
       const imgContent = imageUrl ? `<img src="${imageUrl}" alt="${item.title}">` : '';
       const imgBg = imageUrl ? 'background:#111827' : `background:${item.bg||'#0B1124'}`;
+      const atMax = isFinite(MercaitechCart.maxQty(item.stock)) && item.qty >= MercaitechCart.maxQty(item.stock);
       return `<div class="cart-line" data-pid="${item.id}">
         <div class="cart-line__img" style="${imgBg};cursor:pointer" data-action="open">${imgContent}</div>
         <div class="cart-line__info">
           <div class="cart-line__name" style="cursor:pointer" data-action="open">${item.title}</div>
           <div class="cart-line__meta">${item.categoryLabel}</div>
           <div class="cart-line__bottom">
-            <span style="font-size:12px;color:var(--fg-subtle)">×${item.qty}</span>
+            <div class="cart-qty">
+              <button class="cart-qty__btn" data-action="dec" aria-label="Reducir">−</button>
+              <span class="cart-qty__val">${item.qty}</span>
+              <button class="cart-qty__btn" data-action="inc" aria-label="Aumentar"${atMax?' disabled style="opacity:.4;cursor:not-allowed"':''}>+</button>
+            </div>
             <div class="cart-line__price">${COP(item.price*item.qty)}</div>
           </div>
         </div>
+        <button class="icon-btn" data-action="remove" aria-label="Eliminar" style="flex-shrink:0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
       </div>`;
     }).join('');
-    // Bind inside IIFE so closeCart is in scope
-    items.querySelectorAll('[data-action="open"]').forEach(el => {
-      el.addEventListener('click', () => {
-        const id = parseInt(el.closest('[data-pid]')?.dataset.pid);
+    items.querySelectorAll('[data-action]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const line = el.closest('[data-pid]');
+        const id = parseInt(line?.dataset.pid);
         if (!id) return;
-        closeCart();
-        window.openPdp(id);
+        const action = el.dataset.action;
+        if (action === 'open') { closeCart(); window.openPdp(id); }
+        else if (action === 'remove') { window.cart.remove(id); renderCartUI(); }
+        else if (action === 'dec') { const cur = window.cart.items.find(i=>i.id===id)?.qty||1; window.cart.setQty(id, cur-1); renderCartUI(); }
+        else if (action === 'inc') { const cur = window.cart.items.find(i=>i.id===id)?.qty||1; window.cart.setQty(id, cur+1); renderCartUI(); }
       });
     });
     const sub = window.cart.subtotal;
+    const iva = Math.round(sub * 0.19 / 1.19);
     totals.innerHTML = `
       <div class="cart-totals__row"><span>Subtotal</span><span>${COP(sub)}</span></div>
+      <div class="cart-totals__row" style="font-size:11px;opacity:.6"><span>IVA incluido (19%)</span><span>${COP(iva)}</span></div>
+      <div class="cart-totals__row"><span>Envío</span><span class="text-cyan">Gratis</span></div>
       <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${COP(sub)}</span></div>`;
     checkout.disabled = false;
   }
   function openCart()  { renderCartUI(); document.getElementById('cart-drawer').classList.add('open'); document.getElementById('cart-scrim').classList.add('open'); document.body.style.overflow='hidden'; }
   function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.getElementById('cart-scrim').classList.remove('open'); document.body.style.overflow=''; }
+  window.openCart = openCart;
   document.addEventListener('DOMContentLoaded', () => {
     window.cart.onChange(() => { updateBadge(); if (document.getElementById('cart-drawer').classList.contains('open')) renderCartUI(); });
     updateBadge();

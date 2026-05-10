@@ -60,8 +60,15 @@ function renderCartItems() {
   if (window.cart.isEmpty) {
     container.innerHTML = `
       <div class="cart-empty">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-        <p>Tu carrito está vacío</p>
+        <div class="cart-empty__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        </div>
+        <p class="cart-empty__title">Tu carrito está vacío</p>
+        <p class="cart-empty__sub">Descubre lo que tenemos para ti</p>
+        <a href="productos.html" class="btn btn--primary btn--sm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Explorar productos
+        </a>
       </div>`;
     totalsEl.innerHTML = '';
     checkoutBtn.disabled = true;
@@ -75,6 +82,7 @@ function renderCartItems() {
       ? `<img src="${imageUrl}" alt="${item.title}">`
       : getIcon(item.icon);
     const imgBg = imageUrl ? 'background:#111827' : `background:${item.bg}`;
+    const atMax = isFinite(MercaitechCart.maxQty(item.stock)) && item.qty >= MercaitechCart.maxQty(item.stock);
     return `
     <div class="cart-line" data-id="${item.id}">
       <div class="cart-line__img" style="${imgBg};cursor:pointer" onclick="closeCart();openPdp(${item.id})">${imgContent}</div>
@@ -85,7 +93,7 @@ function renderCartItems() {
           <div class="cart-qty">
             <button class="cart-qty__btn" onclick="updateCartQty(${item.id},${item.qty - 1})" aria-label="Reducir">−</button>
             <span class="cart-qty__val">${item.qty}</span>
-            <button class="cart-qty__btn" onclick="updateCartQty(${item.id},${item.qty + 1})" aria-label="Aumentar">+</button>
+            <button class="cart-qty__btn" onclick="updateCartQty(${item.id},${item.qty + 1})" aria-label="Aumentar"${atMax?' disabled style="opacity:.4;cursor:not-allowed"':''}>+</button>
           </div>
           <div class="cart-line__price">${window.cart.formatPrice(item.price * item.qty)}</div>
         </div>
@@ -457,8 +465,8 @@ function openPdp(id) {
     if (pdpQty > 1) { pdpQty--; $('pdp-qty-val').textContent = pdpQty; }
   });
   $('pdp-plus')?.addEventListener('click', () => {
-    pdpQty++;
-    $('pdp-qty-val').textContent = pdpQty;
+    const max = MercaitechCart.maxQty(currentPdpProduct?.stock);
+    if (pdpQty < max) { pdpQty++; $('pdp-qty-val').textContent = pdpQty; }
   });
   $('pdp-add-btn').addEventListener('click', () => {
     if (window.isOutOfStock(currentPdpProduct)) return;

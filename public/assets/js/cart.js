@@ -65,14 +65,26 @@ class MercaitechCart {
     return () => { this._listeners = this._listeners.filter(f => f !== fn); };
   }
 
+  // ── Stock helper ───────────────────────────────────────────────
+  static maxQty(stock) {
+    if (stock === false) return 0;
+    if (stock === true || stock == null) return Infinity;
+    return typeof stock === 'number' ? Math.max(0, stock) : Infinity;
+  }
+
   // ── Mutations ──────────────────────────────────────────────────
   add(product, qty = 1) {
     // Strip large base64 fields — they exceed localStorage quota and prevent persistence
     // eslint-disable-next-line no-unused-vars
     const { image_url, images, video_url, video_urls, _source, ...slim } = product;
+    const max = MercaitechCart.maxQty(slim.stock);
+    if (max === 0) return this; // out of stock
     const existing = this.items.find(i => i.id === slim.id);
-    if (existing) { existing.qty += qty; }
-    else          { this.items.push({ ...slim, qty }); }
+    if (existing) {
+      existing.qty = Math.min(existing.qty + qty, max);
+    } else {
+      this.items.push({ ...slim, qty: Math.min(qty, max) });
+    }
     this._save();
     return this;
   }
@@ -86,7 +98,11 @@ class MercaitechCart {
   setQty(productId, qty) {
     if (qty < 1) { return this.remove(productId); }
     const item = this.items.find(i => i.id === productId);
-    if (item) { item.qty = qty; this._save(); }
+    if (item) {
+      const max = MercaitechCart.maxQty(item.stock);
+      item.qty = Math.min(qty, max);
+      this._save();
+    }
     return this;
   }
 
