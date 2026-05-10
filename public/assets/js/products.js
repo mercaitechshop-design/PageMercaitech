@@ -246,4 +246,39 @@ function getIcon(name) {
 }
 
 window.PRODUCTS = PRODUCTS;
-window.getIcon = getIcon;
+window.getIcon   = getIcon;
+
+// ── Shared stock helper (used by all pages) ───────────────────────────────────
+// Returns true when a product has no available stock.
+// Handles: boolean (static data), integer (DB data), undefined (unknown → in-stock)
+window.isOutOfStock = function isOutOfStock(p) {
+  if (!p) return false;
+  if (typeof p.stock === 'boolean') return !p.stock;
+  if (p.stock === undefined || p.stock === null) return false;
+  return +p.stock <= 0;
+};
+
+// ── Load products from DB — DB is the single source of truth ─────────────────
+// When the API responds successfully, the ENTIRE window.PRODUCTS array is
+// replaced with DB data.  This guarantees:
+//   • Inactive / deleted products disappear immediately
+//   • Price / image / title changes are reflected
+//   • New products appear
+// If the request fails (server down) the static fallback array stays intact.
+(function loadDBProducts() {
+  fetch('api/products.php', { credentials: 'same-origin' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data => {
+      if (!data.success || !Array.isArray(data.products)) return;
+
+      // Replace the array in-place so all existing references stay valid
+      // (avoid spread on large arrays — iterate instead)
+      window.PRODUCTS.length = 0;
+      data.products.forEach(p => window.PRODUCTS.push(p));
+
+      if (typeof window._onProductsLoaded === 'function') {
+        window._onProductsLoaded(window.PRODUCTS);
+      }
+    })
+    .catch(() => { /* server unavailable — static fallback stays */ });
+})();

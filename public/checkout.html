@@ -6,7 +6,7 @@
   <title>Checkout — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="stylesheet" href="assets/css/tokens.css?v=3">
-  <link rel="stylesheet" href="assets/css/styles.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=4">
   <style>
     .checkout-page { padding: calc(var(--nav-h) + var(--space-8)) 0 var(--space-10); min-height: 100vh; }
     .checkout-grid { display: grid; grid-template-columns: 1fr 400px; gap: var(--space-7); align-items: start; }
@@ -60,8 +60,8 @@
   <div class="navbar__inner">
     <a href="index.html" class="navbar__brand">
       <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
-      
     </a>
+    <a href="index.html" class="btn btn--secondary btn--sm" style="margin-left:16px;flex-shrink:0">← Volver a la tienda</a>
     <div style="flex:1"></div>
     <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-subtle)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:var(--mt-green-400)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
@@ -72,14 +72,6 @@
 
 <main class="checkout-page">
   <div class="container">
-    <!-- Breadcrumb -->
-    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg-subtle);margin-bottom:var(--space-6)">
-      <a href="index.html" style="color:var(--mt-blue-300);display:flex;align-items:center;gap:4px">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
-        Volver a la tienda
-      </a>
-      <span>›</span><span>Carrito</span><span>›</span><span style="color:var(--fg)">Checkout</span>
-    </div>
 
     <div class="checkout-grid">
       <!-- LEFT: Form -->
@@ -246,8 +238,8 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script src="assets/js/products.js"></script>
-<script src="assets/js/cart.js"></script>
-<script src="assets/js/auth.js"></script>
+<script src="assets/js/cart.js?v=12"></script>
+<script src="assets/js/auth.js?v=11"></script>
 <script>
 'use strict';
 
@@ -287,16 +279,23 @@ function renderCheckoutSummary() {
     return;
   }
 
-  itemsEl.innerHTML = window.cart.items.map(item => `
+  itemsEl.innerHTML = window.cart.items.map(item => {
+    const full = (window.PRODUCTS||[]).find(p => p.id === item.id);
+    const imageUrl = full?.image_url || item.image_url;
+    const imgContent = imageUrl
+      ? `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" alt="${item.title}">`
+      : getIcon(item.icon);
+    const imgBg = imageUrl ? 'background:#111827' : `background:${item.bg||'#0B1124'}`;
+    return `
     <div class="order-summary-item">
-      <div class="order-summary-img" style="background:${item.bg}">${getIcon(item.icon)}</div>
+      <div class="order-summary-img" style="${imgBg};overflow:hidden">${imgContent}</div>
       <div style="flex:1;min-width:0">
         <div class="order-summary-name">${item.title}</div>
         <div class="order-summary-meta">${item.categoryLabel} · Cant. ${item.qty}</div>
       </div>
       <div class="order-summary-price">${window.cart.formatPrice(item.price * item.qty)}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   const sub      = window.cart.subtotal;
   const discount = Math.round(sub * appliedDiscount);
@@ -440,6 +439,9 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // Init
+// Re-render when DB products arrive so images show up
+window._onProductsLoaded = function() { renderCheckoutSummary(); };
+
 document.addEventListener('DOMContentLoaded', () => {
   renderCheckoutSummary();
 

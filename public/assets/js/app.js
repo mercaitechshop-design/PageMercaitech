@@ -68,21 +68,33 @@ function renderCartItems() {
     return;
   }
 
-  container.innerHTML = window.cart.items.map(item => `
+  container.innerHTML = window.cart.items.map(item => {
+    const full = (window.PRODUCTS||[]).find(p => p.id === item.id);
+    const imageUrl = full?.image_url || item.image_url;
+    const imgContent = imageUrl
+      ? `<img src="${imageUrl}" alt="${item.title}">`
+      : getIcon(item.icon);
+    const imgBg = imageUrl ? 'background:#111827' : `background:${item.bg}`;
+    return `
     <div class="cart-line" data-id="${item.id}">
-      <div class="cart-line__img" style="background:${item.bg};cursor:pointer" onclick="closeCart();openPdp(${item.id})">
-        ${getIcon(item.icon)}
+      <div class="cart-line__img" style="${imgBg};cursor:pointer" onclick="closeCart();openPdp(${item.id})">${imgContent}</div>
+      <div class="cart-line__info">
+        <div class="cart-line__name" style="cursor:pointer" onclick="closeCart();openPdp(${item.id})">${item.title}</div>
+        <div class="cart-line__meta">${item.categoryLabel}</div>
+        <div class="cart-line__bottom">
+          <div class="cart-qty">
+            <button class="cart-qty__btn" onclick="updateCartQty(${item.id},${item.qty - 1})" aria-label="Reducir">−</button>
+            <span class="cart-qty__val">${item.qty}</span>
+            <button class="cart-qty__btn" onclick="updateCartQty(${item.id},${item.qty + 1})" aria-label="Aumentar">+</button>
+          </div>
+          <div class="cart-line__price">${window.cart.formatPrice(item.price * item.qty)}</div>
+        </div>
       </div>
-      <div class="cart-line__info" style="cursor:pointer" onclick="closeCart();openPdp(${item.id})">
-        <div class="cart-line__name">${item.title}</div>
-        <div class="cart-line__meta">${item.categoryLabel} · Cant. ${item.qty}</div>
-        <div class="cart-line__price">${window.cart.formatPrice(item.price * item.qty)}</div>
-      </div>
-      <button class="icon-btn" onclick="removeFromCart(${item.id})" aria-label="Eliminar ${item.title}">
+      <button class="icon-btn" onclick="removeFromCart(${item.id})" aria-label="Eliminar ${item.title}" style="flex-shrink:0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       </button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   const subtotal = window.cart.subtotal;
   const iva      = Math.round(subtotal * 0.19 / 1.19);
@@ -113,6 +125,11 @@ window.removeFromCart = function(id) {
   renderCartItems();
 };
 
+window.updateCartQty = function(id, qty) {
+  window.cart.setQty(id, qty); // setQty removes item when qty < 1
+  renderCartItems();
+};
+
 function addToCart(product, qty = 1) {
   window.cart.add(product, qty);
   updateCartBadge();
@@ -126,15 +143,21 @@ const CAROUSEL_PER_PAGE = 4;
 let showingAll = false;
 
 function productCardHTML(p, i) {
+  const oos          = window.isOutOfStock(p);
+  const mediaBg      = p.image_url ? 'background:#111827' : `background:${p.bg}`;
+  const mediaContent = p.image_url
+    ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover" alt="${p.title}">`
+    : `<div class="product-card__icon">${getIcon(p.icon)}</div>`;
   return `
-    <article class="product-card reveal" role="listitem" tabindex="0"
+    <article class="product-card reveal visible${oos ? ' product-card--oos' : ''}" role="listitem" tabindex="0"
              data-id="${p.id}" aria-label="${p.title}, ${window.cart.formatPrice(p.price)}"
              style="transition-delay:${i * 60}ms">
-      <div class="product-card__media" style="background:${p.bg}">
+      <div class="product-card__media" style="${mediaBg}">
         <div class="product-card__media-inner">
-          <div class="product-card__icon">${getIcon(p.icon)}</div>
+          ${mediaContent}
         </div>
         ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}">${p.badge.label}</span>` : ''}
+        ${oos ? '<div class="product-card__oos">Sin stock</div>' : ''}
       </div>
       <div class="product-card__body">
         <span class="product-card__cat">${p.categoryLabel}</span>
@@ -144,7 +167,9 @@ function productCardHTML(p, i) {
             <span class="price-new">${window.cart.formatPrice(p.price)}</span>
             ${p.oldPrice ? `<span class="price-old">${window.cart.formatPrice(p.oldPrice)}</span>` : ''}
           </div>
-          <button class="add-btn" aria-label="Añadir al carrito" onclick="event.stopPropagation(); addToCartById(${p.id})">
+          <button class="add-btn" aria-label="${oos ? 'Sin stock' : 'Añadir al carrito'}"
+                  onclick="event.stopPropagation(); addToCartById(${p.id})"
+                  ${oos ? 'disabled' : ''}>
             <svg class="add-btn__cart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
             <span class="add-btn__plus">+</span>
           </button>
@@ -183,13 +208,18 @@ function updateCarouselUI() {
 function renderCarouselPage() {
   const grid = $('product-grid');
   const section = $('products');
+  if (!grid) return;
   const start = carouselPage * CAROUSEL_PER_PAGE;
   const page  = carouselItems.slice(start, start + CAROUSEL_PER_PAGE);
   section?.classList.remove('products-section--all');
-  grid.innerHTML = page.map((p, i) => productCardHTML(p, i)).join('');
+  grid.innerHTML = page.map((p, i) => {
+    try { return productCardHTML(p, i); } catch(e) { return ''; }
+  }).join('');
+  // Force visibility — belt-and-suspenders for the reveal animation
+  grid.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
   bindCardClicks(grid);
   updateCarouselUI();
-  setTimeout(observeReveal, 50);
+  observeReveal();
 }
 
 function showAllProducts() {
@@ -197,15 +227,19 @@ function showAllProducts() {
   const section = $('products');
   showingAll = true;
   section?.classList.add('products-section--all');
-  grid.innerHTML = carouselItems.map((p, i) => productCardHTML(p, i)).join('');
+  grid.innerHTML = carouselItems.map((p, i) => {
+    try { return productCardHTML(p, i); } catch(e) { return ''; }
+  }).join('');
+  grid.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
   bindCardClicks(grid);
   const verTodosLink = $('ver-todos-link');
   if (verTodosLink) {
     verTodosLink.innerHTML = `Ver menos <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14"/><path d="m12 19-7-7 7-7"/></svg>`;
   }
-  // Hide carousel controls
-  const controls = $('carousel-controls');
-  if (controls) controls.style.display = 'none';
+  // Hide only the nav buttons, not the wrapper (which contains the grid)
+  const _sa_prev = $('carousel-prev'); if (_sa_prev) _sa_prev.style.display = 'none';
+  const _sa_next = $('carousel-next'); if (_sa_next) _sa_next.style.display = 'none';
+  const _sa_dots = $('carousel-dots'); if (_sa_dots) _sa_dots.style.display = 'none';
   setTimeout(observeReveal, 50);
 }
 
@@ -217,16 +251,24 @@ function collapseToCarousel() {
   if (verTodosLink) {
     verTodosLink.innerHTML = `Ver todos <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
   }
-  const controls = $('carousel-controls');
-  if (controls) controls.style.display = '';
+  // Restore nav buttons (renderCarouselPage already handled dots via updateCarouselUI)
+  const _prev = $('carousel-prev'); if (_prev) _prev.style.display = '';
+  const _next = $('carousel-next'); if (_next) _next.style.display = '';
+  const _dots = $('carousel-dots'); if (_dots) _dots.style.display = carouselItems.length > CAROUSEL_PER_PAGE ? '' : 'none';
 }
 
 function renderProducts(category = 'todos') {
   carouselPage = 0;
   showingAll   = false;
-  carouselItems = category === 'todos'
-    ? PRODUCTS
-    : PRODUCTS.filter(p => p.category === category);
+
+  if (category === 'todos') {
+    // "Productos destacados" — prefer featured products; fall back to all when none are marked
+    // destacado comes from DB as boolean true/false, or from static data as undefined
+    const featured = PRODUCTS.filter(p => p.destacado === true || +p.destacado === 1);
+    carouselItems  = featured.length > 0 ? featured : PRODUCTS.slice();
+  } else {
+    carouselItems = PRODUCTS.filter(p => p.category === category);
+  }
 
   const grid    = $('product-grid');
   const section = $('products');
@@ -236,8 +278,15 @@ function renderProducts(category = 'todos') {
   if (verTodosLink) {
     verTodosLink.innerHTML = `Ver todos <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
   }
-  const controls = $('carousel-controls');
-  if (controls) controls.style.display = carouselItems.length > CAROUSEL_PER_PAGE ? '' : 'none';
+  // Never hide the carousel wrapper — it contains #product-grid.
+  // Only hide/show the prev/next nav buttons and dots.
+  const showNav = carouselItems.length > CAROUSEL_PER_PAGE;
+  const _prevBtn = $('carousel-prev');
+  const _nextBtn = $('carousel-next');
+  const _dotsWrap = $('carousel-dots');
+  if (_prevBtn) _prevBtn.style.display = showNav ? '' : 'none';
+  if (_nextBtn) _nextBtn.style.display = showNav ? '' : 'none';
+  if (_dotsWrap) _dotsWrap.style.display = showNav ? '' : 'none';
 
   if (carouselItems.length === 0) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--fg-subtle)">No hay productos en esta categoría aún.</div>';
@@ -249,7 +298,13 @@ function renderProducts(category = 'todos') {
 
 window.addToCartById = function(id) {
   const p = PRODUCTS.find(p => p.id === id);
-  if (p) addToCart(p);
+  if (!p) return;
+  if (window.isOutOfStock(p)) {
+    showToast('Sin stock · Este producto no está disponible', 'error');
+    return;
+  }
+  addToCart(p);
+  openCart();
 };
 
 // ── Category filter ────────────────────────────────────────────────────────
@@ -261,25 +316,76 @@ function setCategory(cat) {
 }
 
 // ── PDP Modal ──────────────────────────────────────────────────────────────
+function buildVideoPlayer(url) {
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  const vi = url.match(/vimeo\.com\/(\d+)/);
+  if (yt) return `<iframe src="https://www.youtube.com/embed/${yt[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+  if (vi) return `<iframe src="https://player.vimeo.com/video/${vi[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+  return `<video src="${url}" controls autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit"></video>`;
+}
+
+function buildVideoThumb(url) {
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  const vi = url.match(/vimeo\.com\/(\d+)/);
+  const overlay = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,0,0,.32);transition:background .18s">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,255,255,.95)" style="width:26px;height:26px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7))"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <span style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.06em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)">Video</span>
+  </div>`;
+  if (yt) {
+    return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0" title="Ver video">
+      <img src="https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" alt="Video" loading="lazy">
+      ${overlay}
+    </div>`;
+  }
+  if (vi) {
+    return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#0d1220;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0" title="Ver video">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(31,214,255,.9)" style="width:22px;height:22px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span style="font-size:9px;font-weight:700;color:rgba(31,214,255,.7);letter-spacing:.06em;text-transform:uppercase">Video</span>
+      </div>
+    </div>`;
+  }
+  // Local video — use first frame as poster
+  return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0" title="Ver video">
+    <video src="${url}#t=0.5" muted preload="metadata" playsinline onloadedmetadata="this.currentTime=0.5"
+           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none"></video>
+    ${overlay}
+  </div>`;
+}
+
 function openPdp(id) {
   const p = PRODUCTS.find(p => p.id === id);
   if (!p) return;
   currentPdpProduct = p;
   pdpQty = 1;
 
+  const _imgs    = Array.isArray(p.images) && p.images.length > 0 ? p.images : null;
+  // Support both video_urls (array) and legacy video_url (string)
+  const _vids    = Array.isArray(p.video_urls) && p.video_urls.length > 0
+    ? p.video_urls
+    : (p.video_url ? [p.video_url] : []);
+  const _vid     = _vids[0] || null;
+  const _mainSrc = _imgs ? _imgs[0].url : null;
+  const _vidThumbs = _vids.map(v => buildVideoThumb(v)).join('');
   $('pdp-content').innerHTML = `
     <div class="pdp-grid">
       <div class="pdp-gallery">
-        <div class="pdp-gallery__main" style="background:${p.bg}">
-          <div class="pdp-gallery__glow"></div>
-          <div class="pdp-gallery__icon">${getIcon(p.icon)}</div>
-          ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2">${p.badge.label}</span>` : ''}
+        <div class="pdp-gallery__main" id="pdp-main-media" style="${_mainSrc ? 'background:#111827' : _vid && !_mainSrc ? 'background:#000' : 'background:'+p.bg}">
+          ${_mainSrc || (_vid && !_mainSrc) ? '' : '<div class="pdp-gallery__glow"></div>'}
+          ${_vid && !_mainSrc
+            ? buildVideoPlayer(_vid)
+            : _mainSrc
+              ? `<img id="pdp-main-img" src="${_mainSrc}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`
+              : `<div class="pdp-gallery__icon">${getIcon(p.icon)}</div>`}
+          ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2;position:absolute;top:12px;left:12px">${p.badge.label}</span>` : ''}
         </div>
         <div class="pdp-gallery__thumbs">
-          ${[0,1,2,3].map((i) => `
-            <div class="pdp-thumb ${i===0?'active':''}" style="background:${p.bg}" tabindex="0" aria-label="Vista ${i+1}">
-              <div style="width:32%;height:32%;color:rgba(255,255,255,.55)">${getIcon(p.icon)}</div>
-            </div>`).join('')}
+          ${_imgs
+            ? _imgs.map((img, i) => `<div class="pdp-thumb ${i===0?'active':''}" data-img="${img.url}" style="background:#111827;overflow:hidden" tabindex="0"><img src="${img.url}" style="width:100%;height:100%;object-fit:cover" alt="${img.alt||p.title}"></div>`).join('') + _vidThumbs
+            : _vid
+              ? _vidThumbs
+              : [0,1,2,3].map((i) => `<div class="pdp-thumb ${i===0?'active':''}" style="background:${p.bg}" tabindex="0" aria-label="Vista ${i+1}"><div style="width:32%;height:32%;color:rgba(255,255,255,.55)">${getIcon(p.icon)}</div></div>`).join('')
+          }
         </div>
       </div>
       <div class="pdp-info">
@@ -294,15 +400,18 @@ function openPdp(id) {
           ${p.oldPrice ? `<span class="price-old">${window.cart.formatPrice(p.oldPrice)}</span>` : ''}
           ${p.oldPrice ? `<span class="pdp-save">Ahorras ${window.cart.formatPrice(p.oldPrice - p.price)}</span>` : ''}
         </div>
-        <div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>
+        ${window.isOutOfStock(p)
+          ? `<div class="pdp-stock pdp-stock--oos"><span class="stock-dot stock-dot--oos"></span>Sin stock · No disponible actualmente</div>`
+          : `<div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>`}
         <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${p.description}</p>
         <div class="pdp-specs">
-          ${Object.entries(p.specs).map(([k,v]) => `
+          ${Object.entries(p.specs || {}).map(([k,v]) => `
             <div class="pdp-spec">
               <span class="pdp-spec-label">${k}</span>
               <span class="pdp-spec-value">${v}</span>
             </div>`).join('')}
         </div>
+        ${!window.isOutOfStock(p) ? `
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <div class="pdp-qty">
             <button class="pdp-qty__btn" id="pdp-minus" aria-label="Reducir cantidad">
@@ -313,13 +422,13 @@ function openPdp(id) {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
             </button>
           </div>
-          <span style="font-size:12px;color:var(--fg-subtle)">Stock disponible</span>
-        </div>
+          <span style="font-size:12px;color:var(--fg-subtle)">Stock: ${typeof p.stock === 'boolean' ? 'Disponible' : p.stock + ' unidades'}</span>
+        </div>` : ''}
         <div class="pdp-actions">
-          <button class="btn btn--primary btn--lg" id="pdp-add-btn">
+          <button class="btn btn--primary btn--lg" id="pdp-add-btn" ${window.isOutOfStock(p) ? 'disabled style="opacity:.45;cursor:not-allowed"' : ''}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;flex-shrink:0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-            AÑADIR AL CARRITO
-            <span style="width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:400;line-height:1;flex-shrink:0">+</span>
+            ${window.isOutOfStock(p) ? 'SIN STOCK' : 'AÑADIR AL CARRITO'}
+            ${!window.isOutOfStock(p) ? '<span style="width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:400;line-height:1;flex-shrink:0">+</span>' : ''}
           </button>
           <button class="btn btn--secondary btn--lg btn--icon" id="pdp-wish-btn" aria-label="Añadir a favoritos" title="Añadir a lista de deseos">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
@@ -343,15 +452,16 @@ function openPdp(id) {
     </div>
   `;
 
-  // PDP qty controls
-  $('pdp-minus').addEventListener('click', () => {
+  // PDP qty controls (only present when in stock)
+  $('pdp-minus')?.addEventListener('click', () => {
     if (pdpQty > 1) { pdpQty--; $('pdp-qty-val').textContent = pdpQty; }
   });
-  $('pdp-plus').addEventListener('click', () => {
+  $('pdp-plus')?.addEventListener('click', () => {
     pdpQty++;
     $('pdp-qty-val').textContent = pdpQty;
   });
   $('pdp-add-btn').addEventListener('click', () => {
+    if (window.isOutOfStock(currentPdpProduct)) return;
     addToCart(currentPdpProduct, pdpQty);
     closePdp();
     openCart();
@@ -360,8 +470,9 @@ function openPdp(id) {
   // Wishlist toggle
   const wishBtn = $('pdp-wish-btn');
   if (wishBtn) {
+    const _wlKey = () => { try { const u=JSON.parse(localStorage.getItem('mt_user')||'null'); return u?.id?'mt_wishlist_u'+u.id:'mt_wishlist_guest'; } catch { return 'mt_wishlist_guest'; } };
     const isWished = () => {
-      try { return JSON.parse(localStorage.getItem('mt_wishlist') || '[]').some(i => i.id === currentPdpProduct.id); }
+      try { return JSON.parse(localStorage.getItem(_wlKey()) || '[]').some(i => i.id === currentPdpProduct.id); }
       catch { return false; }
     };
     const updateWishBtn = () => {
@@ -373,29 +484,50 @@ function openPdp(id) {
     };
     updateWishBtn();
     wishBtn.addEventListener('click', () => {
+      const list = JSON.parse(localStorage.getItem(_wlKey()) || '[]');
+      const idx  = list.findIndex(i => i.id === currentPdpProduct.id);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+        showToast('Eliminado de tu lista de deseos', 'info');
+      } else {
+        const { image_url, images, video_url, video_urls, ...slim } = currentPdpProduct;
+        list.push(slim);
+        showToast('Añadido a tu lista de deseos', 'success');
+      }
       try {
-        const list = JSON.parse(localStorage.getItem('mt_wishlist') || '[]');
-        const idx  = list.findIndex(i => i.id === currentPdpProduct.id);
-        if (idx >= 0) {
-          list.splice(idx, 1);
-          showToast('Eliminado de tu lista de deseos', 'info');
-        } else {
-          list.push(currentPdpProduct);
-          showToast('Añadido a tu lista de deseos', 'success');
-        }
-        localStorage.setItem('mt_wishlist', JSON.stringify(list));
-        updateWishBtn();
-      } catch {}
+        localStorage.setItem(_wlKey(), JSON.stringify(list));
+      } catch(e) {
+        showToast('Error al guardar favoritos (almacenamiento lleno)', 'error');
+        return;
+      }
+      updateWishBtn();
     });
   }
 
-  // Thumb tabs
-  $$('.pdp-thumb').forEach((thumb, i) => {
+  // Thumb tabs — switch between images and video
+  $('pdp-content').querySelectorAll('.pdp-thumb').forEach(thumb => {
     thumb.addEventListener('click', () => {
-      $$('.pdp-thumb').forEach(t => t.classList.remove('active'));
+      $('pdp-content').querySelectorAll('.pdp-thumb').forEach(t => t.classList.remove('active'));
       thumb.classList.add('active');
+      const mainMedia = $('pdp-main-media');
+      // Stop current media before switching
+      if (mainMedia) {
+        mainMedia.querySelectorAll('video').forEach(v => { try { v.pause(); v.src = ''; } catch(e){} });
+        mainMedia.querySelectorAll('iframe').forEach(f => { try { f.src = ''; } catch(e){} });
+      }
+      if (thumb.dataset.video) {
+        if (mainMedia) {
+          mainMedia.style.background = '#000';
+          mainMedia.innerHTML = buildVideoPlayer(thumb.dataset.video);
+        }
+      } else if (thumb.dataset.img) {
+        if (mainMedia) {
+          mainMedia.style.background = '#111827';
+          mainMedia.innerHTML = `<img id="pdp-main-img" src="${thumb.dataset.img}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`;
+        }
+      }
     });
-    thumb.addEventListener('keydown', e => { if(e.key==='Enter') thumb.click(); });
+    thumb.addEventListener('keydown', e => { if (e.key === 'Enter') thumb.click(); });
   });
 
   $('pdp-overlay').classList.add('open');
@@ -404,6 +536,12 @@ function openPdp(id) {
 }
 
 function closePdp() {
+  // Stop any playing video or embedded iframe before hiding
+  const content = $('pdp-content');
+  if (content) {
+    content.querySelectorAll('video').forEach(v => { try { v.pause(); v.src = ''; v.load(); } catch(e) {} });
+    content.querySelectorAll('iframe').forEach(f => { try { f.src = ''; } catch(e) {} });
+  }
   $('pdp-overlay').classList.remove('open');
   $('pdp-overlay').setAttribute('aria-hidden', 'true');
   syncBodyOverflow();
@@ -486,17 +624,22 @@ function performSearch(query) {
     return;
   }
 
-  container.innerHTML = results.map(p => `
+  container.innerHTML = results.map(p => {
+    const iconBg = p.image_url ? 'background:#111827' : `background:${p.bg}`;
+    const iconContent = p.image_url
+      ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" alt="${p.title}">`
+      : getIcon(p.icon);
+    return `
     <div class="search-result" tabindex="0" data-id="${p.id}" role="option">
-      <div class="search-result__icon" style="background:${p.bg}">
-        ${getIcon(p.icon)}
+      <div class="search-result__icon" style="${iconBg};overflow:hidden">
+        ${iconContent}
       </div>
       <div class="search-result__info">
         <div class="search-result__name">${p.title}</div>
         <div class="search-result__price">${window.cart.formatPrice(p.price)}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   container.querySelectorAll('.search-result').forEach(el => {
     el.addEventListener('click', () => {
@@ -741,12 +884,24 @@ function closeMobileMenu() {
 function initCartSubscription() {
   window.cart.onChange(() => {
     updateCartBadge();
-    if ($('cart-drawer').classList.contains('open')) renderCartItems();
+    if ($('cart-drawer')?.classList.contains('open')) renderCartItems();
   });
   updateCartBadge();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+// Re-render when DB products load (called by products.js after fetch)
+window._onProductsLoaded = function() {
+  renderProducts(typeof activeCategory !== 'undefined' ? activeCategory : 'todos');
+  // Re-try opening a product that was in the URL but couldn't be found before DB loaded
+  try {
+    const pid = new URLSearchParams(window.location.search).get('product');
+    if (pid && $('pdp-overlay') && !$('pdp-overlay').classList.contains('open')) {
+      openPdp(parseInt(pid));
+    }
+  } catch(e) {}
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   renderProducts('todos');
   initNavbarScroll();

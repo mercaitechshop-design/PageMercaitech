@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
   <link rel="stylesheet" href="assets/css/tokens.css?v=3">
-  <link rel="stylesheet" href="assets/css/styles.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=4">
 </head>
 <body>
 
@@ -15,15 +15,15 @@
   <div class="navbar__inner">
     <a href="index.html" class="navbar__brand">
       <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
-      
     </a>
     <div style="flex:1"></div>
-    <div class="navbar__search"><svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="navbar-search-input" aria-label="Buscar productos"></div>
-      <div class="navbar__actions">
-      <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
-      <button class="icon-btn" id="search-toggle-btn" aria-label="Buscar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
-        <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+    <div class="navbar__actions">
+      <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+      <button class="icon-btn" id="cart-btn" aria-label="Carrito" style="position:relative">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        <span class="cart-badge" id="cart-badge" style="display:none">0</span>
       </button>
     </div>
   </div>
@@ -31,6 +31,9 @@
 
 <main class="account-page">
   <div class="container">
+    <div style="margin-bottom:16px">
+      <a href="index.html" class="btn btn--secondary btn--sm">← Volver a la tienda</a>
+    </div>
     <div class="account-layout">
       <aside class="account-sidebar">
         <div class="account-sidebar__header">
@@ -69,9 +72,28 @@
   </div>
 </main>
 
+<!-- Cart drawer -->
+<div class="cart-scrim" id="cart-scrim"></div>
+<aside class="cart-drawer" id="cart-drawer" role="dialog" aria-label="Carrito de compras" aria-modal="true">
+  <header class="cart-drawer__head">
+    <h2 class="cart-drawer__title">Tu carrito <span class="text-subtle" id="cart-count-label">(0)</span></h2>
+    <button class="icon-btn" id="close-cart-btn" aria-label="Cerrar carrito">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </header>
+  <div class="cart-drawer__items" id="cart-items"></div>
+  <footer class="cart-drawer__foot" id="cart-footer">
+    <div class="cart-totals" id="cart-totals"></div>
+    <button class="btn btn--primary btn--lg btn--full" id="checkout-btn" disabled>
+      FINALIZAR COMPRA
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
+  </footer>
+</aside>
+
 <script src="assets/js/products.js"></script>
-<script src="assets/js/cart.js"></script>
-<script src="assets/js/auth.js"></script>
+<script src="assets/js/cart.js?v=12"></script>
+<script src="assets/js/auth.js?v=11"></script>
 <script>
 'use strict';
 window.addEventListener('scroll', () => {
@@ -115,7 +137,7 @@ function renderOrders(orders) {
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <div class="account-empty__title">Aún no tienes pedidos</div>
         <p class="account-empty__sub">Cuando realices tu primera compra, podrás seguirla aquí.</p>
-        <a href="index.html" class="btn btn--primary">EXPLORAR PRODUCTOS</a>
+        <a href="productos.html" class="btn btn--primary">EXPLORAR PRODUCTOS</a>
       </div>`;
     return;
   }
@@ -136,7 +158,205 @@ function renderOrders(orders) {
   `).join('');
 }
 </script>
+
+<!-- PDP Modal -->
+<div class="pdp-overlay" id="pdp-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalle de producto">
+  <div class="pdp-modal" id="pdp-modal">
+    <div class="pdp-modal__header">
+      <button class="pdp-modal__back" id="pdp-close-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Volver
+      </button>
+      <button class="icon-btn" id="pdp-x-btn" aria-label="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="pdp-modal__body"><div id="pdp-content"></div></div>
+  </div>
+</div>
+<script>
+'use strict';
+(function pdpModule() {
+  const _COP = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(n);
+  function _bvp(url) {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const vi = url.match(/vimeo\.com\/(\d+)/);
+    if (yt) return `<iframe src="https://www.youtube.com/embed/${yt[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+    if (vi) return `<iframe src="https://player.vimeo.com/video/${vi[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+    return `<video src="${url}" controls autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit"></video>`;
+  }
+  function _bvt(url) {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const ov = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,0,0,.32)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,255,255,.95)" style="width:26px;height:26px"><polygon points="5 3 19 12 5 21 5 3"/></svg><span style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);text-transform:uppercase">Video</span></div>`;
+    if (yt) return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0"><img src="https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" alt="Video" loading="lazy">${ov}</div>`;
+    return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0"><video src="${url}#t=0.5" muted preload="metadata" playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none"></video>${ov}</div>`;
+  }
+  let _qty = 1;
+  window.openPdp = function(id) {
+    const p = (window.PRODUCTS||[]).find(x => x.id === id) || (window.cart?.items||[]).find(x => x.id === id);
+    if (!p) return;
+    _qty = 1;
+    const oos = window.isOutOfStock ? window.isOutOfStock(p) : false;
+    const _imgs = Array.isArray(p.images) && p.images.length > 0 ? p.images : null;
+    const _vids = Array.isArray(p.video_urls) && p.video_urls.length > 0 ? p.video_urls : (p.video_url ? [p.video_url] : []);
+    const _vid = _vids[0] || null;
+    const _main = _imgs ? _imgs[0].url : null;
+    const _vt = _vids.map(v => _bvt(v)).join('');
+    const bg = p.bg || '#0B1124';
+    const ic = typeof window.getIcon === 'function' ? window.getIcon(p.icon) : '';
+    document.getElementById('pdp-content').innerHTML = `
+      <div class="pdp-grid">
+        <div class="pdp-gallery">
+          <div class="pdp-gallery__main" id="pdp-main-media" style="${_main?'background:#111827':_vid&&!_main?'background:#000':'background:'+bg}">
+            ${_main||(_vid&&!_main)?'':'<div class="pdp-gallery__glow"></div>'}
+            ${_vid&&!_main?_bvp(_vid):_main?`<img src="${_main}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`:ic?`<div class="pdp-gallery__icon">${ic}</div>`:''}
+            ${p.badge?`<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2;position:absolute;top:12px;left:12px">${p.badge.label}</span>`:''}
+          </div>
+          <div class="pdp-gallery__thumbs">
+            ${_imgs?_imgs.map((img,i)=>`<div class="pdp-thumb ${i===0?'active':''}" data-img="${img.url}" style="background:#111827;overflow:hidden" tabindex="0"><img src="${img.url}" style="width:100%;height:100%;object-fit:cover" alt="${img.alt||p.title}"></div>`).join('')+_vt:_vid?_vt:[0,1,2,3].map(i=>`<div class="pdp-thumb ${i===0?'active':''}" style="background:${bg}" tabindex="0"><div style="width:32%;height:32%;color:rgba(255,255,255,.55)">${ic}</div></div>`).join('')}
+          </div>
+        </div>
+        <div class="pdp-info">
+          <span class="overline text-cyan">${p.categoryLabel||''}</span>
+          <h2 class="pdp-info__title">${p.title}</h2>
+          <div class="pdp-info__rating"><span class="pdp-info__rating-stars">★★★★${(p.rating||0)>=4.8?'★':'½'}</span><span>${p.rating||0} · ${(p.reviews||0).toLocaleString('es')} reseñas</span></div>
+          <div class="pdp-info__prices">
+            <span class="pdp-price-main">${_COP(p.price)}</span>
+            ${p.oldPrice?`<span class="price-old">${_COP(p.oldPrice)}</span>`:''}
+            ${p.oldPrice?`<span class="pdp-save">Ahorras ${_COP(p.oldPrice-p.price)}</span>`:''}
+          </div>
+          ${oos?`<div class="pdp-stock pdp-stock--oos"><span class="stock-dot stock-dot--oos"></span>Sin stock</div>`:`<div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>`}
+          <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${p.description||''}</p>
+          <div class="pdp-specs">${Object.entries(p.specs||{}).map(([k,v])=>`<div class="pdp-spec"><span class="pdp-spec-label">${k}</span><span class="pdp-spec-value">${v}</span></div>`).join('')}</div>
+          ${!oos?`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="pdp-qty">
+              <button class="pdp-qty__btn" id="pdp-minus"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg></button>
+              <span class="pdp-qty__val" id="pdp-qty-val">1</span>
+              <button class="pdp-qty__btn" id="pdp-plus"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+            </div>
+            <span style="font-size:12px;color:var(--fg-subtle)">Stock: ${typeof p.stock==='boolean'?'Disponible':p.stock+' unidades'}</span>
+          </div>`:''}
+          <div class="pdp-actions">
+            <button class="btn btn--primary btn--lg" id="pdp-add-btn" ${oos?'disabled style="opacity:.45;cursor:not-allowed"':''}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              ${oos?'SIN STOCK':'AÑADIR AL CARRITO'}
+            </button>
+          </div>
+          <div class="pdp-trust">
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Compra segura</div>
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Envío rápido</div>
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>30 días devolución</div>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('pdp-minus')?.addEventListener('click',()=>{if(_qty>1){_qty--;document.getElementById('pdp-qty-val').textContent=_qty;}});
+    document.getElementById('pdp-plus')?.addEventListener('click',()=>{_qty++;document.getElementById('pdp-qty-val').textContent=_qty;});
+    document.getElementById('pdp-add-btn').addEventListener('click',()=>{
+      if(oos)return;
+      for(let i=0;i<_qty;i++) window.cart.add(p);
+      window.closePdp();
+      window.location.href='checkout.html';
+    });
+    document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(t=>{
+      t.addEventListener('click',()=>{
+        document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        const mm=document.getElementById('pdp-main-media');
+        if(mm){
+          mm.querySelectorAll('video').forEach(v=>{try{v.pause();v.src='';}catch(e){}});
+          mm.querySelectorAll('iframe').forEach(f=>{try{f.src='';}catch(e){}});
+          if(t.dataset.video){mm.style.background='#000';mm.innerHTML=_bvp(t.dataset.video);}
+          else if(t.dataset.img){mm.style.background='#111827';mm.innerHTML=`<img src="${t.dataset.img}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`;}
+        }
+      });
+    });
+    const ov=document.getElementById('pdp-overlay');
+    ov.classList.add('open');ov.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  };
+  window.closePdp = function() {
+    const c=document.getElementById('pdp-content');
+    if(c){c.querySelectorAll('video').forEach(v=>{try{v.pause();v.src='';v.load();}catch(e){}});c.querySelectorAll('iframe').forEach(f=>{try{f.src='';}catch(e){}});}
+    const ov=document.getElementById('pdp-overlay');
+    ov.classList.remove('open');ov.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+  };
+  window._openProduct = id => window.openPdp(id);
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('pdp-close-btn').addEventListener('click',window.closePdp);
+    document.getElementById('pdp-x-btn').addEventListener('click',window.closePdp);
+    document.getElementById('pdp-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('pdp-overlay'))window.closePdp();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('pdp-overlay').classList.contains('open'))window.closePdp();});
+  });
+})();
+</script>
+
 <div class="search-overlay" id="search-overlay" role="search"><div class="search-box"><div class="search-box__input-wrap"><svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías..." aria-label="Buscar productos"><button class="search-box__close icon-btn icon-btn--danger" id="search-close-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="search-results" id="search-results"></div></div></div>
 <script src="assets/js/search.js"></script>
+<script>
+'use strict';
+(function initCart() {
+  const COP = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(n);
+  function updateBadge() {
+    const count = window.cart.count;
+    const badge = document.getElementById('cart-badge');
+    const label = document.getElementById('cart-count-label');
+    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+    if (label) label.textContent = '(' + count + ')';
+  }
+  function renderCartUI() {
+    const items    = document.getElementById('cart-items');
+    const totals   = document.getElementById('cart-totals');
+    const checkout = document.getElementById('checkout-btn');
+    updateBadge();
+    if (window.cart.isEmpty) {
+      items.innerHTML = '<div class="cart-empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><p>Tu carrito está vacío</p></div>';
+      totals.innerHTML = ''; checkout.disabled = true; return;
+    }
+    items.innerHTML = window.cart.items.map(item => {
+      const full = (window.PRODUCTS||[]).find(p => p.id === item.id);
+      const imageUrl = full?.image_url || item.image_url;
+      const imgContent = imageUrl ? `<img src="${imageUrl}" alt="${item.title}">` : '';
+      const imgBg = imageUrl ? 'background:#111827' : `background:${item.bg||'#0B1124'}`;
+      return `<div class="cart-line" data-pid="${item.id}">
+        <div class="cart-line__img" style="${imgBg};cursor:pointer" data-action="open">${imgContent}</div>
+        <div class="cart-line__info">
+          <div class="cart-line__name" style="cursor:pointer" data-action="open">${item.title}</div>
+          <div class="cart-line__meta">${item.categoryLabel}</div>
+          <div class="cart-line__bottom">
+            <span style="font-size:12px;color:var(--fg-subtle)">×${item.qty}</span>
+            <div class="cart-line__price">${COP(item.price*item.qty)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    // Bind inside IIFE so closeCart is in scope
+    items.querySelectorAll('[data-action="open"]').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = parseInt(el.closest('[data-pid]')?.dataset.pid);
+        if (!id) return;
+        closeCart();
+        window.openPdp(id);
+      });
+    });
+    const sub = window.cart.subtotal;
+    totals.innerHTML = `
+      <div class="cart-totals__row"><span>Subtotal</span><span>${COP(sub)}</span></div>
+      <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${COP(sub)}</span></div>`;
+    checkout.disabled = false;
+  }
+  function openCart()  { renderCartUI(); document.getElementById('cart-drawer').classList.add('open'); document.getElementById('cart-scrim').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.getElementById('cart-scrim').classList.remove('open'); document.body.style.overflow=''; }
+  document.addEventListener('DOMContentLoaded', () => {
+    window.cart.onChange(() => { updateBadge(); if (document.getElementById('cart-drawer').classList.contains('open')) renderCartUI(); });
+    updateBadge();
+    document.getElementById('cart-btn').addEventListener('click', openCart);
+    document.getElementById('close-cart-btn').addEventListener('click', closeCart);
+    document.getElementById('cart-scrim').addEventListener('click', closeCart);
+    document.getElementById('checkout-btn').addEventListener('click', () => { if (!window.cart.isEmpty) window.location.href='checkout.html'; });
+    document.addEventListener('keydown', e => { if (e.key==='Escape') closeCart(); });
+  });
+})();
+</script>
 </body>
 </html>

@@ -10,6 +10,12 @@ $uri  = $_SERVER['REQUEST_URI'];
 $path = parse_url($uri, PHP_URL_PATH);
 $root = dirname(__DIR__);   // raíz del proyecto (un nivel arriba de routes/)
 
+// ── Upload video (multipart) → api/v1/upload_video.php ──────────────────────
+if ($path === '/api/upload_video.php') {
+    $f = $root . '/api/v1/upload_video.php';
+    if (file_exists($f)) { include $f; return true; }
+}
+
 // ── API: /api/*.php  →  api/v1/*.php ─────────────────────────────────────────
 if (preg_match('#^/api/([a-z_\-]+)\.php$#i', $path, $m)) {
     $apiFile = $root . '/api/v1/' . $m[1] . '.php';
@@ -47,7 +53,7 @@ if ($path !== '/' && file_exists($publicFile) && !is_dir($publicFile)) {
     if (isset($mimeTypes[$ext])) {
         header('Content-Type: ' . $mimeTypes[$ext]);
     }
-    if ($ext === 'css' || $ext === 'js') {
+    if ($ext === 'css' || $ext === 'js' || $ext === 'html') {
         header('Cache-Control: no-store, no-cache, must-revalidate');
         header('Pragma: no-cache');
     }
@@ -60,6 +66,8 @@ if ($path === '/' || is_dir($publicFile)) {
     $index = $root . '/public/index.html';
     if (file_exists($index)) {
         header('Content-Type: text/html; charset=UTF-8');
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
         readfile($index);
         return true;
     }

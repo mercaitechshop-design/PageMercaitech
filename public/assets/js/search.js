@@ -68,22 +68,32 @@
       return;
     }
 
-    container.innerHTML = results.map(p => `
+    container.innerHTML = results.map(p => {
+      const iconBg = p.image_url ? 'background:#111827' : `background:${p.bg}`;
+      const iconContent = p.image_url
+        ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" alt="${p.title}">`
+        : getIcon(p.icon);
+      return `
       <div class="search-result" tabindex="0" data-id="${p.id}" role="option">
-        <div class="search-result__icon" style="background:${p.bg}">
-          ${getIcon(p.icon)}
+        <div class="search-result__icon" style="${iconBg};overflow:hidden">
+          ${iconContent}
         </div>
         <div class="search-result__info">
           <div class="search-result__name">${p.title}</div>
           <div class="search-result__price">${fmt(p.price)}</div>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
 
     container.querySelectorAll('.search-result').forEach(el => {
       el.addEventListener('click', () => {
         closeSearch();
-        window.location.href = 'index.html?product=' + el.dataset.id;
+        const id = parseInt(el.dataset.id);
+        if (typeof window._openProduct === 'function') {
+          window._openProduct(id);
+        } else {
+          window.location.href = 'productos.html?product=' + id;
+        }
       });
       el.addEventListener('keydown', e => { if (e.key === 'Enter') el.click(); });
     });

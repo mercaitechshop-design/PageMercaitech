@@ -67,9 +67,12 @@ class MercaitechCart {
 
   // ── Mutations ──────────────────────────────────────────────────
   add(product, qty = 1) {
-    const existing = this.items.find(i => i.id === product.id);
+    // Strip large base64 fields — they exceed localStorage quota and prevent persistence
+    // eslint-disable-next-line no-unused-vars
+    const { image_url, images, video_url, video_urls, _source, ...slim } = product;
+    const existing = this.items.find(i => i.id === slim.id);
     if (existing) { existing.qty += qty; }
-    else          { this.items.push({ ...product, qty }); }
+    else          { this.items.push({ ...slim, qty }); }
     this._save();
     return this;
   }

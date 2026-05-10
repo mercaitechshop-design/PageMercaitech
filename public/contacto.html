@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
   <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
   <link rel="stylesheet" href="assets/css/tokens.css?v=3">
-  <link rel="stylesheet" href="assets/css/styles.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=4">
 </head>
 <body>
 
@@ -51,6 +51,11 @@
           <a href="productos.html#belleza" class="navbar__dropdown-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
             Belleza
+          </a>
+          <div class="navbar__dropdown-divider"></div>
+          <a href="index.html#ofertas" class="navbar__dropdown-item navbar__dropdown-item--highlight" role="menuitem">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Ofertas del día
           </a>
         </div>
       </li>
@@ -241,9 +246,9 @@
 
 <div class="toast-container" id="toast-container"></div>
 
-<script src="assets/js/products.js"></script>
-<script src="assets/js/cart.js"></script>
-<script src="assets/js/auth.js"></script>
+<script src="assets/js/products.js?v=10"></script>
+<script src="assets/js/cart.js?v=10"></script>
+<script src="assets/js/auth.js?v=10"></script>
 <script>
 'use strict';
 
@@ -401,6 +406,6 @@ async function submitContact(e) {
 }
 </script>
 <div class="search-overlay" id="search-overlay" role="search"><div class="search-box"><div class="search-box__input-wrap"><svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías..." aria-label="Buscar productos"><button class="search-box__close icon-btn icon-btn--danger" id="search-close-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="search-results" id="search-results"></div></div></div>
-<script src="assets/js/search.js"></script>
+<script src="assets/js/search.js?v=10"></script>
 </body>
 </html>
