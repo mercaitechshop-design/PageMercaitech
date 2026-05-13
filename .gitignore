@@ -22,6 +22,12 @@
 .DS_Store
 Thumbs.db
 
-# Archivos de diagnóstico (no subir a producción)
+# Archivos solo de desarrollo (no subir a producción)
 /api/diagnostico.php
 /api/test-mail.php
+/api/v1/mp_simulate.php
+/api/v1/email_preview.php
+/ngrok-start.sh
+
+# Imágenes subidas (el servidor de producción las tiene en disco)
+/public/uploads/

@@ -99,16 +99,21 @@ function saveProduct(array $body): void {
     $id = (int)($body['id'] ?? 0);
 
     $titulo    = sanitize($body['titulo'] ?? '');
-    $desc      = $body['descripcion']        ?? '';
+    // Descripción: permitir HTML básico de formato, bloquear scripts/iframes
+    $desc      = strip_tags($body['descripcion'] ?? '', '<p><br><b><i><strong><em><ul><ol><li><h3><h4><span>');
     $descCorta = sanitize($body['descripcion_corta'] ?? '');
     $catSlug   = sanitize($body['categoria_slug']     ?? 'tecnologia');
     $precio    = (float)($body['precio']    ?? 0);
     $precioOri = $body['precio_original'] !== null && $body['precio_original'] !== '' ? (float)$body['precio_original'] : null;
-    $stock     = (int)($body['stock']       ?? 0);
+    $stock     = max(0, (int)($body['stock'] ?? 0));
     $activo    = (int)($body['activo']      ?? 1);
     $destacado = (int)($body['destacado']   ?? 0);
     $icono     = sanitize($body['icono']    ?? 'sparkles');
-    $bg        = $body['imagen_bg']          ?? 'radial-gradient(ellipse at 50% 40%, rgba(0,102,255,.2), transparent 60%), linear-gradient(135deg, #0B1124, #001A47)';
+    // imagen_bg solo acepta valores CSS válidos (gradient/color), no HTML
+    $bgRaw     = $body['imagen_bg'] ?? '';
+    $bg        = preg_match('/^[\w\s,().%#\/\-]+$|^(radial|linear)-gradient\(.*\)$/s', $bgRaw)
+                 ? $bgRaw
+                 : 'radial-gradient(ellipse at 50% 40%, rgba(0,102,255,.2), transparent 60%), linear-gradient(135deg, #0B1124, #001A47)';
     // video_urls is an array of uploaded paths; store as JSON (or plain string for 1 item)
     $rawVideos = $body['video_urls'] ?? null;
     if (is_array($rawVideos)) {
@@ -176,13 +181,18 @@ function saveProduct(array $body): void {
         $id = (int)$db->lastInsertId();
     }
 
-    // Insert images
+    // Insert images — base64 se convierte a archivo en disco
     foreach ($imagenes as $i => $img) {
         if (empty($img['url'])) continue;
+        $url = $img['url'];
+        if (str_starts_with($url, 'data:image/')) {
+            $saved = saveProductImageFile($url, $id, $i);
+            if ($saved) $url = $saved;
+        }
         $isPrincipal = ($i === 0) ? 1 : 0;
         $alt = sanitize($img['alt'] ?? $titulo);
         $db->prepare("INSERT INTO imagenes_producto (producto_id, url, alt, es_principal, orden) VALUES (?, ?, ?, ?, ?)")
-           ->execute([$id, $img['url'], $alt, $isPrincipal, $i]);
+           ->execute([$id, $url, $alt, $isPrincipal, $i]);
     }
 
     // Insert specs
@@ -192,8 +202,24 @@ function saveProduct(array $body): void {
            ->execute([$id, sanitize($spec['clave']), sanitize($spec['valor'] ?? ''), $i]);
     }
 
+    // Invalidar cache de productos al guardar cambios
+    @unlink(__DIR__ . '/../../storage/cache/products.json');
+
     jsonResponse(['success' => true, 'id' => $id,
                   'message' => $body['id'] ? 'Producto actualizado.' : 'Producto creado.']);
+}
+
+// ── Guardar imagen de producto como archivo en disco ──────────────────────────
+function saveProductImageFile(string $base64, int $productId, int $index): ?string {
+    if (!preg_match('/^data:image\/(\w+);base64,(.+)$/s', $base64, $m)) return null;
+    $ext  = strtolower($m[1] === 'jpeg' ? 'jpg' : $m[1]);
+    $data = base64_decode($m[2], true);
+    if (!$data) return null;
+    $dir  = __DIR__ . '/../../public/uploads/products/';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    $name = "product-{$productId}-img-{$index}-" . substr(md5($data), 0, 8) . ".{$ext}";
+    if (@file_put_contents($dir . $name, $data) === false) return null;
+    return '/uploads/products/' . $name;
 }
 
 // ── DELETE PRODUCT ────────────────────────────────────────────────────────────

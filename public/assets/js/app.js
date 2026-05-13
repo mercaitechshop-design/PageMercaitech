@@ -150,11 +150,56 @@ let carouselItems  = [];
 const CAROUSEL_PER_PAGE = 4;
 let showingAll = false;
 
+// ── Skeleton card (se muestra mientras carga el API) ──────────────────────────
+function skeletonCardHTML() {
+  return `<div class="skeleton-card" aria-hidden="true">
+    <div class="skeleton skeleton-card__img"></div>
+    <div class="skeleton-card__body">
+      <div class="skeleton skeleton-card__line skeleton-card__line--sm"></div>
+      <div class="skeleton skeleton-card__line skeleton-card__line--lg"></div>
+      <div class="skeleton skeleton-card__line skeleton-card__line--md"></div>
+      <div class="skeleton skeleton-card__price"></div>
+      <div class="skeleton skeleton-card__btn"></div>
+    </div>
+  </div>`;
+}
+
+function showSkeletons(gridId, count = 8) {
+  const grid = $(gridId);
+  if (!grid) return;
+  grid.innerHTML = Array(count).fill(skeletonCardHTML()).join('');
+}
+
+// Lazy image observer — añade clase "loaded" cuando la imagen está en viewport
+const _imgObserver = ('IntersectionObserver' in window)
+  ? new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const img = entry.target;
+        if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
+        img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
+        img.addEventListener('error', () => img.classList.add('loaded'), { once: true });
+        obs.unobserve(img);
+      });
+    }, { rootMargin: '200px' })
+  : null;
+
+function lazyImg(src, alt, style = '') {
+  // Primeras 4 imágenes: eager (above the fold); resto: lazy
+  const tag = `<img src="${src}" loading="lazy" decoding="async" alt="${alt}" class="lazy-img"${style ? ` style="${style}"` : ''}>`;
+  return tag;
+}
+
 function productCardHTML(p, i) {
   const oos          = window.isOutOfStock(p);
+  const stockNum     = typeof p.stock === 'boolean' ? (p.stock ? 999 : 0) : (+p.stock || 0);
+  const lowStock     = !oos && stockNum > 0 && stockNum <= 5;
   const mediaBg      = p.image_url ? 'background:#111827' : `background:${p.bg}`;
+  // Primeras 4 tarjetas: carga eagerly (están above the fold)
+  // El resto: lazy loading con fade-in
+  const loadingAttr  = i < 4 ? 'eager' : 'lazy';
   const mediaContent = p.image_url
-    ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover" alt="${p.title}">`
+    ? `<img src="${p.image_url}" loading="${loadingAttr}" decoding="async" style="width:100%;height:100%;object-fit:cover" alt="${p.title}" class="lazy-img${i >= 4 ? '' : ' loaded'}">`
     : `<div class="product-card__icon">${getIcon(p.icon)}</div>`;
   return `
     <article class="product-card reveal visible${oos ? ' product-card--oos' : ''}" role="listitem" tabindex="0"
@@ -164,8 +209,9 @@ function productCardHTML(p, i) {
         <div class="product-card__media-inner">
           ${mediaContent}
         </div>
-        ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}">${p.badge.label}</span>` : ''}
-        ${oos ? '<div class="product-card__oos">Sin stock</div>' : ''}
+        ${p.badge && !lowStock && !oos ? `<span class="product-card__badge badge--${p.badge.kind}">${p.badge.label}</span>` : ''}
+        ${oos ? '<div class="product-card__oos">Agotado</div>' : ''}
+        ${lowStock ? `<div class="product-card__low-stock">¡Solo quedan ${stockNum}!</div>` : ''}
       </div>
       <div class="product-card__body">
         <span class="product-card__cat">${p.categoryLabel}</span>
@@ -223,8 +269,13 @@ function renderCarouselPage() {
   grid.innerHTML = page.map((p, i) => {
     try { return productCardHTML(p, i); } catch(e) { return ''; }
   }).join('');
-  // Force visibility — belt-and-suspenders for the reveal animation
   grid.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+  // Activar lazy loading en imágenes del grid
+  if (_imgObserver) {
+    grid.querySelectorAll('img.lazy-img[loading="lazy"]').forEach(img => {
+      img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
+    });
+  }
   bindCardClicks(grid);
   updateCarouselUI();
   observeReveal();
@@ -308,7 +359,7 @@ window.addToCartById = function(id) {
   const p = PRODUCTS.find(p => p.id === id);
   if (!p) return;
   if (window.isOutOfStock(p)) {
-    showToast('Sin stock · Este producto no está disponible', 'error');
+    showToast('Producto agotado · No hay unidades disponibles', 'error');
     return;
   }
   addToCart(p);
@@ -408,9 +459,14 @@ function openPdp(id) {
           ${p.oldPrice ? `<span class="price-old">${window.cart.formatPrice(p.oldPrice)}</span>` : ''}
           ${p.oldPrice ? `<span class="pdp-save">Ahorras ${window.cart.formatPrice(p.oldPrice - p.price)}</span>` : ''}
         </div>
-        ${window.isOutOfStock(p)
-          ? `<div class="pdp-stock pdp-stock--oos"><span class="stock-dot stock-dot--oos"></span>Sin stock · No disponible actualmente</div>`
-          : `<div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>`}
+        ${(function() {
+            const _s = typeof p.stock === 'boolean' ? (p.stock ? 999 : 0) : (+p.stock || 0);
+            const _oos = window.isOutOfStock(p);
+            const _low = !_oos && _s > 0 && _s <= 5;
+            if (_oos)  return `<div class="pdp-stock pdp-stock--oos"><span class="stock-dot stock-dot--oos"></span>Agotado · No disponible actualmente</div>`;
+            if (_low)  return `<div class="pdp-stock pdp-stock--low"><span class="stock-dot stock-dot--low"></span>¡Solo quedan <strong>${_s} unidades</strong>! · Envío en 24–48h</div>`;
+            return `<div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>`;
+          })()}
         <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${p.description}</p>
         <div class="pdp-specs">
           ${Object.entries(p.specs || {}).map(([k,v]) => `
@@ -430,12 +486,12 @@ function openPdp(id) {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
             </button>
           </div>
-          <span style="font-size:12px;color:var(--fg-subtle)">Stock: ${typeof p.stock === 'boolean' ? 'Disponible' : p.stock + ' unidades'}</span>
+          <span style="font-size:12px;color:var(--fg-subtle)">${typeof p.stock === 'boolean' ? 'Disponible' : (+p.stock || 0) + ' unidades disponibles'}</span>
         </div>` : ''}
         <div class="pdp-actions">
           <button class="btn btn--primary btn--lg" id="pdp-add-btn" ${window.isOutOfStock(p) ? 'disabled style="opacity:.45;cursor:not-allowed"' : ''}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;flex-shrink:0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-            ${window.isOutOfStock(p) ? 'SIN STOCK' : 'AÑADIR AL CARRITO'}
+            ${window.isOutOfStock(p) ? 'AGOTADO' : 'AÑADIR AL CARRITO'}
             ${!window.isOutOfStock(p) ? '<span style="width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:400;line-height:1;flex-shrink:0">+</span>' : ''}
           </button>
           <button class="btn btn--secondary btn--lg btn--icon" id="pdp-wish-btn" aria-label="Añadir a favoritos" title="Añadir a lista de deseos">
@@ -774,10 +830,25 @@ function initEvents() {
     document.getElementById('svc-dropdown')?.classList.remove('open');
     document.getElementById('svc-dropdown-btn')?.setAttribute('aria-expanded', 'false');
   };
+  window.closeToolsDrop = function() {
+    document.getElementById('tools-dropdown')?.classList.remove('open');
+    document.getElementById('tools-dropdown-btn')?.setAttribute('aria-expanded', 'false');
+  };
+  const toolsBtn  = document.getElementById('tools-dropdown-btn');
+  const toolsMenu = document.getElementById('tools-dropdown');
+  if (toolsBtn && toolsMenu) {
+    toolsBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      window.closeSvcDrop?.(); window.closeCatDrop?.();
+      const open = toolsMenu.classList.toggle('open');
+      toolsBtn.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', window.closeToolsDrop);
+  }
   if (catDropBtn && catDropMenu) {
     catDropBtn.addEventListener('click', e => {
       e.stopPropagation();
-      window.closeSvcDrop?.();
+      window.closeSvcDrop?.(); window.closeToolsDrop?.();
       window.location.href = 'productos.html';
     });
     document.addEventListener('click', window.closeCatDrop);
@@ -901,7 +972,6 @@ function initCartSubscription() {
 // Re-render when DB products load (called by products.js after fetch)
 window._onProductsLoaded = function() {
   renderProducts(typeof activeCategory !== 'undefined' ? activeCategory : 'todos');
-  // Re-try opening a product that was in the URL but couldn't be found before DB loaded
   try {
     const pid = new URLSearchParams(window.location.search).get('product');
     if (pid && $('pdp-overlay') && !$('pdp-overlay').classList.contains('open')) {
@@ -910,14 +980,33 @@ window._onProductsLoaded = function() {
   } catch(e) {}
 };
 
+window._onProductsError = function() {
+  const grid = $('product-grid');
+  if (grid) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--fg-subtle)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;margin:0 auto 12px;display:block"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <p style="margin:0 0 16px;font-size:14px">No se pudieron cargar los productos. Verifica tu conexión.</p>
+      <button class="btn btn--secondary btn--sm" onclick="window.location.reload()">Reintentar</button>
+    </div>`;
+  }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-  renderProducts('todos');
   initNavbarScroll();
   initEvents();
   initCartSubscription();
   observeReveal();
   initNewsletterPopup();
   initCarouselControls();
+
+  if (window._dbProductsReady) {
+    // API respondió antes de que cargara el DOM (cache muy rápida) → renderizar ya
+    renderProducts('todos');
+  } else {
+    // Mostrar skeletons mientras el API responde
+    showSkeletons('product-grid', 4);
+    // _onProductsLoaded se disparará cuando llegue el API
+  }
 
   // Handle ?cat= query param (desde footer u otros links)
   const urlParams = new URLSearchParams(window.location.search);

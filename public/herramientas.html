@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Herramientas — Mercaitech</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <!-- Preload crítico -->
+  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype" crossorigin>
+  <link rel="preload" href="assets/css/tokens.css?v=3" as="style">
+  <link rel="preload" href="assets/css/styles.css?v=4" as="style">
+  <link rel="dns-prefetch" href="//api.mercadopago.com">
+  <link rel="stylesheet" href="assets/css/tokens.css?v=3">
+  <link rel="stylesheet" href="assets/css/styles.css?v=4">
+  <style>
+    /* ── Layout ─────────────────────────────────────────────── */
+    .tools-page { padding-top: calc(var(--nav-h) + 32px); padding-bottom: 80px; min-height: 100vh; }
+    .tools-hero { text-align: center; padding: 40px 0 48px; }
+    .tools-hero__badge { display: inline-flex; align-items: center; gap: 7px; font-size: var(--fs-overline); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mt-cyan-400); background: rgba(31,214,255,.08); border: 1px solid rgba(31,214,255,.2); border-radius: var(--radius-pill); padding: 5px 14px; margin-bottom: 20px; }
+    .tools-hero__q { font-family: var(--font-display); font-weight: 900; font-size: var(--fs-display-lg); line-height: var(--lh-tight); letter-spacing: -0.035em; color: var(--fg); margin-bottom: 6px; }
+    .tools-hero__cta { font-family: var(--font-display); font-weight: 900; font-size: clamp(22px,2.8vw,36px); line-height: var(--lh-tight); letter-spacing: -0.03em; color: var(--mt-cyan-400); margin-bottom: 14px; }
+    .tools-hero__sub { font-size: var(--fs-body-sm); color: var(--fg-subtle); max-width: 460px; margin: 0 auto; line-height: var(--lh-relaxed); }
+
+    /* ── Toolbar ─────────────────────────────────────────────── */
+    .calc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); flex-wrap: wrap; }
+    .calc-tabs { display: flex; gap: 2px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 3px; }
+    .calc-tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 18px; border-radius: var(--radius-sm); font-size: var(--fs-body-sm); font-weight: 600; background: none; border: none; color: var(--fg-subtle); cursor: pointer; transition: all var(--dur-fast) var(--ease-standard); font-family: inherit; }
+    .calc-tab.active { background: var(--bg-elevated); color: var(--fg); box-shadow: var(--shadow-xs); }
+    .calc-tab:not(.active):hover { color: var(--fg-muted); }
+
+    /* ── Section cards ───────────────────────────────────────── */
+    .calc-card { background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-3); }
+    .calc-card__header { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+    .step-badge { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-badge.step-blue  { background: rgba(0,102,255,.12); border: 1px solid rgba(0,102,255,.25); color: #6699ff; }
+    .step-badge.step-cyan  { background: rgba(31,214,255,.12); border: 1px solid rgba(31,214,255,.25); color: var(--mt-cyan-400); }
+    .step-badge.step-green { background: rgba(46,230,166,.12); border: 1px solid rgba(46,230,166,.25); color: var(--mt-green-400); }
+    .step-badge svg { width: 18px; height: 18px; }
+    .calc-card__header-text h3 { font-size: var(--fs-h4); font-weight: 700; color: var(--fg); margin: 0 0 2px; }
+    .calc-card__header-text p { font-size: var(--fs-caption); color: var(--fg-subtle); margin: 0; }
+
+    /* ── Form fields — igual que .profile-field / .profile-input ─ */
+    .calc-grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
+    .calc-grid2 { display: grid; grid-template-columns: repeat(2,1fr); gap: var(--space-4); }
+    @media(max-width:700px){ .calc-grid3,.calc-grid2 { grid-template-columns:1fr; } }
+    .calc-field { display: flex; flex-direction: column; gap: 6px; }
+    .calc-label { font-size: var(--fs-caption); font-weight: 600; color: var(--fg-muted); letter-spacing: .04em; text-transform: uppercase; }
+    .calc-input-wrap { position: relative; }
+    .calc-prefix { position: absolute; top: 50%; left: 14px; transform: translateY(-50%); font-size: 14px; font-weight: 600; color: var(--fg-subtle); pointer-events: none; }
+    .calc-input { width: 100%; box-sizing: border-box; background: var(--bg-elevated); border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px 12px 32px; color: var(--fg); font-family: inherit; font-size: 14px; outline: none; transition: border-color var(--dur-base) var(--ease-standard); }
+    .calc-input:focus { border-color: var(--border-strong); }
+    .calc-input::placeholder { color: var(--fg-subtle); }
+    .calc-input.no-prefix { padding-left: 14px; }
+    .calc-hint { font-size: 11px; color: var(--fg-subtle); }
+
+    /* ── Result panel ─────────────────────────────────────────── */
+    .result-panel { background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: var(--space-5); margin-top: var(--space-4); }
+    .rp-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-3); margin-bottom: 4px; }
+    .big-margen { font-family: var(--font-display); font-weight: 900; font-size: var(--fs-display-xl); letter-spacing: -0.04em; color: var(--fg); line-height: 1; }
+    .big-margen-label { font-size: var(--fs-body-sm); font-weight: 700; margin-top: 6px; }
+    .rp-margen-section { font-size: var(--fs-overline); letter-spacing: 1.5px; text-transform: uppercase; color: var(--fg-subtle); font-weight: 600; margin: 8px 0 var(--space-3); display: flex; align-items: center; gap: 6px; cursor: help; }
+    .rp-right { text-align: right; display: flex; flex-direction: column; gap: var(--space-2); justify-content: center; }
+    .rp-line { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: 0.4px; color: var(--fg-subtle); }
+    .rp-line strong { color: var(--fg); font-size: var(--fs-body-sm); font-weight: 700; letter-spacing: 0; }
+    .rp-divider { height: 1px; background: var(--border); margin: var(--space-4) 0; }
+    .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .mini-card { background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+    .mini-card.highlight { border-color: var(--border-strong); }
+    .mc-label { font-size: var(--fs-overline); letter-spacing: 1px; text-transform: uppercase; color: var(--fg-subtle); margin-bottom: var(--space-2); }
+    .mc-val { font-family: var(--font-display); font-weight: 800; font-size: var(--fs-h3); color: var(--fg); }
+    .mc-sub { font-size: 11px; color: var(--fg-subtle); margin-top: 3px; }
+
+    /* ── Ofertas ─────────────────────────────────────────────── */
+    .oferta-toggle { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: var(--space-4); padding: 10px var(--space-3); background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-md); font-size: var(--fs-caption); font-weight: 600; color: var(--fg-muted); cursor: pointer; transition: background var(--dur-fast); font-family: inherit; text-align: left; }
+    .oferta-toggle:hover { background: var(--bg-raised); color: var(--fg); }
+    .oferta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+    .oferta-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+    .oferta-card.best { border-color: rgba(31,214,255,.25); }
+    .oferta-units { font-size: var(--fs-overline); font-weight: 700; letter-spacing: 1px; color: var(--fg-subtle); margin-bottom: 4px; text-transform: uppercase; }
+    .oferta-badge { font-size: var(--fs-caption); font-weight: 700; color: var(--mt-cyan-400); margin-bottom: var(--space-2); }
+    .oferta-total { font-family: var(--font-display); font-weight: 800; font-size: var(--fs-h2); color: var(--fg); margin-bottom: var(--space-2); }
+    .oferta-divider { height: 1px; background: var(--border); margin: var(--space-2) 0; }
+    .oferta-row { display: flex; justify-content: space-between; font-size: var(--fs-caption); color: var(--fg-muted); margin-bottom: 3px; }
+    .oferta-row strong { color: var(--fg); }
+    .oferta-disc { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 700; background: rgba(46,230,166,.1); color: var(--mt-green-400); padding: 2px 8px; border-radius: var(--radius-pill); }
+
+    /* ── Sliders ─────────────────────────────────────────────── */
+    .slider-group { flex: 1; min-width: 200px; }
+    .slider-label { display: flex; justify-content: space-between; font-size: var(--fs-caption); font-weight: 600; color: var(--fg-muted); margin-bottom: 8px; }
+    .slider-val { font-weight: 700; }
+    .slider-val.cancel { color: #FF5470; }
+    .slider-val.returns { color: var(--fg-muted); }
+    input[type=range] { width: 100%; height: 4px; border-radius: 2px; appearance: none; outline: none; cursor: pointer; }
+    input[type=range].cancel-range { background: linear-gradient(to right,#FF5470 0%,#FF5470 var(--pct,33%),var(--border-strong) var(--pct,33%)); }
+    input[type=range].return-range { background: linear-gradient(to right,var(--mt-ink-300) 0%,var(--mt-ink-300) var(--pct,33%),var(--border-strong) var(--pct,33%)); }
+    input[type=range]::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--fg); border: 2px solid var(--bg-elevated); box-shadow: var(--shadow-sm); }
+
+    /* ── Funnel ──────────────────────────────────────────────── */
+    .funnel-block { display: flex; flex-direction: column; margin: var(--space-4) 0; }
+    .funnel-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 2px; }
+    .funnel-row.blue      { background: rgba(0,102,255,.1); border: 1px solid rgba(0,102,255,.2); }
+    .funnel-row.blue-light{ background: rgba(0,102,255,.06); border: 1px solid rgba(0,102,255,.15); }
+    .funnel-row.green     { background: rgba(46,230,166,.07); border: 1px solid rgba(46,230,166,.2); }
+    .fl-label { font-size: var(--fs-caption); color: var(--fg-muted); margin-bottom: 2px; }
+    .fl-val   { font-size: var(--fs-body); font-weight: 700; color: var(--fg); }
+    .fr-money { font-family: var(--font-display); font-weight: 800; font-size: var(--fs-body); text-align: right; }
+    .fr-money.blue       { color: var(--fg); }
+    .fr-money.blue-light { color: var(--fg-muted); }
+    .fr-money.green      { color: var(--mt-green-400); }
+    .fr-sub { font-size: 11px; color: var(--fg-subtle); text-align: right; margin-top: 2px; }
+    .funnel-pill { display: flex; justify-content: center; margin: 3px 0; }
+    .funnel-pill-inner { font-size: 11px; font-weight: 600; color: var(--fg-subtle); background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 3px 12px; }
+
+    /* ── Metric cards ─────────────────────────────────────────── */
+    .metrics3 { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--space-3); margin-top: var(--space-4); }
+    .metrics4 { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-3); }
+    @media(max-width:700px){ .metrics3,.metrics4 { grid-template-columns: 1fr 1fr; } }
+    .metric-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+    .metric-card.danger { border-color: rgba(255,84,112,.2); background: rgba(255,84,112,.05); }
+    .mc2-label { font-size: var(--fs-overline); letter-spacing: 1px; text-transform: uppercase; color: var(--fg-subtle); margin-bottom: var(--space-2); }
+    .mc2-val   { font-family: var(--font-display); font-weight: 800; font-size: var(--fs-h3); color: var(--fg); }
+    .mc2-sub   { font-size: 11px; color: var(--fg-subtle); margin-top: 3px; }
+
+    /* ── Resumen box ─────────────────────────────────────────── */
+    .resumen-box { background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-4); }
+    .resumen-header { font-size: var(--fs-overline); letter-spacing: 1.5px; text-transform: uppercase; color: var(--fg-subtle); font-weight: 700; margin-bottom: var(--space-2); }
+    .resumen-body { font-size: var(--fs-body-sm); color: var(--fg-muted); line-height: var(--lh-normal); }
+    .resumen-body strong { color: var(--fg); }
+
+    /* ── Pauta grid ──────────────────────────────────────────── */
+    .pauta-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
+    @media(max-width:700px){ .pauta-grid { grid-template-columns:1fr; } }
+    .pauta-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); position: relative; transition: border-color var(--dur-fast), box-shadow var(--dur-fast); }
+    .pauta-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+    .pauta-card.ideal { border-color: rgba(31,214,255,.25); box-shadow: 0 0 0 1px rgba(31,214,255,.1); }
+    .ideal-badge { position: absolute; top: 0; right: 14px; font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; background: var(--mt-cyan-400); color: var(--mt-ink-950); padding: 4px 10px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+    .pc-pct    { font-size: var(--fs-overline); letter-spacing: 1.5px; text-transform: uppercase; color: var(--fg-subtle); margin-bottom: var(--space-2); margin-top: 4px; }
+    .pc-budget { font-family: var(--font-display); font-weight: 800; font-size: var(--fs-h2); margin-bottom: var(--space-3); }
+    .pc-divider { height: 1px; background: var(--border); margin: var(--space-3) 0; }
+    .pc-row-label { font-size: var(--fs-overline); color: var(--fg-subtle); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .5px; }
+    .pc-row-val { font-size: var(--fs-body); font-weight: 700; color: var(--fg); margin-bottom: 4px; }
+    .pc-hint { font-size: 11px; color: var(--fg-subtle); }
+    .cyan-val  { color: var(--mt-cyan-400); }
+    .blue-val  { color: var(--accent); }
+    .green-val { color: var(--mt-green-400); }
+
+    /* ── CPA section ─────────────────────────────────────────── */
+    .cpa-section { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-3); }
+    .cpa-label { font-size: var(--fs-body-sm); font-weight: 700; color: var(--fg); margin-bottom: var(--space-3); }
+    .cpa-link { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--space-3); font-size: var(--fs-body-sm); font-weight: 600; color: var(--fg-muted); text-decoration: none; transition: color var(--dur-fast); }
+    .cpa-link:hover { color: var(--fg); }
+
+    /* ── Rules ───────────────────────────────────────────────── */
+    .rules-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--space-3); }
+    @media(max-width:700px){ .rules-grid { grid-template-columns:1fr; } }
+    .rule-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+    .rc-title { font-size: var(--fs-body-sm); font-weight: 700; color: var(--fg); margin-bottom: var(--space-1); }
+    .rc-body  { font-size: var(--fs-caption); color: var(--fg-muted); line-height: var(--lh-normal); }
+
+    /* ── Scenarios ────────────────────────────────────────────── */
+    .scenario-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 12px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius-pill); font-size: var(--fs-caption); font-weight: 600; color: var(--fg-muted); cursor: pointer; transition: all var(--dur-fast); }
+    .scenario-chip:hover { border-color: var(--border-strong); color: var(--fg); }
+    .scenario-chip .del { font-size: 14px; line-height: 1; color: var(--fg-subtle); margin-left: 2px; cursor: pointer; padding: 0 2px; }
+    .scenario-chip .del:hover { color: #FF5470; }
+    .sessions-actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+    .sess-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-md); font-size: var(--fs-caption); font-weight: 600; border: 1.5px solid var(--border); background: transparent; color: var(--fg-muted); cursor: pointer; transition: all var(--dur-fast); font-family: inherit; white-space: nowrap; }
+    .sess-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
+    .sess-btn:hover { border-color: var(--border-strong); color: var(--fg); }
+    .sess-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .sess-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    /* ── Save modal ──────────────────────────────────────────── */
+    .save-overlay { position: fixed; inset: 0; background: var(--bg-overlay); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .save-box { background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: var(--space-5); width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); }
+    .save-box h3 { font-size: var(--fs-h4); font-weight: 700; color: var(--fg); margin: 0 0 6px; }
+    .save-box p  { font-size: var(--fs-body-sm); color: var(--fg-muted); margin: 0 0 var(--space-4); }
+    .save-input { width: 100%; box-sizing: border-box; padding: 12px 14px; background: var(--bg-elevated); border: 1.5px solid var(--border); border-radius: var(--radius-md); font-size: 14px; color: var(--fg); font-family: inherit; outline: none; transition: border-color var(--dur-base); }
+    .save-input:focus { border-color: var(--border-strong); }
+    .save-actions { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
+
+    /* ── Veredicto ───────────────────────────────────────────── */
+    .veredicto { border-radius: var(--radius-md); padding: var(--space-4) var(--space-5); margin-top: var(--space-4); display: flex; gap: var(--space-4); align-items: flex-start; }
+    .veredicto.verde    { background: rgba(46,230,166,.07); border: 1px solid rgba(46,230,166,.2); }
+    .veredicto.amarillo { background: var(--accent-soft);   border: 1px solid rgba(0,102,255,.2); }
+    .veredicto.rojo     { background: rgba(255,84,112,.07); border: 1px solid rgba(255,84,112,.2); }
+    .veredicto-icon  { font-size: 26px; line-height: 1; }
+    .veredicto-title { font-size: var(--fs-body); font-weight: 700; color: var(--fg); margin-bottom: 4px; }
+    .veredicto-sub   { font-size: var(--fs-body-sm); color: var(--fg-muted); }
+
+    /* ── Pending box ─────────────────────────────────────────── */
+    .pending-box { background: var(--bg-elevated); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); padding: var(--space-5) var(--space-5); text-align: center; }
+    .pending-title { font-size: var(--fs-caption); font-weight: 700; color: var(--fg-subtle); margin-bottom: var(--space-2); letter-spacing: 0.5px; }
+    .pending-item  { font-size: var(--fs-body-sm); color: var(--fg-muted); margin-bottom: 4px; }
+    .pending-cta   { font-size: var(--fs-caption); color: var(--fg-subtle); margin-top: var(--space-3); }
+
+    /* ── Misc ─────────────────────────────────────────────────── */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .pedidos-field { max-width: 180px; }
+    .calc-toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(16px); background: var(--bg-raised); border: 1px solid var(--border-strong); color: var(--fg); padding: 10px 20px; border-radius: var(--radius-md); font-size: var(--fs-body-sm); font-weight: 600; z-index: 9999; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-md); }
+    .calc-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar" role="navigation" aria-label="Navegación principal">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__brand" aria-label="Mercaitech — inicio">
+      <img src="assets/logo.png" alt="Mercaitech" class="navbar__logo">
+    </a>
+    <ul class="navbar__links" role="list">
+      <li><a href="index.html" class="navbar__link">Inicio</a></li>
+      <li class="navbar__dropdown-wrap" id="cat-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn" id="cat-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Productos
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="cat-dropdown" role="menu">
+          <a href="productos.html" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Todos los productos</a>
+          <a href="productos.html#tecnologia" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M2 15h2M2 9h2M22 15h-2M22 9h-2M15 22v-2M9 22v-2"/></svg>Tecnología</a>
+          <a href="productos.html#hogar" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Hogar</a>
+          <a href="productos.html#moda" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>Moda</a>
+          <a href="productos.html#deportes" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 22H18a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v3"/><polyline points="14 2 14 8 20 8"/><path d="M4.42 15.61a2.1 2.1 0 1 1 2.97 2.97L3 22l-1-4z"/></svg>Deportes</a>
+          <div class="navbar__dropdown-divider"></div>
+          <a href="index.html#ofertas" class="navbar__dropdown-item navbar__dropdown-item--highlight"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Ofertas del día</a>
+        </div>
+      </li>
+      <li class="navbar__dropdown-wrap" id="svc-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn" id="svc-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Servicios
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="svc-dropdown" role="menu">
+          <a href="index.html#servicios" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Desarrollo a Medida</a>
+          <a href="index.html#servicios" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Consultoría Estratégica</a>
+          <a href="index.html#servicios" class="navbar__dropdown-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>Automatización IA</a>
+          <div class="navbar__dropdown-divider"></div>
+          <a href="contacto.html" class="navbar__dropdown-item navbar__dropdown-item--highlight"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Contáctanos</a>
+        </div>
+      </li>
+      <li><a href="herramientas.html" class="navbar__link active">Herramientas</a></li>
+      <li><a href="contacto.html" class="navbar__link">Contáctanos</a></li>
+    </ul>
+    <div class="navbar__right">
+      <div class="navbar__search">
+        <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" class="navbar__search-input" placeholder="Buscar productos…" id="navbar-search-input" aria-label="Buscar productos">
+      </div>
+      <div class="navbar__actions">
+        <button class="icon-btn" id="search-toggle-btn" aria-label="Buscar">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <button class="icon-btn" id="account-btn" aria-label="Mi cuenta">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+        <button class="icon-btn" id="cart-btn" aria-label="Carrito" style="position:relative">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Cart drawer -->
+<div class="cart-scrim" id="cart-scrim"></div>
+<aside class="cart-drawer" id="cart-drawer" role="dialog" aria-label="Carrito" aria-modal="true">
+  <header class="cart-drawer__head">
+    <h2 class="cart-drawer__title">Tu carrito <span class="text-subtle" id="cart-count-label">(0)</span></h2>
+    <button class="icon-btn" id="close-cart-btn" aria-label="Cerrar carrito">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </header>
+  <div class="cart-drawer__items" id="cart-items"></div>
+  <footer class="cart-drawer__foot" id="cart-footer">
+    <div class="cart-totals" id="cart-totals"></div>
+    <button class="btn btn--primary btn--lg btn--full" id="checkout-btn" disabled onclick="window.location.href='checkout.html'">
+      FINALIZAR COMPRA
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
+  </footer>
+</aside>
+
+<!-- MAIN -->
+<main class="tools-page">
+  <div class="container">
+
+    <!-- Hero -->
+    <div class="tools-hero">
+      <div class="tools-hero__badge">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/></svg>
+        Herramientas Mercaitech · Dropshipping Colombia · COD
+      </div>
+      <h1 class="tools-hero__q">¿Es rentable tu producto?</h1>
+      <p class="tools-hero__cta">Calcula todo en 3 pasos.</p>
+      <p class="tools-hero__sub">Analiza costos, cancelaciones, pauta y margen real en segundos</p>
+    </div>
+
+    <!-- Toolbar: tabs izquierda · escenarios derecha -->
+    <div class="calc-toolbar" id="sessions-bar">
+      <div class="calc-tabs">
+        <button class="calc-tab active" data-tab="calculadora" onclick="switchTab('calculadora')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+          Calculadora
+        </button>
+        <button class="calc-tab" data-tab="real" onclick="switchTab('real')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Caso Real
+        </button>
+      </div>
+      <div class="sessions-actions">
+        <button class="sess-btn" id="btn-new" onclick="newScenario()">+ Nuevo</button>
+        <button class="sess-btn primary" id="btn-save" onclick="saveSessionPrompt()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Guardar escenario
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: CALCULADORA ═══ -->
+    <div id="tab-calculadora" class="tab-content active">
+
+      <!-- PASO 1 -->
+      <div class="calc-card">
+        <div class="calc-card__header">
+          <div class="step-badge step-blue">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M16 14h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M16 18h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+          </div>
+          <div class="calc-card__header-text">
+            <h3>Costeo del Producto</h3>
+            <p>Paso 1 · Precio de venta, producto y flete</p>
+          </div>
+        </div>
+        <div class="calc-grid3">
+          <div class="calc-field">
+            <div class="calc-label">💰 Costo Producto</div>
+            <div class="calc-input-wrap">
+              <span class="calc-prefix">$</span>
+              <input type="text" inputmode="numeric" id="costoProd" class="calc-input" placeholder="Ej: 20.000" oninput="fmtInput(this);calcAll()">
+            </div>
+            <div class="calc-hint">Lo que pagas al proveedor</div>
+          </div>
+          <div class="calc-field">
+            <div class="calc-label">🚚 Flete Promedio</div>
+            <div class="calc-input-wrap">
+              <span class="calc-prefix">$</span>
+              <input type="text" inputmode="numeric" id="flete" class="calc-input" placeholder="Ej: 14.000" oninput="fmtInput(this);calcAll()">
+            </div>
+            <div class="calc-hint">Aprox. $18.000–$20.000</div>
+          </div>
+          <div class="calc-field">
+            <div class="calc-label">🏷️ Precio de Venta</div>
+            <div class="calc-input-wrap">
+              <span class="calc-prefix">$</span>
+              <input type="text" inputmode="numeric" id="precioVenta" class="calc-input" placeholder="Ej: 80.000" oninput="fmtInput(this);calcAll()">
+            </div>
+            <div class="calc-hint">¿A cuánto lo vendes?</div>
+          </div>
+        </div>
+        <div class="result-panel" id="p1result">
+          <div class="rp-header">
+            <div>
+              <div class="big-margen" id="margenBrutoPct">—</div>
+              <div class="big-margen-label" id="margenBrutoLabel" style="color:var(--fg-subtle)">Ingresa los datos arriba</div>
+            </div>
+            <div class="rp-right">
+              <div class="rp-line">COSTO TOTAL: <strong id="costoTotalP1">$ —</strong></div>
+              <div class="rp-line">GANANCIA POR UNIDAD: <strong id="gananciaPorUnidad" style="color:var(--mt-green-400)">$ —</strong></div>
+            </div>
+          </div>
+          <div class="rp-margen-section">TU MARGEN BRUTO <span title="Porcentaje de ganancia antes de descontar pauta y operación">ⓘ</span></div>
+          <div class="rp-divider"></div>
+          <div class="mini-grid">
+            <div class="mini-card">
+              <div class="mc-label">PRECIO MÍNIMO (50%)</div>
+              <div class="mc-val" id="precioMin">$ —</div>
+              <div class="mc-sub">Margen bruto del 50%</div>
+            </div>
+            <div class="mini-card highlight">
+              <div class="mc-label">PRECIO ÓPTIMO (60%) ⭐</div>
+              <div class="mc-val" id="precioOpt" style="color:var(--mt-cyan-400)">$ —</div>
+              <div class="mc-sub">Margen bruto del 60%</div>
+            </div>
+          </div>
+          <button class="oferta-toggle" id="oferta-btn" onclick="toggleOfertas(this)">
+            🎁 VER → OFERTAS DE CANTIDAD SUGERIDAS <span id="oferta-arrow">▼</span>
+          </button>
+          <div id="ofertasContent" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- PASO 2 -->
+      <div class="calc-card">
+        <div class="calc-card__header">
+          <div class="step-badge step-cyan">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="calc-card__header-text">
+            <h3>Simulación de Ventas</h3>
+            <p>Paso 2 · Cancelaciones, devoluciones y margen bruto real</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px">
+          <div class="calc-field pedidos-field">
+            <div class="calc-label">📦 Pedidos / Día</div>
+            <div class="calc-input-wrap">
+              <input type="number" id="pedidosDia" class="calc-input no-prefix" value="10" min="1" oninput="calcAll()">
+            </div>
+          </div>
+          <div class="slider-group" style="flex:1;min-width:200px">
+            <div class="slider-label">
+              <span>🔴 % Cancelaciones</span>
+              <span class="slider-val cancel" id="cancelVal">20%</span>
+            </div>
+            <input type="range" id="cancelRange" class="cancel-range" min="0" max="60" value="20" oninput="updateSliders()">
+          </div>
+          <div class="slider-group" style="flex:1;min-width:200px">
+            <div class="slider-label">
+              <span>↩️ % Devoluciones</span>
+              <span class="slider-val returns" id="devVal">20%</span>
+            </div>
+            <input type="range" id="devRange" class="return-range" min="0" max="60" value="20" oninput="updateSliders()">
+          </div>
+        </div>
+        <div id="funnelSection"></div>
+        <div class="metrics3" id="metrics3"></div>
+      </div>
+
+      <!-- PASO 3 -->
+      <div class="calc-card">
+        <div class="calc-card__header">
+          <div class="step-badge step-green">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <div class="calc-card__header-text">
+            <h3>Calculadora de Pauta</h3>
+            <p>Paso 3 · CPA ideal y utilidad operacional</p>
+          </div>
+        </div>
+        <div class="resumen-box" id="resumenBox"><span style="color:var(--fg-subtle)">Completa el paso 1 para ver el resumen...</span></div>
+        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--fg-subtle);margin-bottom:14px">🎯 Presupuesto de pauta sobre el margen bruto</div>
+        <div class="pauta-grid" id="pautaGrid"></div>
+        <div class="cpa-section">
+          <div class="cpa-label">📌 ¿Cuál es tu CPA actual?</div>
+          <div class="calc-input-wrap" style="max-width:260px">
+            <span class="calc-prefix">$</span>
+            <input type="text" inputmode="numeric" id="cpaActual" class="calc-input" placeholder="Ej: 8.000" oninput="fmtInput(this);calcAll()">
+          </div>
+          <div class="calc-hint" style="margin-top:6px">Costo por adquisición en tu plataforma de pauta</div>
+          <a href="#" class="cpa-link" onclick="switchTab('real');return false;">📊 ¿Tengo datos reales? Ir a Caso Real →</a>
+        </div>
+      </div>
+
+      <!-- Reglas de oro -->
+      <div class="calc-card">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mt-cyan-400);font-weight:700;margin-bottom:16px">🏅 Reglas de oro</div>
+        <div class="rules-grid">
+          <div class="rule-card">
+            <div class="rc-title">🎯 Regla del 50%</div>
+            <div class="rc-body">Costo total = máximo 50% del precio de venta.</div>
+          </div>
+          <div class="rule-card">
+            <div class="rc-title">⭐ Regla del 40%</div>
+            <div class="rc-body">Costo total = 40% del precio → margen del 60%.</div>
+          </div>
+          <div class="rule-card">
+            <div class="rc-title">🇨🇴 Regla del 35%</div>
+            <div class="rc-body">Pauta = máximo 35% del margen bruto real.</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-calculadora -->
+
+    <!-- ═══ TAB: REAL ═══ -->
+    <div id="tab-real" class="tab-content">
+
+      <div class="calc-card">
+        <div class="calc-card__header">
+          <div class="step-badge step-blue">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <div class="calc-card__header-text"><h3>Tu Producto</h3><p>Paso 1 · Precio, costo y flete</p></div>
+        </div>
+        <div class="calc-grid3">
+          <div class="calc-field">
+            <div class="calc-label">🏷️ Precio de Venta</div>
+            <div class="calc-input-wrap"><span class="calc-prefix">$</span><input type="text" inputmode="numeric" id="r_precio" class="calc-input" placeholder="Ej: 80.000" oninput="fmtInput(this);calcReal()"></div>
+          </div>
+          <div class="calc-field">
+            <div class="calc-label">💰 Costo Producto</div>
+            <div class="calc-input-wrap"><span class="calc-prefix">$</span><input type="text" inputmode="numeric" id="r_costo" class="calc-input" placeholder="Ej: 20.000" oninput="fmtInput(this);calcReal()"></div>
+          </div>
+          <div class="calc-field">
+            <div class="calc-label">🚚 Flete Promedio</div>
+            <div class="calc-input-wrap"><span class="calc-prefix">$</span><input type="text" inputmode="numeric" id="r_flete" class="calc-input" placeholder="Ej: 14.000" oninput="fmtInput(this);calcReal()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="calc-card">
+        <div class="calc-card__header">
+          <div class="step-badge step-cyan">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          </div>
+          <div class="calc-card__header-text"><h3>Tu Campaña Real</h3><p>Paso 2 · Inversión, pedidos y días</p></div>
+        </div>
+        <div class="calc-grid3" style="margin-bottom:20px">
+          <div class="calc-field">
+            <div class="calc-label">💸 Inversión en Pauta</div>
+            <div class="calc-input-wrap"><span class="calc-prefix">$</span><input type="text" inputmode="numeric" id="r_inversion" class="calc-input" placeholder="200.000" oninput="fmtInput(this);calcReal()"></div>
+            <div class="calc-hint">Total invertido en ese período</div>
+          </div>
+          <div class="calc-field">
+            <div class="calc-label">📦 Pedidos Totales</div>
+            <div class="calc-input-wrap"><input type="number" id="r_pedidos" class="calc-input no-prefix" placeholder="25" oninput="calcReal()"></div>
+            <div class="calc-hint">Pedidos recibidos en ese período</div>
+          </div>
+          <div class="calc-field">
+            <div class="calc-label">📅 Días de Campaña</div>
+            <div class="calc-input-wrap"><input type="number" id="r_dias" class="calc-input no-prefix" placeholder="7" oninput="calcReal()"></div>
+            <div class="calc-hint">¿En cuántos días fue eso?</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:20px">
+          <div class="slider-group" style="flex:1;min-width:200px">
+            <div class="slider-label"><span>📵 % Cancelaciones</span><span class="slider-val cancel" id="r_cancelVal">20%</span></div>
+            <input type="range" id="r_cancelRange" class="cancel-range" min="0" max="60" value="20" oninput="updateSlidersReal()">
+          </div>
+          <div class="slider-group" style="flex:1;min-width:200px">
+            <div class="slider-label"><span>↩️ % Devoluciones</span><span class="slider-val returns" id="r_devVal">20%</span></div>
+            <input type="range" id="r_devRange" class="return-range" min="0" max="60" value="20" oninput="updateSlidersReal()">
+          </div>
+        </div>
+        <div id="r_pending">
+          <div class="pending-box">
+            <div class="pending-title">Campos pendientes:</div>
+            <div class="pending-item">💸 Inversión en pauta</div>
+            <div class="pending-item">📦 Pedidos totales</div>
+            <div class="pending-cta">⛔ Completa todos los campos para ver los resultados</div>
+          </div>
+        </div>
+        <div id="r_results" style="display:none">
+          <div class="resumen-box" id="r_resumen"></div>
+          <div id="r_funnel"></div>
+          <div id="r_metrics"></div>
+          <div id="r_veredicto"></div>
+        </div>
+      </div>
+    </div><!-- /tab-real -->
+
+  </div><!-- /container -->
+</main>
+
+<!-- PDP Modal -->
+<div class="pdp-overlay" id="pdp-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalle de producto">
+  <div class="pdp-modal" id="pdp-modal">
+    <div class="pdp-modal__header">
+      <button class="btn btn--secondary btn--sm" id="pdp-close-btn">← Volver a herramientas</button>
+      <button class="icon-btn" id="pdp-x-btn" aria-label="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="pdp-modal__body"><div id="pdp-content"></div></div>
+  </div>
+</div>
+<script>
+'use strict';
+(function pdpModule() {
+  const _COP = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(n);
+  function _bvp(url) {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const vi = url.match(/vimeo\.com\/(\d+)/);
+    if (yt) return `<iframe src="https://www.youtube.com/embed/${yt[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+    if (vi) return `<iframe src="https://player.vimeo.com/video/${vi[1]}?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen style="position:absolute;inset:0;border-radius:inherit"></iframe>`;
+    return `<video src="${url}" controls autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit"></video>`;
+  }
+  function _bvt(url) {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const ov = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,0,0,.32)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,255,255,.95)" style="width:26px;height:26px"><polygon points="5 3 19 12 5 21 5 3"/></svg><span style="font-size:9px;font-weight:700;color:rgba(255,255,255,.9);text-transform:uppercase">Video</span></div>`;
+    if (yt) return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0"><img src="https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" alt="Video" loading="lazy">${ov}</div>`;
+    return `<div class="pdp-thumb" data-video="${url}" style="position:relative;background:#111;overflow:hidden;border-color:rgba(31,214,255,.35)" tabindex="0"><video src="${url}#t=0.5" muted preload="metadata" playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none"></video>${ov}</div>`;
+  }
+  let _qty = 1;
+  window.openPdp = function(id) {
+    const p = (window.PRODUCTS||[]).find(x => x.id === id) || (window.cart?.items||[]).find(x => x.id === id);
+    if (!p) return;
+    _qty = 1;
+    const oos = window.isOutOfStock ? window.isOutOfStock(p) : false;
+    const _imgs = Array.isArray(p.images) && p.images.length > 0 ? p.images : null;
+    const _vids = Array.isArray(p.video_urls) && p.video_urls.length > 0 ? p.video_urls : (p.video_url ? [p.video_url] : []);
+    const _vid = _vids[0] || null;
+    const _main = _imgs ? _imgs[0].url : null;
+    const _vt = _vids.map(v => _bvt(v)).join('');
+    const bg = p.bg || '#0B1124';
+    const ic = typeof window.getIcon === 'function' ? window.getIcon(p.icon) : '';
+    document.getElementById('pdp-content').innerHTML = `
+      <div class="pdp-grid">
+        <div class="pdp-gallery">
+          <div class="pdp-gallery__main" id="pdp-main-media" style="${_main?'background:#111827':_vid&&!_main?'background:#000':'background:'+bg}">
+            ${_main||(_vid&&!_main)?'':'<div class="pdp-gallery__glow"></div>'}
+            ${_vid&&!_main?_bvp(_vid):_main?`<img src="${_main}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`:ic?`<div class="pdp-gallery__icon">${ic}</div>`:''}
+            ${p.badge?`<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2;position:absolute;top:12px;left:12px">${p.badge.label}</span>`:''}
+          </div>
+          <div class="pdp-gallery__thumbs">
+            ${_imgs?_imgs.map((img,i)=>`<div class="pdp-thumb ${i===0?'active':''}" data-img="${img.url}" style="background:#111827;overflow:hidden" tabindex="0"><img src="${img.url}" style="width:100%;height:100%;object-fit:cover" alt="${img.alt||p.title}"></div>`).join('')+_vt:_vid?_vt:[0,1,2,3].map(i=>`<div class="pdp-thumb ${i===0?'active':''}" style="background:${bg}" tabindex="0"><div style="width:32%;height:32%;color:rgba(255,255,255,.55)">${ic}</div></div>`).join('')}
+          </div>
+        </div>
+        <div class="pdp-info">
+          <span class="overline text-cyan">${p.categoryLabel||''}</span>
+          <h2 class="pdp-info__title">${p.title}</h2>
+          <div class="pdp-info__rating"><span class="pdp-info__rating-stars">★★★★${(p.rating||0)>=4.8?'★':'½'}</span><span>${p.rating||0} · ${(p.reviews||0).toLocaleString('es')} reseñas</span></div>
+          <div class="pdp-info__prices">
+            <span class="pdp-price-main">${_COP(p.price)}</span>
+            ${p.oldPrice?`<span class="price-old">${_COP(p.oldPrice)}</span>`:''}
+            ${p.oldPrice?`<span class="pdp-save">Ahorras ${_COP(p.oldPrice-p.price)}</span>`:''}
+          </div>
+          ${oos?`<div class="pdp-stock pdp-stock--oos"><span class="stock-dot stock-dot--oos"></span>Sin stock</div>`:`<div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>`}
+          <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${p.description||''}</p>
+          <div class="pdp-specs">${Object.entries(p.specs||{}).map(([k,v])=>`<div class="pdp-spec"><span class="pdp-spec-label">${k}</span><span class="pdp-spec-value">${v}</span></div>`).join('')}</div>
+          ${!oos?`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="pdp-qty">
+              <button class="pdp-qty__btn" id="pdp-minus"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg></button>
+              <span class="pdp-qty__val" id="pdp-qty-val">1</span>
+              <button class="pdp-qty__btn" id="pdp-plus"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+            </div>
+            <span style="font-size:12px;color:var(--fg-subtle)">Stock: ${typeof p.stock==='boolean'?'Disponible':p.stock+' unidades'}</span>
+          </div>`:''}
+          <div class="pdp-actions">
+            <button class="btn btn--primary btn--lg" id="pdp-add-btn" ${oos?'disabled style="opacity:.45;cursor:not-allowed"':''}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              ${oos?'SIN STOCK':'AÑADIR AL CARRITO'}
+            </button>
+            <button class="btn btn--secondary btn--lg btn--icon" id="pdp-wish-btn" aria-label="Lista de deseos" title="Añadir a lista de deseos">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            </button>
+          </div>
+          <div class="pdp-trust">
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Compra segura</div>
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Envío rápido</div>
+            <div class="pdp-trust__item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>30 días devolución</div>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('pdp-minus')?.addEventListener('click',()=>{if(_qty>1){_qty--;document.getElementById('pdp-qty-val').textContent=_qty;}});
+    document.getElementById('pdp-plus')?.addEventListener('click',()=>{const _max=MercaitechCart.maxQty(p?.stock);if(_qty<_max){_qty++;document.getElementById('pdp-qty-val').textContent=_qty;}});
+    document.getElementById('pdp-add-btn').addEventListener('click',()=>{
+      if(oos)return;
+      for(let i=0;i<_qty;i++) window.cart.add(p);
+      window.closePdp();
+      if (typeof window.openCart === 'function') window.openCart();
+    });
+    const _wishBtn = document.getElementById('pdp-wish-btn');
+    if (_wishBtn) {
+      const _wlKey = () => { try { const u=JSON.parse(localStorage.getItem('mt_user')||'null'); return u?.id?'mt_wishlist_u'+u.id:'mt_wishlist_guest'; } catch { return 'mt_wishlist_guest'; } };
+      const _getWL = () => { try { return JSON.parse(localStorage.getItem(_wlKey())||'[]'); } catch { return []; } };
+      const _syncWish = () => {
+        const w = _getWL().some(i => i.id === p.id);
+        _wishBtn.style.color = w ? '#FF5470' : '';
+        _wishBtn.style.borderColor = w ? 'rgba(255,84,112,.5)' : '';
+        _wishBtn.querySelector('svg').style.fill = w ? '#FF5470' : 'none';
+        _wishBtn.title = w ? 'En tu lista de deseos' : 'Añadir a lista de deseos';
+      };
+      _syncWish();
+      _wishBtn.addEventListener('click', () => {
+        const list = _getWL();
+        const idx = list.findIndex(i => i.id === p.id);
+        if (idx >= 0) { list.splice(idx, 1); }
+        else { const { image_url, images, video_url, video_urls, ...slim } = p; list.push(slim); }
+        try { localStorage.setItem(_wlKey(), JSON.stringify(list)); } catch(e) { return; }
+        _syncWish();
+      });
+    }
+    document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(t=>{
+      t.addEventListener('click',()=>{
+        document.getElementById('pdp-content').querySelectorAll('.pdp-thumb').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        const mm=document.getElementById('pdp-main-media');
+        if(mm){
+          mm.querySelectorAll('video').forEach(v=>{try{v.pause();v.src='';}catch(e){}});
+          mm.querySelectorAll('iframe').forEach(f=>{try{f.src='';}catch(e){}});
+          if(t.dataset.video){mm.style.background='#000';mm.innerHTML=_bvp(t.dataset.video);}
+          else if(t.dataset.img){mm.style.background='#111827';mm.innerHTML=`<img src="${t.dataset.img}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`;}
+        }
+      });
+    });
+    const ov=document.getElementById('pdp-overlay');
+    ov.classList.add('open');ov.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  };
+  window.closePdp = function() {
+    const c=document.getElementById('pdp-content');
+    if(c){c.querySelectorAll('video').forEach(v=>{try{v.pause();v.src='';v.load();}catch(e){}});c.querySelectorAll('iframe').forEach(f=>{try{f.src='';}catch(e){}});}
+    const ov=document.getElementById('pdp-overlay');
+    ov.classList.remove('open');ov.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+  };
+  window._openProduct = id => window.openPdp(id);
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('pdp-close-btn').addEventListener('click',window.closePdp);
+    document.getElementById('pdp-x-btn').addEventListener('click',window.closePdp);
+    document.getElementById('pdp-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('pdp-overlay'))window.closePdp();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('pdp-overlay').classList.contains('open'))window.closePdp();});
+  });
+})();
+</script>
+
+<!-- Save modal -->
+<div class="save-overlay" id="saveModal" style="display:none" onclick="if(event.target===this)closeSaveModal()">
+  <div class="save-box">
+    <h3>Guardar escenario</h3>
+    <p>Asigna un nombre para comparar este escenario con otros</p>
+    <input type="text" id="scenarioNameInput" class="save-input" placeholder='Ej: "Producto A – precio alto"' onkeydown="if(event.key==='Enter')confirmSave()">
+    <div class="save-actions">
+      <button class="btn btn--secondary" onclick="closeSaveModal()">Cancelar</button>
+      <button class="btn btn--primary" id="btn-confirm-save" onclick="confirmSave()">Guardar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="calc-toast" id="calc-toast"></div>
+
+<!-- Search overlay -->
+<div class="search-overlay" id="search-overlay" role="search"><div class="search-box"><div class="search-box__input-wrap"><svg class="search-box__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="search-box__input" id="search-input" placeholder="Buscar productos, marcas, categorías..." aria-label="Buscar productos"><button class="search-box__close icon-btn icon-btn--danger" id="search-close-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="search-results" id="search-results"></div></div></div>
+<script src="assets/js/search.js?v=10"></script>
+
+<!-- WhatsApp -->
+<div class="wa-widget" id="wa-widget" aria-label="Chat WhatsApp" role="dialog" style="display:none">
+  <div class="wa-widget__head"><div class="wa-widget__avatar">M<span class="wa-widget__online-dot"></span></div><div><div class="wa-widget__name">Mercaitech</div><div class="wa-widget__status">En línea · Asesor disponible</div></div></div>
+  <div class="wa-widget__body"><div class="wa-widget__bubble">¡Hola! 👋 ¿Necesitas asesoría sobre dropshipping o rentabilidad?</div></div>
+  <a href="https://wa.me/573103003738?text=Hola!%20Quiero%20asesor%C3%ADa%20sobre%20dropshipping%20con%20Mercaitech%20%F0%9F%9A%80" target="_blank" rel="noopener" class="wa-widget__cta">Iniciar conversación →</a>
+</div>
+<button class="whatsapp-float" id="wa-fab" aria-label="Abrir chat de WhatsApp" aria-expanded="false">
+  <svg class="whatsapp-float__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+  <span class="whatsapp-float__dot"></span>
+</button>
+
+<script src="assets/js/products.js?v=10"></script>
+<script src="assets/js/cart.js?v=12"></script>
+<script src="assets/js/auth.js?v=11"></script>
+<script>
+'use strict';
+
+// ── Navbar scroll ──────────────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+// ── Cart drawer ────────────────────────────────────────────────────────────
+const COP = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(n);
+function updateBadge() {
+  const c = window.cart.count;
+  const b = document.getElementById('cart-badge');
+  const label = document.getElementById('cart-count-label');
+  if (b) { b.textContent = c; b.style.display = c > 0 ? 'flex' : 'none'; }
+  if (label) label.textContent = '(' + c + ')';
+}
+function renderCartItems() {
+  const items = document.getElementById('cart-items');
+  const totals = document.getElementById('cart-totals');
+  const btn = document.getElementById('checkout-btn');
+  updateBadge();
+  if (window.cart.isEmpty) {
+    items.innerHTML = '<div class="cart-empty"><div class="cart-empty__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div><p class="cart-empty__title">Tu carrito está vacío</p><p class="cart-empty__sub">Descubre lo que tenemos para ti</p><a href="productos.html" class="btn btn--primary btn--sm" style="margin-top:6px;text-decoration:none"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Explorar productos</a></div>';
+    totals.innerHTML = ''; btn.disabled = true; return;
+  }
+  items.innerHTML = window.cart.items.map(item => {
+    const full = (window.PRODUCTS||[]).find(p=>p.id===item.id);
+    const img = full?.image_url || item.image_url;
+    const atMax = isFinite(MercaitechCart.maxQty(item.stock)) && item.qty >= MercaitechCart.maxQty(item.stock);
+    return `<div class="cart-line" data-pid="${item.id}">
+      <div class="cart-line__img" style="${img?'background:#111827':'background:'+(item.bg||'#0B1124')};cursor:pointer" data-action="open">${img?`<img src="${img}" alt="${item.title}">`:''}
+      </div>
+      <div class="cart-line__info">
+        <div class="cart-line__name" style="cursor:pointer" data-action="open">${item.title}</div>
+        <div class="cart-line__meta">${item.categoryLabel}</div>
+        <div class="cart-line__bottom">
+          <div class="cart-qty">
+            <button class="cart-qty__btn" data-action="dec">−</button>
+            <span class="cart-qty__val">${item.qty}</span>
+            <button class="cart-qty__btn" data-action="inc"${atMax?' disabled style="opacity:.4;cursor:not-allowed"':''}>+</button>
+          </div>
+          <div class="cart-line__price">${COP(item.price*item.qty)}</div>
+        </div>
+      </div>
+      <button class="icon-btn" data-action="remove" style="flex-shrink:0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+  items.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const line = el.closest('[data-pid]');
+      const id = parseInt(line?.dataset.pid);
+      if (!id) return;
+      const a = el.dataset.action;
+      if (a === 'remove') { window.cart.remove(id); renderCartItems(); }
+      else if (a === 'dec') { const cur=window.cart.items.find(i=>i.id===id)?.qty||1; window.cart.setQty(id,cur-1); renderCartItems(); }
+      else if (a === 'inc') { const cur=window.cart.items.find(i=>i.id===id)?.qty||1; window.cart.setQty(id,cur+1); renderCartItems(); }
+      else if (a === 'open') { closeCart(); window.openPdp(id); }
+    });
+  });
+  const sub = window.cart.subtotal;
+  const iva = Math.round(sub*.19/1.19);
+  totals.innerHTML = `
+    <div class="cart-totals__row"><span>Subtotal</span><span>${COP(sub)}</span></div>
+    <div class="cart-totals__row" style="font-size:11px;opacity:.6"><span>IVA incluido (19%)</span><span>${COP(iva)}</span></div>
+    <div class="cart-totals__row"><span>Envío</span><span class="text-cyan">Gratis</span></div>
+    <div class="cart-totals__row cart-totals__row--total"><span>Total</span><span>${COP(sub)}</span></div>`;
+  btn.disabled = false;
+}
+function openCart()  { renderCartItems(); document.getElementById('cart-drawer').classList.add('open'); document.getElementById('cart-scrim').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.getElementById('cart-scrim').classList.remove('open'); document.body.style.overflow=''; }
+window.openCart = openCart;
+document.addEventListener('DOMContentLoaded', () => {
+  window.cart.onChange(() => { updateBadge(); if (document.getElementById('cart-drawer').classList.contains('open')) renderCartItems(); });
+  updateBadge();
+  document.getElementById('cart-btn').addEventListener('click', openCart);
+  document.getElementById('close-cart-btn').addEventListener('click', closeCart);
+  document.getElementById('cart-scrim').addEventListener('click', closeCart);
+  document.addEventListener('keydown', e => { if (e.key==='Escape') closeCart(); });
+  // Navbar dropdowns
+  const catBtn = document.getElementById('cat-dropdown-btn');
+  const catMenu = document.getElementById('cat-dropdown');
+  const svcBtn = document.getElementById('svc-dropdown-btn');
+  const svcMenu = document.getElementById('svc-dropdown');
+  catBtn?.addEventListener('click', e => { e.stopPropagation(); svcMenu?.classList.remove('open'); catMenu?.classList.toggle('open'); });
+  svcBtn?.addEventListener('click', e => { e.stopPropagation(); catMenu?.classList.remove('open'); svcMenu?.classList.toggle('open'); });
+  document.addEventListener('click', () => { catMenu?.classList.remove('open'); svcMenu?.classList.remove('open'); });
+  // WhatsApp
+  const waFab = document.getElementById('wa-fab');
+  const waWidget = document.getElementById('wa-widget');
+  if (waFab && waWidget) {
+    waFab.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = waFab.getAttribute('aria-expanded') === 'true';
+      waFab.setAttribute('aria-expanded', String(!open));
+      waWidget.style.display = open ? 'none' : 'block';
+    });
+    document.addEventListener('click', () => { waWidget.style.display='none'; waFab.setAttribute('aria-expanded','false'); });
+    waWidget.addEventListener('click', e => e.stopPropagation());
+  }
+});
+
+// ── Formatters ─────────────────────────────────────────────────────────────
+const fmt  = n => '$ ' + Math.round(n).toLocaleString('es-CO');
+const fmtP = n => n.toFixed(1) + '%';
+function fmtInput(el) {
+  const raw = el.value.replace(/\D/g,'');
+  const num = parseInt(raw,10)||0;
+  el.value  = num > 0 ? num.toLocaleString('es-CO') : '';
+}
+function getNum(id) {
+  const el = document.getElementById(id);
+  return parseInt((el?.value||'').replace(/\D/g,''),10)||0;
+}
+function setNum(id,val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const n = parseInt(val,10)||0;
+  el.value = n > 0 ? n.toLocaleString('es-CO') : '';
+}
+function updateSliderBg(el, color) {
+  const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+  el.style.setProperty('--pct', pct + '%');
+}
+
+// ── Scenarios state ────────────────────────────────────────────────────────
+let _scenarios = [];
+let _currentUser = null;
+
+// ── Auth integration ───────────────────────────────────────────────────────
+const ADMIN_EMAIL = 'mercaitechshop@gmail.com';
+document.addEventListener('DOMContentLoaded', async () => {
+  updateSliders(); updateSlidersReal(); calcAll();
+  try {
+    const user = MercaitechAuth.getUser();
+    if (!user || user.email !== ADMIN_EMAIL) { window.location.replace('index.html'); return; }
+    _currentUser = user;
+    await loadScenarios();
+    renderSessionsBar();
+  } catch { window.location.replace('index.html'); }
+});
+
+// ── API helpers ────────────────────────────────────────────────────────────
+async function apiGet()  { const r=await fetch('api/calculator.php',{credentials:'same-origin'}); return r.json(); }
+async function apiPost(body) { const r=await fetch('api/calculator.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); return r.json(); }
+async function apiDel(body)  { const r=await fetch('api/calculator.php',{method:'DELETE',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); return r.json(); }
+
+async function loadScenarios() {
+  try {
+    const res = await apiGet();
+    if (res.success) _scenarios = res.scenarios || [];
+  } catch { _scenarios = []; }
+}
+
+function renderSessionsBar() {
+  const bar = document.getElementById('sessions-bar');
+  bar.querySelectorAll('.scenario-chip').forEach(c => c.remove());
+  const actionsDiv = bar.querySelector('.sessions-actions');
+  _scenarios.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'scenario-chip';
+    chip.innerHTML = `📁 ${s.name} <span class="del" data-id="${s.id}">×</span>`;
+    chip.addEventListener('click', () => applyScenario(s));
+    chip.querySelector('.del').addEventListener('click', e => { e.stopPropagation(); deleteScenario(s.id); });
+    bar.insertBefore(chip, actionsDiv);
+  });
+}
+
+// ── Scenarios CRUD ─────────────────────────────────────────────────────────
+function saveSessionPrompt() {
+  if (!_currentUser) { showToast('Inicia sesión para guardar escenarios'); return; }
+  document.getElementById('saveModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('scenarioNameInput').focus(), 50);
+}
+function closeSaveModal() {
+  document.getElementById('saveModal').style.display = 'none';
+  document.getElementById('scenarioNameInput').value = '';
+}
+async function confirmSave() {
+  const nameEl = document.getElementById('scenarioNameInput');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); return; }
+  const btn = document.getElementById('btn-confirm-save');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const res = await apiPost({ name, data: getCurrentInputs() });
+    if (res.success) {
+      await loadScenarios(); renderSessionsBar();
+      showToast('Escenario guardado ✓'); closeSaveModal();
+    } else { showToast(res.error || 'Error al guardar'); }
+  } catch { showToast('Error de conexión'); }
+  btn.disabled = false; btn.textContent = 'Guardar →';
+}
+async function deleteScenario(id) {
+  try {
+    await apiDel({ id });
+    await loadScenarios(); renderSessionsBar();
+  } catch { showToast('Error al eliminar'); }
+}
+function applyScenario(s) {
+  const d = s.data;
+  setNum('costoProd', d.costoProd||0); setNum('flete', d.flete||0); setNum('precioVenta', d.precioVenta||0);
+  document.getElementById('pedidosDia').value = d.pedidosDia||10;
+  document.getElementById('cancelRange').value = d.cancelPct||20;
+  document.getElementById('devRange').value = d.devPct||20;
+  setNum('cpaActual', d.cpaActual||0);
+  updateSliders(); calcAll();
+  showToast('Escenario cargado: ' + s.name);
+}
+function newScenario() {
+  setNum('costoProd',0); setNum('flete',0); setNum('precioVenta',0);
+  document.getElementById('pedidosDia').value = 10;
+  document.getElementById('cancelRange').value = 20;
+  document.getElementById('devRange').value = 20;
+  setNum('cpaActual',0);
+  updateSliders(); calcAll();
+  showToast('Nuevo escenario');
+}
+function getCurrentInputs() {
+  return {
+    costoProd:   getNum('costoProd'),
+    flete:       getNum('flete'),
+    precioVenta: getNum('precioVenta'),
+    pedidosDia:  +document.getElementById('pedidosDia').value||10,
+    cancelPct:   +document.getElementById('cancelRange').value||20,
+    devPct:      +document.getElementById('devRange').value||20,
+    cpaActual:   getNum('cpaActual')
+  };
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.calc-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('tab-calculadora').classList.toggle('active', tab==='calculadora');
+  document.getElementById('tab-real').classList.toggle('active', tab==='real');
+  if (tab==='real') calcReal();
+}
+
+// ── Sliders ────────────────────────────────────────────────────────────────
+function updateSliders() {
+  const cr = document.getElementById('cancelRange');
+  const dr = document.getElementById('devRange');
+  document.getElementById('cancelVal').textContent = cr.value + '%';
+  document.getElementById('devVal').textContent    = dr.value + '%';
+  updateSliderBg(cr); updateSliderBg(dr);
+  calcAll();
+}
+function updateSlidersReal() {
+  const cr = document.getElementById('r_cancelRange');
+  const dr = document.getElementById('r_devRange');
+  document.getElementById('r_cancelVal').textContent = cr.value + '%';
+  document.getElementById('r_devVal').textContent    = dr.value + '%';
+  updateSliderBg(cr); updateSliderBg(dr);
+  calcReal();
+}
+
+// ── Funnel pill helper ─────────────────────────────────────────────────────
+function funnelPill(pct, count, label) {
+  return `<div class="funnel-pill"><span class="funnel-pill-inner">−${pct}% → ${count} ${label}</span></div>`;
+}
+
+// ── CALCULADORA PRINCIPAL ─────────────────────────────────────────────────
+function calcAll() {
+  const costoProd = getNum('costoProd');
+  const flete     = getNum('flete');
+  const precio    = getNum('precioVenta') || 1;
+  const pedidos   = +document.getElementById('pedidosDia').value || 1;
+  const cancelPct = +document.getElementById('cancelRange').value / 100;
+  const devPct    = +document.getElementById('devRange').value / 100;
+  const cpaActual = getNum('cpaActual');
+
+  const costoTotal     = costoProd + flete;
+  const gananciaUnidad = precio - costoTotal;
+  const margenBruto    = (gananciaUnidad / precio) * 100;
+  const precioMin      = costoTotal > 0 ? costoTotal / 0.5 : 0;
+  const precioOpt      = costoTotal > 0 ? costoTotal / 0.4 : 0;
+
+  document.getElementById('margenBrutoPct').textContent    = costoProd||flete||precio>1 ? fmtP(margenBruto) : '—';
+  document.getElementById('costoTotalP1').textContent      = costoTotal > 0 ? fmt(costoTotal) : '$ —';
+  document.getElementById('gananciaPorUnidad').textContent = costoTotal > 0 ? fmt(gananciaUnidad) : '$ —';
+  document.getElementById('precioMin').textContent         = precioMin > 0 ? fmt(precioMin) : '$ —';
+  document.getElementById('precioOpt').textContent         = precioOpt > 0 ? fmt(precioOpt) : '$ —';
+
+  const pctEl = document.getElementById('margenBrutoPct');
+  const mlEl  = document.getElementById('margenBrutoLabel');
+  if (costoProd || flete) {
+    if      (margenBruto > 30) { mlEl.textContent='Margen positivo';        mlEl.style.color='var(--mt-green-400)'; pctEl.style.color='var(--mt-green-400)'; }
+    else if (margenBruto >= 0) { mlEl.textContent='Margen bajo';             mlEl.style.color='var(--fg-subtle)';   pctEl.style.color='var(--fg)'; }
+    else                       { mlEl.textContent='Sin rentabilidad';        mlEl.style.color='#FF5470';             pctEl.style.color='#FF5470'; }
+  } else {
+    pctEl.style.color = 'var(--fg)';
+  }
+
+  renderOfertas(precio);
+
+  // Paso 2
+  const cancelados      = Math.round(pedidos * cancelPct);
+  const despachados     = pedidos - cancelados;
+  const devueltos       = Math.round(despachados * devPct);
+  const entregados      = despachados - devueltos;
+  const entregPct       = ((entregados / pedidos) * 100).toFixed(0);
+  const margenBrutoMon  = entregados * gananciaUnidad;
+  const fletesDevueltos = devueltos  * flete;
+  const margenBrutoReal = margenBrutoMon - fletesDevueltos;
+
+  document.getElementById('funnelSection').innerHTML = `
+    <div class="funnel-block">
+      <div class="funnel-row blue">
+        <div><div class="fl-label">Ventas Totales</div><div class="fl-val">${pedidos} pedidos/día</div></div>
+        <div><div class="fr-money blue">${fmt(pedidos*precio)}</div><div class="fr-sub">Facturado bruto</div></div>
+      </div>
+      ${funnelPill((cancelPct*100).toFixed(0), cancelados, 'cancelados')}
+      <div class="funnel-row blue-light">
+        <div><div class="fl-label">📦 Despachados</div><div class="fl-val">${despachados} pedidos</div></div>
+        <div><div class="fr-money blue-light">${fmt(despachados*precio)}</div><div class="fr-sub">${((despachados/pedidos)*100).toFixed(0)}% del total</div></div>
+      </div>
+      ${funnelPill((devPct*100).toFixed(0), devueltos, 'devueltos')}
+      <div class="funnel-row green">
+        <div><div class="fl-label">✅ Entregados</div><div class="fl-val">${entregados} pedidos</div></div>
+        <div><div class="fr-money green">${fmt(entregados*precio)}</div><div class="fr-sub">${entregPct}% del total</div></div>
+      </div>
+    </div>`;
+
+  document.getElementById('metrics3').innerHTML = `
+    <div class="metric-card">
+      <div class="mc2-label">Margen Bruto (${fmtP(margenBruto)})</div>
+      <div class="mc2-val">${fmt(margenBrutoMon)}</div>
+      <div class="mc2-sub">Sobre ingresos entregados</div>
+    </div>
+    <div class="metric-card danger">
+      <div class="mc2-label">Fletes Devueltos</div>
+      <div class="mc2-val" style="color:#FF5470">−${fmt(fletesDevueltos)}</div>
+      <div class="mc2-sub">${devueltos} dev. × ${fmt(flete)}</div>
+    </div>
+    <div class="metric-card">
+      <div class="mc2-label">Margen Bruto Real 🎯</div>
+      <div class="mc2-val" style="color:${margenBrutoReal>=0?'var(--mt-green-400)':'#FF5470'}">${fmt(margenBrutoReal)}</div>
+      <div class="mc2-sub">Después de devoluciones</div>
+    </div>`;
+
+  // Paso 3
+  document.getElementById('resumenBox').innerHTML = `
+    <div class="resumen-header">Resumen del Escenario</div>
+    <div class="resumen-body">
+      Precio venta: <strong>${fmt(precio)}</strong> &nbsp;·&nbsp;
+      Costo total: <strong>${fmt(costoTotal)}</strong> &nbsp;·&nbsp;
+      Margen bruto: <strong style="color:${margenBruto>30?'var(--mt-green-400)':margenBruto<0?'#FF5470':'var(--fg)'}">${fmtP(margenBruto)}</strong><br>
+      Pedidos/día: <strong>${pedidos}</strong> &nbsp;·&nbsp;
+      Margen bruto real: <strong style="color:${margenBrutoReal>=0?'var(--mt-green-400)':'#FF5470'}">${fmt(margenBrutoReal)}</strong>
+    </div>`;
+
+  const pctArr = [{p:35,ideal:true},{p:40},{p:50}];
+  document.getElementById('pautaGrid').innerHTML = pctArr.map(({p,ideal}) => {
+    const budget   = margenBrutoReal * (p/100);
+    const cpaMax   = pedidos>0 ? budget/pedidos : 0;
+    const margenOp = margenBrutoReal - budget;
+    return `<div class="pauta-card${ideal?' ideal':''}">
+      ${ideal?'<div class="ideal-badge">IDEAL</div>':''}
+      <div class="pc-pct">${p}% del margen</div>
+      <div class="pc-budget ${ideal?'cyan-val':'blue-val'}">${fmt(budget)}</div>
+      <div class="pc-divider"></div>
+      <div class="pc-row-label">CPA máximo</div>
+      <div class="pc-row-val ${ideal?'cyan-val':'blue-val'}">${fmt(cpaMax)}</div>
+      <div class="pc-hint">para ${pedidos} pedidos/día</div>
+      <div class="pc-divider"></div>
+      <div class="pc-row-label">Margen operacional</div>
+      <div class="pc-row-val ${ideal?'cyan-val':'blue-val'}">${fmt(margenOp)}</div>
+    </div>`;
+  }).join('');
+
+  if (cpaActual > 0) {
+    const cpaIdeal = margenBrutoReal * 0.35 / pedidos;
+    const diff     = cpaIdeal - cpaActual;
+    const color    = diff >= 0 ? 'var(--mt-green-400)' : '#FF5470';
+    const status   = diff >= 0
+      ? `✅ Tu CPA es eficiente. Margen extra: ${fmt(diff)} por pedido.`
+      : `⚠️ Tu CPA supera el ideal por ${fmt(Math.abs(diff))}. Optimiza la pauta.`;
+    document.getElementById('resumenBox').innerHTML +=
+      `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:${color}">${status}</div>`;
+  }
+}
+
+// ── Ofertas de cantidad ────────────────────────────────────────────────────
+function renderOfertas(precio) {
+  const cont = document.getElementById('ofertasContent');
+  if (!cont || cont.style.display === 'none') return;
+  const packs = [{units:2,disc:.30,label:'PACK 2x',best:false},{units:3,disc:.40,label:'⭐ Mejor precio',best:true}];
+  cont.innerHTML = '<div class="oferta-grid">' + packs.map(({units,disc,label,best}) => {
+    const total    = Math.ceil(precio*units*(1-disc)/1000)*1000-100;
+    const unitP    = total/units;
+    const pct      = Math.round(disc*100);
+    return `<div class="oferta-card${best?' best':''}">
+      <div class="oferta-units">${units} Unidades</div>
+      <div class="oferta-badge">${label}</div>
+      <div class="oferta-total">${fmt(total)}</div>
+      <div class="oferta-divider"></div>
+      <div class="oferta-row"><span>Por unidad:</span><strong>${fmt(unitP)}</strong></div>
+      <div class="oferta-row"><span>Normal:</span><s>${fmt(precio)}</s></div>
+      <span class="oferta-disc">−${pct}% por unidad</span>
+    </div>`;
+  }).join('') + '</div>';
+}
+function toggleOfertas(btn) {
+  const cont  = document.getElementById('ofertasContent');
+  const arrow = document.getElementById('oferta-arrow');
+  const open  = cont.style.display !== 'none';
+  cont.style.display = open ? 'none' : 'block';
+  arrow.textContent  = open ? '▼' : '▲';
+  if (!open) renderOfertas(getNum('precioVenta')||1);
+}
+
+// ── CASO REAL ──────────────────────────────────────────────────────────────
+function calcReal() {
+  const precio    = getNum('r_precio');
+  const costo     = getNum('r_costo');
+  const flete     = getNum('r_flete');
+  const inversion = getNum('r_inversion');
+  const pedidos   = +document.getElementById('r_pedidos').value||0;
+  const dias      = +document.getElementById('r_dias').value||0;
+  const cancelPct = +document.getElementById('r_cancelRange').value/100;
+  const devPct    = +document.getElementById('r_devRange').value/100;
+
+  const missing = [];
+  if (!inversion) missing.push({icon:'💸',label:'Inversión en pauta'});
+  if (!pedidos)   missing.push({icon:'📦',label:'Pedidos totales'});
+
+  if (missing.length) {
+    document.getElementById('r_pending').innerHTML = `<div class="pending-box"><div class="pending-title">Campos pendientes:</div>${missing.map(m=>`<div class="pending-item">${m.icon} ${m.label}</div>`).join('')}<div class="pending-cta">⛔ Completa todos los campos para ver los resultados</div></div>`;
+    document.getElementById('r_pending').style.display='block';
+    document.getElementById('r_results').style.display='none';
+    return;
+  }
+
+  document.getElementById('r_pending').style.display='none';
+  document.getElementById('r_results').style.display='block';
+
+  const costoTotal      = costo + flete;
+  const gananciaUnidad  = precio - costoTotal;
+  const margenBruto     = precio>0 ? (gananciaUnidad/precio)*100 : 0;
+  const cancelados      = Math.round(pedidos*cancelPct);
+  const despachados     = pedidos-cancelados;
+  const devueltos       = Math.round(despachados*devPct);
+  const entregados      = despachados-devueltos;
+  const entregPct       = pedidos>0 ? ((entregados/pedidos)*100).toFixed(0) : 0;
+  const ingresoReal     = entregados*precio;
+  const margenBrutoMon  = entregados*gananciaUnidad;
+  const fletesDevueltos = devueltos*flete;
+  const margenBrutoReal = margenBrutoMon-fletesDevueltos;
+  const utilidadNeta    = margenBrutoReal-inversion;
+  const cpaReal         = pedidos>0 ? inversion/pedidos : 0;
+  const roas            = inversion>0 ? ingresoReal/inversion : 0;
+  const roi             = inversion>0 ? (utilidadNeta/inversion)*100 : 0;
+  const invDiaria       = dias>0 ? inversion/dias : inversion;
+  const pedsDia         = dias>0 ? pedidos/dias : pedidos;
+
+  document.getElementById('r_resumen').innerHTML = `
+    <div class="resumen-header">Resumen de Campaña</div>
+    <div class="resumen-body">
+      Precio: <strong>${fmt(precio)}</strong> &nbsp;·&nbsp; Costo: <strong>${fmt(costoTotal)}</strong> &nbsp;·&nbsp; Margen: <strong style="color:${margenBruto>30?'var(--mt-green-400)':margenBruto<0?'#FF5470':'var(--fg)'}">${fmtP(margenBruto)}</strong><br>
+      Pedidos: <strong>${pedidos}</strong> &nbsp;·&nbsp; Entregados: <strong style="color:var(--mt-green-400)">${entregados} (${entregPct}%)</strong> &nbsp;·&nbsp; Pauta: <strong>${fmt(inversion)}</strong>
+    </div>`;
+
+  document.getElementById('r_funnel').innerHTML = `
+    <div class="funnel-block">
+      <div class="funnel-row blue">
+        <div><div class="fl-label">Pedidos Totales</div><div class="fl-val">${pedidos} pedidos</div></div>
+        <div><div class="fr-money blue">${fmt(pedidos*precio)}</div><div class="fr-sub">Facturado bruto</div></div>
+      </div>
+      ${funnelPill((cancelPct*100).toFixed(0), cancelados, 'cancelados')}
+      <div class="funnel-row blue-light">
+        <div><div class="fl-label">📦 Despachados</div><div class="fl-val">${despachados}</div></div>
+        <div><div class="fr-money blue-light">${fmt(despachados*precio)}</div><div class="fr-sub">${pedidos>0?((despachados/pedidos)*100).toFixed(0):0}%</div></div>
+      </div>
+      ${funnelPill((devPct*100).toFixed(0), devueltos, 'devueltos')}
+      <div class="funnel-row green">
+        <div><div class="fl-label">✅ Entregados</div><div class="fl-val">${entregados}</div></div>
+        <div><div class="fr-money green">${fmt(ingresoReal)}</div><div class="fr-sub">${entregPct}%</div></div>
+      </div>
+    </div>`;
+
+  document.getElementById('r_metrics').innerHTML = `
+    <div class="metrics4" style="margin-top:16px">
+      <div class="metric-card"><div class="mc2-label">CPA Real</div><div class="mc2-val">${fmt(cpaReal)}</div><div class="mc2-sub">Costo por pedido</div></div>
+      <div class="metric-card"><div class="mc2-label">ROAS</div><div class="mc2-val">${roas.toFixed(2)}x</div><div class="mc2-sub">Retorno sobre pauta</div></div>
+      <div class="metric-card${roi<0?' danger':''}"><div class="mc2-label">ROI</div><div class="mc2-val" style="color:${roi>=0?'var(--mt-green-400)':'#FF5470'}">${roi.toFixed(1)}%</div><div class="mc2-sub">Retorno inversión</div></div>
+      <div class="metric-card${utilidadNeta<0?' danger':''}"><div class="mc2-label">Utilidad Neta</div><div class="mc2-val" style="color:${utilidadNeta>=0?'var(--mt-green-400)':'#FF5470'}">${fmt(utilidadNeta)}</div><div class="mc2-sub">Después de pauta</div></div>
+    </div>
+    <div class="metrics3" style="margin-top:12px">
+      <div class="metric-card"><div class="mc2-label">Margen Bruto Real</div><div class="mc2-val" style="color:${margenBrutoReal>=0?'var(--mt-green-400)':'#FF5470'}">${fmt(margenBrutoReal)}</div><div class="mc2-sub">Sin contar pauta</div></div>
+      <div class="metric-card"><div class="mc2-label">Inversión / Día</div><div class="mc2-val">${fmt(invDiaria)}</div><div class="mc2-sub">${dias||1} día${dias!==1?'s':''}</div></div>
+      <div class="metric-card"><div class="mc2-label">Pedidos / Día</div><div class="mc2-val">${pedsDia.toFixed(1)}</div><div class="mc2-sub">Promedio real</div></div>
+    </div>`;
+
+  let vc='amarillo',vi='⚠️',vt='En punto de equilibrio',vs=`ROI del ${roi.toFixed(1)}% — Reduce costos o mejora entrega`;
+  if      (roi>=20)  { vc='verde';    vi='🚀'; vt='¡Campaña muy rentable!'; vs=`ROI del ${roi.toFixed(1)}% — Escala con confianza`; }
+  else if (roi>=0)   { vc='amarillo'; vi='⚡'; vt='Campaña rentable';        vs=`ROI del ${roi.toFixed(1)}% — Optimiza para escalar`; }
+  else if (roi>=-20) { vc='amarillo'; vi='⚠️'; vt='En punto de equilibrio'; vs=`ROI del ${roi.toFixed(1)}% — Reduce costos o mejora entrega`; }
+  else               { vc='rojo';     vi='❌'; vt='Campaña no rentable';     vs=`ROI del ${roi.toFixed(1)}% — Pausa y revisa tu estrategia`; }
+  document.getElementById('r_veredicto').innerHTML = `
+    <div class="veredicto ${vc}">
+      <div class="veredicto-icon">${vi}</div>
+      <div><div class="veredicto-title">${vt}</div><div class="veredicto-sub">${vs}</div></div>
+    </div>`;
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('calc-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mis Pedidos — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
-  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <!-- Preload crítico -->
+  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype" crossorigin>
+  <link rel="preload" href="assets/css/tokens.css?v=3" as="style">
+  <link rel="preload" href="assets/css/styles.css?v=4" as="style">
+  <link rel="dns-prefetch" href="//api.mercadopago.com">
   <link rel="stylesheet" href="assets/css/tokens.css?v=3">
   <link rel="stylesheet" href="assets/css/styles.css?v=4">
 </head>
@@ -127,6 +131,48 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(() => renderOrders([]));
 });
 
+const COP = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(parseFloat(n));
+
+const STATUS_META = {
+  pendiente:  { label:'Pendiente',  color:'#F59E0B', bg:'rgba(245,158,11,.1)',  border:'rgba(245,158,11,.25)',  icon:'⏳' },
+  aprobado:   { label:'Aprobado',   color:'#10E896', bg:'rgba(16,232,150,.1)',  border:'rgba(16,232,150,.25)',  icon:'✓'  },
+  pagado:     { label:'Pagado',     color:'#10E896', bg:'rgba(16,232,150,.1)',  border:'rgba(16,232,150,.25)',  icon:'✓'  },
+  procesando: { label:'Procesando', color:'#3B82F6', bg:'rgba(59,130,246,.1)',  border:'rgba(59,130,246,.25)',  icon:'⚙'  },
+  enviado:    { label:'Enviado',    color:'#1FD6FF', bg:'rgba(31,214,255,.1)',  border:'rgba(31,214,255,.25)',  icon:'🚚' },
+  entregado:  { label:'Entregado',  color:'#2EE6A6', bg:'rgba(46,230,166,.1)',  border:'rgba(46,230,166,.25)',  icon:'📦' },
+  cancelado:  { label:'Cancelado',  color:'#EF4444', bg:'rgba(239,68,68,.1)',   border:'rgba(239,68,68,.25)',   icon:'✕'  },
+};
+
+function formatDateTime(str) {
+  const d = new Date(str);
+  const date = d.toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' });
+  const time = d.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit', hour12:true });
+  return `${date} · ${time}`;
+}
+
+async function retryPayment(btn, ref) {
+  btn.disabled = true;
+  btn.textContent = 'Verificando…';
+  try {
+    const r = await fetch('api/mp_retry.php?ref=' + encodeURIComponent(ref), { credentials: 'same-origin' });
+    const d = await r.json();
+    if (d.already_paid) {
+      // Pago ya existía → recargar para mostrar orden aprobada
+      window.location.reload();
+    } else if (d.success) {
+      localStorage.setItem('mt_pending_checkout', JSON.stringify({ numero_orden: ref, email: '' }));
+      window.location.href = d.sandbox_init_point || d.init_point;
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Completar pago';
+      alert('Error: ' + (d.error || 'No se pudo generar el pago'));
+    }
+  } catch {
+    btn.disabled = false;
+    btn.textContent = 'Completar pago';
+  }
+}
+
 function renderOrders(orders) {
   const cont = document.getElementById('orders-container');
   if (!orders || orders.length === 0) {
@@ -139,21 +185,93 @@ function renderOrders(orders) {
       </div>`;
     return;
   }
-  cont.innerHTML = orders.map(o => `
-    <div class="order-card">
-      <div class="order-card__head">
-        <div>
-          <div class="order-card__num">${o.numero_orden}</div>
-          <div class="order-card__date">${new Date(o.creado_en).toLocaleDateString('es', {day:'numeric',month:'long',year:'numeric'})}</div>
+
+  cont.innerHTML = orders.map((o, idx) => {
+    const st    = STATUS_META[o.estado] || { label: o.estado, color:'#8593B2', bg:'rgba(133,147,178,.1)', border:'rgba(133,147,178,.25)', icon:'•' };
+    const dt    = formatDateTime(o.creado_en);
+    const addr  = [o.direccion_envio, o.ciudad, o.pais].filter(Boolean).join(', ');
+    const isPending   = o.estado === 'pendiente';
+    const isCancelled = o.estado === 'cancelado';
+
+    const itemsHtml = (o.items || []).map(it => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          <div style="width:6px;height:6px;border-radius:50%;background:${st.color};flex-shrink:0;opacity:.7"></div>
+          <span style="font-size:13px;color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.titulo || 'Producto'}</span>
         </div>
-        <span class="order-status order-status--${o.estado}">${o.estado.charAt(0).toUpperCase()+o.estado.slice(1)}</span>
+        <span style="font-size:12px;color:var(--fg-subtle);margin:0 14px;flex-shrink:0">×${it.cantidad}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--fg);flex-shrink:0">${COP(it.subtotal)}</span>
+      </div>`).join('');
+
+    const pendingBanner = isPending ? `
+      <div style="margin:0 20px 16px;padding:14px 16px;border-radius:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#F59E0B;margin-bottom:3px">Pago pendiente</div>
+          <div style="font-size:12px;color:var(--fg-muted)">Este pedido está reservado. Completa el pago para confirmarlo.</div>
+        </div>
+        <button onclick="retryPayment(this,'${o.numero_orden}')"
+          style="flex-shrink:0;padding:10px 20px;background:#F59E0B;color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.03em">
+          Completar pago →
+        </button>
+      </div>` : '';
+
+    return `
+    <div style="position:relative;background:var(--bg-raised);border:1px solid ${isCancelled ? 'rgba(239,68,68,.2)' : isPending ? 'rgba(245,158,11,.2)' : 'var(--border)'};border-left:3px solid ${st.color};border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;opacity:${isCancelled ? '.65' : '1'}">
+
+      <!-- Header -->
+      <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid rgba(255,255,255,.04)">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-subtle);font-weight:600">Pedido #${orders.length - idx}</span>
+          </div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:.04em;color:var(--mt-cyan-400);font-family:var(--font-mono)">${o.numero_orden}</div>
+          <div style="font-size:11px;color:var(--fg-subtle);margin-top:4px;display:flex;align-items:center;gap:5px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;opacity:.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${dt}
+          </div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;background:${st.bg};border:1px solid ${st.border};color:${st.color};flex-shrink:0;white-space:nowrap">
+          <span style="font-size:13px">${st.icon}</span>
+          ${st.label}
+        </span>
       </div>
-      <div class="order-card__body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-        <div style="font-size:13px;color:var(--fg-muted)">${o.ciudad}, ${o.pais}</div>
-        <div class="order-card__total">${new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0,maximumFractionDigits:0}).format(parseFloat(o.total))}</div>
+
+      <!-- Pending banner -->
+      ${pendingBanner}
+
+      <!-- Productos -->
+      ${itemsHtml ? `
+      <div style="padding:14px 20px 0">
+        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--fg-subtle);margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:6px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Productos
+        </div>
+        ${itemsHtml}
       </div>
-    </div>
-  `).join('');
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px 16px;gap:12px">
+        <span style="font-size:12px;color:var(--fg-subtle)">Envío: <strong style="color:#10E896">Gratis</strong></span>
+        <div style="text-align:right">
+          <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--fg-subtle);margin-bottom:2px">Total</div>
+          <div style="font-size:20px;font-weight:800;color:var(--fg)">${COP(o.total)}</div>
+        </div>
+      </div>` : ''}
+
+      <!-- Dirección -->
+      ${addr ? `
+      <div style="border-top:1px solid rgba(255,255,255,.04);padding:12px 20px;display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.02)">
+        <div style="width:30px;height:30px;border-radius:8px;background:rgba(31,214,255,.08);border:1px solid rgba(31,214,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--mt-cyan-400)" stroke-width="2" style="width:13px;height:13px"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div style="min-width:0">
+          <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--fg-subtle);margin-bottom:4px;font-weight:600">Dirección de entrega</div>
+          <div style="font-size:13px;font-weight:600;color:var(--fg)">${o.nombre_cliente || ''}</div>
+          <div style="font-size:12px;color:var(--fg-muted);line-height:1.5">${addr}</div>
+          ${o.telefono_cliente ? `<div style="font-size:12px;color:var(--fg-subtle)">📞 ${o.telefono_cliente}</div>` : ''}
+        </div>
+      </div>` : ''}
+
+    </div>`;
+  }).join('');
 }
 </script>
 

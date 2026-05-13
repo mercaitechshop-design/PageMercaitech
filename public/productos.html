@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Productos — Mercaitech</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
-  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <!-- Preload crítico -->
+  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype" crossorigin>
+  <link rel="preload" href="assets/css/tokens.css?v=3" as="style">
+  <link rel="preload" href="assets/css/styles.css?v=4" as="style">
+  <link rel="dns-prefetch" href="//api.mercadopago.com">
   <link rel="stylesheet" href="assets/css/tokens.css?v=3">
   <link rel="stylesheet" href="assets/css/styles.css?v=4">
   <style>
@@ -135,6 +139,18 @@
           <a href="contacto.html" class="navbar__dropdown-item navbar__dropdown-item--highlight">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Contáctanos
+          </a>
+        </div>
+      </li>
+      <li class="navbar__dropdown-wrap" id="tools-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn" id="tools-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Herramientas
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="tools-dropdown" role="menu">
+          <a href="herramientas.html" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/></svg>
+            Calculadora de Rentabilidad
           </a>
         </div>
       </li>
@@ -484,12 +500,13 @@ function applyFilter(cat) {
     return;
   }
 
-  grid.innerHTML = list.map(p => {
+  grid.innerHTML = list.map((p, idx) => {
     const wished = isWished(p.id);
     const oos    = window.isOutOfStock(p);
     const mediaBg = p.image_url ? 'background:#111827' : 'background:' + p.bg;
+    const loadAttr = idx < 4 ? 'eager' : 'lazy'; // primeras 4 sin lazy (above the fold)
     const mediaInner = p.image_url
-      ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover" alt="${p.title}">`
+      ? `<img src="${p.image_url}" loading="${loadAttr}" decoding="async" style="width:100%;height:100%;object-fit:cover" alt="${p.title}" class="lazy-img${idx >= 4 ? '' : ' loaded'}">`
       : `<div class="product-card__icon">${getIcon(p.icon)}</div>`;
     return `<div class="product-card${oos ? ' product-card--oos' : ''}" role="listitem">
       <div class="product-card__media" style="${mediaBg};cursor:pointer" onclick="openPdp(${p.id})">
@@ -561,6 +578,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auth
   MercaitechAuth.initNavbar();
 
+  // Herramientas admin-only nav
+  { const _tw = document.getElementById('tools-dropdown-wrap');
+    if (_tw) { const _u = window.MercaitechAuth?.getUser?.(); _tw.style.display = _u?.email === 'mercaitechshop@gmail.com' ? '' : 'none'; } }
+
   // Cart events
   document.getElementById('cart-btn').addEventListener('click', openCart);
   document.getElementById('close-cart-btn').addEventListener('click', closeCartDrawer);
@@ -581,21 +602,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const svcBtn  = document.getElementById('svc-dropdown-btn');
   const svcMenu = document.getElementById('svc-dropdown');
 
+  const toolsBtn  = document.getElementById('tools-dropdown-btn');
+  const toolsMenu = document.getElementById('tools-dropdown');
   catBtn.addEventListener('click', e => {
     e.stopPropagation();
     svcMenu.classList.remove('open'); svcBtn.setAttribute('aria-expanded','false');
+    toolsMenu?.classList.remove('open'); toolsBtn?.setAttribute('aria-expanded','false');
     const o = catMenu.classList.toggle('open');
     catBtn.setAttribute('aria-expanded', o);
   });
   svcBtn.addEventListener('click', e => {
     e.stopPropagation();
     catMenu.classList.remove('open'); catBtn.setAttribute('aria-expanded','false');
+    toolsMenu?.classList.remove('open'); toolsBtn?.setAttribute('aria-expanded','false');
     const o = svcMenu.classList.toggle('open');
     svcBtn.setAttribute('aria-expanded', o);
+  });
+  toolsBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    catMenu.classList.remove('open'); catBtn.setAttribute('aria-expanded','false');
+    svcMenu.classList.remove('open'); svcBtn.setAttribute('aria-expanded','false');
+    const o = toolsMenu.classList.toggle('open');
+    toolsBtn.setAttribute('aria-expanded', o);
   });
   document.addEventListener('click', () => {
     catMenu.classList.remove('open'); catBtn.setAttribute('aria-expanded','false');
     svcMenu.classList.remove('open'); svcBtn.setAttribute('aria-expanded','false');
+    toolsMenu?.classList.remove('open'); toolsBtn?.setAttribute('aria-expanded','false');
   });
 
   // Mobile menu
@@ -613,10 +646,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Read hash and apply initial filter
+  // Leer hash inicial
   const hash = window.location.hash.replace('#', '').toLowerCase();
   const valid = ['tecnologia','hogar','moda','deportes','gaming','belleza'];
-  applyFilter(valid.includes(hash) ? hash : 'todos');
+  const initialCat = valid.includes(hash) ? hash : 'todos';
+
+  if (window._dbProductsReady) {
+    // API ya cargó (cache rápida) → renderizar directo
+    applyFilter(initialCat);
+  } else {
+    // Mostrar skeletons mientras llega el API
+    const grid = document.getElementById('full-grid');
+    if (grid) {
+      const sk = `<div class="skeleton-card" aria-hidden="true"><div class="skeleton skeleton-card__img"></div><div class="skeleton-card__body"><div class="skeleton skeleton-card__line skeleton-card__line--sm"></div><div class="skeleton skeleton-card__line skeleton-card__line--lg"></div><div class="skeleton skeleton-card__price"></div><div class="skeleton skeleton-card__btn"></div></div></div>`;
+      grid.innerHTML = Array(8).fill(sk).join('');
+    }
+    document.getElementById('prod-count').textContent = '';
+  }
 
   // Handle ?product=ID (from search or wishlist links)
   const _productParam = new URLSearchParams(window.location.search).get('product');
@@ -625,10 +671,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Let search.js open PDP inline instead of navigating
   window._openProduct = id => openPdp(id);
 
-  // Re-render when DB products finish loading
+  // Re-render cuando el API responda
   window._onProductsLoaded = function() {
     const activeCat = document.querySelector('.cat-pill.is-active')
-      ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'todos';
+      ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || initialCat || 'todos';
     applyFilter(activeCat);
     // Retry ?product= open after DB data arrives
     if (_productParam && !document.getElementById('pdp-overlay')?.classList.contains('open')) {

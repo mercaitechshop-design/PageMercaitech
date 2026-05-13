@@ -12,7 +12,17 @@
   <meta name="theme-color" content="#03060D">
   <title>Mercaitech — Todo lo que buscas, en un solo lugar.</title>
   <link rel="icon" type="image/png" href="assets/logo-mark.png">
-  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype">
+  <!-- Preload crítico — inicia descarga en paralelo con el HTML -->
+  <link rel="preload" href="assets/fonts/Inter_18pt-Black.ttf" as="font" type="font/truetype" crossorigin>
+  <link rel="preload" href="assets/css/tokens.css?v=3" as="style">
+  <link rel="preload" href="assets/css/styles.css?v=4" as="style">
+  <link rel="preload" href="assets/js/products.js?v=10" as="script">
+  <link rel="preload" href="assets/js/app.js?v=13" as="script">
+  <!-- Prefetch páginas que el usuario probablemente visitará después -->
+  <link rel="prefetch" href="productos.html">
+  <link rel="prefetch" href="checkout.html">
+  <link rel="dns-prefetch" href="//api.mercadopago.com">
+  <link rel="preconnect" href="//accounts.google.com" crossorigin>
   <link rel="stylesheet" href="assets/css/tokens.css?v=3">
   <link rel="stylesheet" href="assets/css/styles.css?v=4">
   <!-- JSON-LD structured data -->
@@ -119,6 +129,18 @@
         </div>
       </li>
 
+      <li class="navbar__dropdown-wrap" id="tools-dropdown-wrap">
+        <button class="navbar__link navbar__dropdown-btn" id="tools-dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          Herramientas
+          <svg class="navbar__dropdown-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="navbar__dropdown" id="tools-dropdown" role="menu">
+          <a href="herramientas.html" class="navbar__dropdown-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/></svg>
+            Calculadora de Rentabilidad
+          </a>
+        </div>
+      </li>
       <li><a href="contacto.html" class="navbar__link">Contáctanos</a></li>
     </ul>
 
@@ -894,6 +916,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderResenas();
+
+  // Herramientas admin-only nav
+  { const _tw = document.getElementById('tools-dropdown-wrap');
+    if (_tw) { const _u = window.MercaitechAuth?.getUser?.(); _tw.style.display = _u?.email === 'mercaitechshop@gmail.com' ? '' : 'none'; } }
 
   // Reviews carousel navigation
   const resPrev = document.getElementById('resenas-prev');

@@ -959,17 +959,30 @@
           </button>
         </div>
 
-        <!-- Success state -->
-        <div class="auth-success" id="register-success">
-          <div class="auth-success__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <!-- Verificación de correo — misma UI que reset password -->
+        <div class="forgot-code-view" id="register-success" style="display:none;text-align:center">
+          <div class="forgot-modal__icon" style="background:rgba(31,214,255,.1);border-color:rgba(31,214,255,.3);color:var(--mt-cyan-400)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
           </div>
-          <h3 class="auth-success__title">¡Cuenta creada!</h3>
-          <p class="auth-success__sub">Revisa tu correo para verificar tu cuenta. Ya puedes empezar a comprar.</p>
-          <a href="index.html" class="auth-success__btn">
-            IR A LA TIENDA
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </a>
+          <h2 class="forgot-modal__title">Verifica tu correo</h2>
+          <p class="forgot-modal__sub" id="verify-email-hint">Te enviamos un código de 6 dígitos. Revisa también la carpeta de spam.</p>
+          <div class="code-inputs">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" id="vc0" data-idx="0">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc1" data-idx="1">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc2" data-idx="2">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc3" data-idx="3">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc4" data-idx="4">
+            <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc5" data-idx="5">
+          </div>
+          <div class="forgot-resend"><span id="reg-resend-timer"></span> <button id="resend-code-btn" onclick="resendRegCode()" disabled>Reenviar código</button></div>
+          <div class="forgot-modal__error" id="verify-code-err"></div>
+          <div class="forgot-modal__form" style="margin-top:8px">
+            <button class="forgot-modal__btn" id="verify-code-btn" type="button">
+              <span class="fm-label">VERIFICAR CÓDIGO</span>
+              <svg class="fm-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <div class="fm-spinner"></div>
+            </button>
+          </div>
         </div>
 
         <form id="register-form" class="auth-form" novalidate>
@@ -1238,7 +1251,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
       successMsg.textContent = `Bienvenido, ${data.user.nombre}. Redirigiendo…`;
       document.getElementById('login-success').classList.add('show');
       setTimeout(() => {
-        window.location.href = data.redirect || 'index.html';
+        window.location.href = window._loginRedirect || data.redirect || 'index.html';
       }, 1800);
     } else {
       // API returned error — ALWAYS also check localStorage fallback
@@ -1298,12 +1311,18 @@ document.getElementById('register-form').addEventListener('submit', async functi
     const data = await res.json();
 
     if (data.success) {
-      const u = data.user || { nombre: nombre+(apellido?' '+apellido:''), email };
-      const userToSave = { id: u.id, nombre: u.nombre, apellido: u.apellido||'', email, telefono };
-      localStorage.setItem('mt_user', JSON.stringify(userToSave));
-      if (window.cart && u.id) window.cart.switchUser(u.id);
+      // NO guardar en localStorage todavía — el usuario debe verificar su correo primero
+      // Solo se guarda en localStorage después de la verificación exitosa
       document.getElementById('register-form').style.display = 'none';
-      document.getElementById('register-success').classList.add('show');
+      const successEl = document.getElementById('register-success');
+      successEl.style.display = 'block';
+      successEl.classList.add('show');
+      const hint = document.getElementById('verify-email-hint');
+      if (hint) hint.textContent = `Ingresa el código de 6 dígitos que enviamos a ${email}.`;
+      // Guardar temporalmente para usarlo al verificar
+      window._pendingUser = data.user;
+      window._pendingUser.telefono = telefono;
+      initVerifyCodeUI();
     } else if (res.status === 409 || (data.message && data.message.includes('registrado'))) {
       document.getElementById('register-form').style.display = 'none';
       document.getElementById('exists-email').textContent = email;
@@ -1527,6 +1546,13 @@ function showForgot() {
   alert(msg);
 }
 
+// ── Leer parámetros de URL ─────────────────────────────────
+const _params    = new URLSearchParams(window.location.search);
+const _redirect  = _params.get('redirect') || 'index.html';
+
+// Guardar redirect para usarlo después del login/registro
+window._loginRedirect = _redirect;
+
 // ── If already logged in, redirect ────────────────────────
 const existingUser = localStorage.getItem('mt_user');
 if (existingUser) {
@@ -1537,14 +1563,13 @@ if (existingUser) {
       document.getElementById('login-success-msg').textContent =
         `Ya estás conectado como ${u.nombre}. Redirigiendo…`;
       document.getElementById('login-success').classList.add('show');
-      setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+      setTimeout(() => { window.location.href = _redirect; }, 1500);
     }
   } catch { localStorage.removeItem('mt_user'); }
 }
 
 // ── Read ?tab= query param ─────────────────────────────────
-const params = new URLSearchParams(window.location.search);
-if (params.get('tab') === 'register') switchTab('register');
+if (_params.get('tab') === 'register') switchTab('register');
 </script>
 
 <!-- ══ FORGOT PASSWORD MODAL ══════════════════════════════ -->
@@ -1843,6 +1868,123 @@ document.getElementById('forgot-overlay').addEventListener('click', e => { if (e
 document.getElementById('forgot-close').addEventListener('click', closeForgotModal);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('forgot-overlay').classList.contains('open')) closeForgotModal(); });
 document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') submitForgot(); });
+
+// ── Verificación de correo al registrarse ─────────────────────────────────────
+function startRegResendTimer(secs = 60) {
+  const timerEl  = document.getElementById('reg-resend-timer');
+  const resendBtn = document.getElementById('resend-code-btn');
+  if (!timerEl || !resendBtn) return;
+  resendBtn.disabled = true;
+  let s = secs;
+  timerEl.textContent = `Reenviar en ${s}s`;
+  const iv = setInterval(() => {
+    s--;
+    if (s <= 0) {
+      clearInterval(iv);
+      timerEl.textContent = '';
+      resendBtn.disabled  = false;
+    } else {
+      timerEl.textContent = `Reenviar en ${s}s`;
+    }
+  }, 1000);
+}
+
+async function resendRegCode() {
+  const resendBtn = document.getElementById('resend-code-btn');
+  resendBtn.disabled = true;
+  try {
+    const res  = await fetch('api/auth.php', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'resend_verification' })
+    });
+    const data = await res.json();
+    if (data.success) startRegResendTimer(60);
+    else { resendBtn.disabled = false; }
+  } catch { resendBtn.disabled = false; }
+}
+
+function initVerifyCodeUI() {
+  const inputs = [0,1,2,3,4,5].map(i => document.getElementById('vc'+i));
+
+  // Auto-avance entre inputs (misma lógica que reset password)
+  inputs.forEach((inp, i) => {
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/\D/g,'');
+      if (inp.value && i < 5) inputs[i+1].focus();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i-1].focus();
+      if (e.key === 'Enter') document.getElementById('verify-code-btn').click();
+    });
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+      txt.split('').forEach((ch, j) => { if (inputs[j]) inputs[j].value = ch; });
+      const last = Math.min(txt.length, 5);
+      if (inputs[last]) inputs[last].focus();
+    });
+  });
+  inputs[0].focus();
+  startRegResendTimer(60);
+
+  // Botón verificar
+  document.getElementById('verify-code-btn').addEventListener('click', async () => {
+    const code  = inputs.map(i => i.value).join('');
+    const errEl = document.getElementById('verify-code-err');
+    const btn   = document.getElementById('verify-code-btn');
+    errEl.textContent = '';
+    if (code.length < 6) { errEl.textContent = 'Ingresa los 6 dígitos del código.'; return; }
+
+    btn.classList.add('loading'); btn.disabled = true;
+
+    try {
+      const res  = await fetch('api/auth.php', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify_email', code })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Ahora sí guardar en localStorage — correo verificado
+        const u = window._pendingUser || {};
+        const userToSave = {
+          id:               u.id,
+          nombre:           u.nombre   || '',
+          apellido:         u.apellido || '',
+          email:            u.email    || '',
+          telefono:         u.telefono || '',
+          email_verificado: 1,
+        };
+        localStorage.setItem('mt_user', JSON.stringify(userToSave));
+        if (window.cart && u.id) window.cart.switchUser(u.id);
+        // Mostrar éxito con la misma UI del login success (auth-success)
+        const regSuccessEl = document.getElementById('register-success');
+        regSuccessEl.className = 'auth-success show';
+        regSuccessEl.style = '';
+        regSuccessEl.innerHTML = `
+          <div class="auth-success__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <h3 class="auth-success__title">¡Correo verificado!</h3>
+          <p class="auth-success__sub">Tu cuenta está lista. Ya puedes empezar a comprar.</p>
+          <a href="${window._loginRedirect || 'index.html'}" class="auth-success__btn">
+            IR A LA TIENDA
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </a>`;
+      } else {
+        errEl.textContent = data.message || 'Código incorrecto o expirado.';
+        inputs.forEach(inp => { inp.value = ''; inp.style.borderColor = 'var(--error, #ff5470)'; });
+        inputs[0].focus();
+        btn.classList.remove('loading'); btn.disabled = false;
+      }
+    } catch {
+      errEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
+      btn.classList.remove('loading'); btn.disabled = false;
+    }
+  });
+}
 </script>
 <script src="assets/js/cart.js"></script>
 </body>

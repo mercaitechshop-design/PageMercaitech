@@ -1,225 +1,9 @@
 // Mercaitech — Product catalog data
-// In production this is fetched from /api/products.php
-// The static array below is the fallback / demo data
+// Los productos se cargan 100% desde la BD vía /api/products.php (con cache 60s)
+// El array empieza vacío → skeletons se muestran hasta que el API responda
+// Nunca se muestran productos hardcodeados, inactivos o de prueba
 
-const PRODUCTS = [
-  {
-    id: 1,
-    slug: 'auriculares-bluetooth-pro',
-    title: 'Auriculares Bluetooth Pro Noise-Cancel',
-    category: 'tecnologia',
-    categoryLabel: 'Audio · Tecnología',
-    icon: 'headphones',
-    price: 999000,
-    oldPrice: 1299000,
-    discount: 24,
-    badge: { kind: 'sale', label: '-24%' },
-    stock: true,
-    rating: 4.8,
-    reviews: 1284,
-    bg: 'radial-gradient(ellipse at 50% 40%, rgba(31,214,255,.22), transparent 60%), linear-gradient(135deg, #0B1124, #001A47)',
-    specs: { Modelo: 'MT-ANC Pro', Conectividad: 'Bluetooth 5.3', Batería: '48h', 'Noise cancel': 'ANC adaptativo', Garantía: '2 años' },
-    description: 'Auriculares premium con cancelación de ruido activa adaptativa. Drivers de 40mm de alta fidelidad, batería de 48h y carga rápida USB-C. El modelo más vendido de Mercaitech.'
-  },
-  {
-    id: 2,
-    slug: 'smartwatch-series-x',
-    title: 'Smartwatch Series X 4G GPS',
-    category: 'tecnologia',
-    categoryLabel: 'Wearables · Tecnología',
-    icon: 'watch',
-    price: 1599000,
-    oldPrice: 1999000,
-    discount: 20,
-    badge: { kind: 'sale', label: '-20%' },
-    stock: true,
-    rating: 4.7,
-    reviews: 876,
-    bg: 'radial-gradient(ellipse at 50% 50%, rgba(0,102,255,.2), transparent 60%), linear-gradient(135deg, #121A30, #03060D)',
-    specs: { Pantalla: 'AMOLED 1.9"', Conectividad: '4G · GPS · WiFi', Batería: '5 días', 'Water resist': '10 ATM', Garantía: '2 años' },
-    description: 'Smartwatch independiente con tarjeta SIM 4G, GPS dual y más de 100 modos de ejercicio. Compatible con iOS y Android.'
-  },
-  {
-    id: 3,
-    slug: 'camara-mirrorless-4k',
-    title: 'Cámara Mirrorless 4K HDR',
-    category: 'tecnologia',
-    categoryLabel: 'Foto · Vídeo',
-    icon: 'camera',
-    price: 4999000,
-    oldPrice: 6799000,
-    discount: 26,
-    badge: { kind: 'sale', label: '-26%' },
-    stock: true,
-    rating: 4.9,
-    reviews: 432,
-    bg: 'radial-gradient(ellipse at 50% 40%, rgba(31,214,255,.16), transparent 60%), linear-gradient(135deg, #0B1124, #002C7A)',
-    specs: { Sensor: '26MP APS-C', Vídeo: '4K 60fps HDR', 'Est. óptica': '5 ejes', Pantalla: 'OLED 3" giratorio', Garantía: '2 años' },
-    description: 'Cámara sin espejo de 26MP con vídeo 4K 60fps HDR y estabilización óptica de 5 ejes. Perfecta para creadores de contenido y fotógrafos profesionales.'
-  },
-  {
-    id: 4,
-    slug: 'laptop-gaming-rtx',
-    title: 'Laptop Gaming RTX 4080',
-    category: 'gaming',
-    categoryLabel: 'Gaming · Tecnología',
-    icon: 'laptop',
-    price: 7499000,
-    oldPrice: null,
-    discount: 0,
-    badge: { kind: 'new', label: 'NUEVO' },
-    stock: true,
-    rating: 4.8,
-    reviews: 201,
-    bg: 'radial-gradient(ellipse at 50% 50%, rgba(0,102,255,.24), transparent 60%), linear-gradient(135deg, #001A47, #03060D)',
-    specs: { CPU: 'Intel i9-14900HX', GPU: 'RTX 4080 16GB', RAM: '32GB DDR5', Almacen: '2TB NVMe', Pantalla: 'QHD 240Hz' },
-    description: 'La laptop gaming más potente de nuestra línea. Pantalla QHD de 240Hz con MUX Switch, RAM DDR5 y SSD NVMe de 2TB. Lista para los títulos más exigentes de 2026.'
-  },
-  {
-    id: 5,
-    slug: 'speaker-bluetooth-outdoor',
-    title: 'Speaker Bluetooth Outdoor 360°',
-    category: 'hogar',
-    categoryLabel: 'Audio · Hogar',
-    icon: 'speaker',
-    price: 649000,
-    oldPrice: 799000,
-    discount: 19,
-    badge: { kind: 'sale', label: '-19%' },
-    stock: true,
-    rating: 4.6,
-    reviews: 658,
-    bg: 'radial-gradient(ellipse at 50% 40%, rgba(31,214,255,.18), transparent 60%), linear-gradient(135deg, #121A30, #001A47)',
-    specs: { Potencia: '60W RMS', Alcance: 'Bluetooth 5.2 · 30m', Batería: '24h', 'Resist. agua': 'IP67', Garantía: '1 año' },
-    description: 'Altavoz portátil impermeable IP67 con sonido 360° de 60W RMS. Perfecto para exteriores, playa y actividades al aire libre.'
-  },
-  {
-    id: 6,
-    slug: 'gamepad-wireless-pro',
-    title: 'Gamepad Wireless Pro Edition',
-    category: 'gaming',
-    categoryLabel: 'Gaming',
-    icon: 'gamepad-2',
-    price: 349000,
-    oldPrice: null,
-    discount: 0,
-    badge: { kind: 'ai', label: '★ IA' },
-    stock: true,
-    rating: 4.7,
-    reviews: 892,
-    bg: 'radial-gradient(ellipse at 50% 50%, rgba(31,214,255,.18), transparent 60%), linear-gradient(135deg, #0B1124, #002C7A)',
-    specs: { Conectividad: '2.4GHz · BT 5.1', Batería: '40h', Vibración: 'Háptica HD', 'Compat.': 'PC · PS · Switch · Mobile', Garantía: '1 año' },
-    description: 'Mando pro inalámbrico compatible con múltiples plataformas. Vibración háptica HD, gatillos adaptativos y batería de 40h con carga USB-C.'
-  },
-  {
-    id: 7,
-    slug: 'drone-4k-pro-gps',
-    title: 'Drone 4K Pro GPS Plegable',
-    category: 'tecnologia',
-    categoryLabel: 'Tecnología · Drones',
-    icon: 'plane',
-    price: 2999000,
-    oldPrice: 3599000,
-    discount: 17,
-    badge: { kind: 'sale', label: '-17%' },
-    stock: true,
-    rating: 4.6,
-    reviews: 321,
-    bg: 'radial-gradient(ellipse at 50% 40%, rgba(0,102,255,.2), transparent 60%), linear-gradient(135deg, #121A30, #03060D)',
-    specs: { Cámara: '4K 60fps · 3 ejes gimbal', Alcance: '10km FPV', 'Tiempo vuelo': '46 min', GPS: 'RTK Preciso', Garantía: '1 año' },
-    description: 'Drone profesional plegable con cámara 4K y gimbal de 3 ejes. GPS RTK de alta precisión, 46 min de vuelo y hasta 10km de alcance FPV.'
-  },
-  {
-    id: 8,
-    slug: 'robot-aspirador-ia',
-    title: 'Robot Aspirador Inteligente IA',
-    category: 'hogar',
-    categoryLabel: 'Hogar · IA',
-    icon: 'bot',
-    price: 1799000,
-    oldPrice: null,
-    discount: 0,
-    badge: { kind: 'new', label: 'NUEVO' },
-    stock: true,
-    rating: 4.9,
-    reviews: 543,
-    bg: 'radial-gradient(ellipse at 50% 50%, rgba(31,214,255,.2), transparent 60%), linear-gradient(135deg, #001A47, #0B1124)',
-    specs: { Succión: '12.000 Pa', 'Nav.': 'LiDAR + AI Mapping', Vaciado: 'Auto 75 días', Fregado: 'Dual Vibración', Garantía: '2 años' },
-    description: 'Robot aspirador y fregador con inteligencia artificial LiDAR. Mapeo 3D de tu hogar, vaciado automático de 75 días y app con control por voz.'
-  },
-  {
-    id: 9,
-    slug: 'zapatillas-running-pro',
-    title: 'Zapatillas Running Pro Carbon',
-    category: 'deportes',
-    categoryLabel: 'Deportes · Running',
-    icon: 'footprints',
-    price: 699000,
-    oldPrice: 899000,
-    discount: 22,
-    badge: { kind: 'sale', label: '-22%' },
-    stock: true,
-    rating: 4.7,
-    reviews: 412,
-    bg: 'radial-gradient(ellipse at 50% 40%, rgba(16,201,138,.2), transparent 60%), linear-gradient(135deg, #0B1124, #001A47)',
-    specs: { Placa: 'Carbono reactivo', Suela: 'Foam ZoomX', Peso: '198g (US 9)', Drop: '8mm', Garantía: '6 meses' },
-    description: 'Zapatillas de running con placa de carbono y foam de alta restitución de energía. Diseñadas para maratones y entrenamientos de alto rendimiento.'
-  },
-  {
-    id: 10,
-    slug: 'monitor-gaming-4k',
-    title: 'Monitor Gaming 32" 4K 144Hz',
-    category: 'gaming',
-    categoryLabel: 'Gaming · Monitores',
-    icon: 'monitor',
-    price: 2799000,
-    oldPrice: 3599000,
-    discount: 22,
-    badge: { kind: 'sale', label: '-22%' },
-    stock: true,
-    rating: 4.8,
-    reviews: 234,
-    bg: 'radial-gradient(ellipse at 50% 50%, rgba(0,102,255,.22), transparent 60%), linear-gradient(135deg, #0B1124, #002C7A)',
-    specs: { Panel: 'OLED 32" 4K', Refresco: '144Hz VRR', 'Tiempo resp': '0.03ms', HDR: 'DisplayHDR 1000', Garantía: '3 años' },
-    description: 'Monitor OLED de 32" con resolución 4K y 144Hz VRR. Tiempo de respuesta de 0.03ms, DisplayHDR 1000 y soporte para G-Sync y FreeSync Premium Pro.'
-  },
-  {
-    id: 11,
-    slug: 'crema-hidratante-ia',
-    title: 'Crema Facial Inteligente SPF50',
-    category: 'belleza',
-    categoryLabel: 'Belleza · Skincare',
-    icon: 'sparkles',
-    price: 189000,
-    oldPrice: 269000,
-    discount: 30,
-    badge: { kind: 'ai', label: '★ IA' },
-    stock: true,
-    rating: 4.5,
-    reviews: 892,
-    bg: 'radial-gradient(ellipse at 50% 40%, rgba(31,214,255,.18), transparent 60%), linear-gradient(135deg, #121A30, #001A47)',
-    specs: { SPF: '50+ PA++++', Tipo: 'Todo tipo de piel', Ingredientes: 'Niacinamida · Retinol', Tamaño: '50ml', Garantía: '12 meses' },
-    description: 'Crema hidratante con SPF50 formulada con niacinamida y retinol. Análisis de piel por IA para una rutina personalizada. La más vendida en belleza.'
-  },
-  {
-    id: 12,
-    slug: 'sudadera-tech-fleece',
-    title: 'Sudadera Tech Fleece Premium',
-    category: 'moda',
-    categoryLabel: 'Moda · Ropa técnica',
-    icon: 'shirt',
-    price: 379000,
-    oldPrice: 519000,
-    discount: 27,
-    badge: { kind: 'sale', label: '-27%' },
-    stock: true,
-    rating: 4.6,
-    reviews: 543,
-    bg: 'radial-gradient(ellipse at 50% 50%, rgba(0,102,255,.16), transparent 60%), linear-gradient(135deg, #121A30, #0B1124)',
-    specs: { Material: 'Tech Fleece 280gsm', Fit: 'Regular / Slim', Lavado: 'Máquina fría', Tallas: 'XS–3XL', Garantía: '6 meses' },
-    description: 'Sudadera confeccionada en Tech Fleece de 280gsm. Abrigo sin volumen, perfecta para entrenamientos y uso casual urbano.'
-  }
-];
+const PRODUCTS = [];
 
 // Helper: get product icon SVG string by name
 const ICONS = {
@@ -258,27 +42,34 @@ window.isOutOfStock = function isOutOfStock(p) {
   return +p.stock <= 0;
 };
 
-// ── Load products from DB — DB is the single source of truth ─────────────────
-// When the API responds successfully, the ENTIRE window.PRODUCTS array is
-// replaced with DB data.  This guarantees:
-//   • Inactive / deleted products disappear immediately
-//   • Price / image / title changes are reflected
-//   • New products appear
-// If the request fails (server down) the static fallback array stays intact.
+// ── Load products from DB (single source of truth) ───────────────────────────
+// La BD tiene cache de 60s en servidor → responde en <10ms después de la primera visita.
+// Los productos solo aparecen cuando el API confirma cuáles están activos.
 (function loadDBProducts() {
-  fetch('api/products.php', { credentials: 'same-origin' })
+  window._dbProductsReady = false; // flag para DOMContentLoaded
+
+  const _h = window.location.hostname.endsWith('.ngrok-free.dev') || window.location.hostname.endsWith('.ngrok.io')
+    ? { 'ngrok-skip-browser-warning': '1' } : {};
+  fetch('api/products.php', { credentials: 'same-origin', headers: _h })
     .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(data => {
       if (!data.success || !Array.isArray(data.products)) return;
 
-      // Replace the array in-place so all existing references stay valid
-      // (avoid spread on large arrays — iterate instead)
       window.PRODUCTS.length = 0;
       data.products.forEach(p => window.PRODUCTS.push(p));
+      window._dbProductsReady = true;
 
+      // Si DOMContentLoaded ya ocurrió, disparar render inmediatamente
+      // Si aún no ocurrió, DOMContentLoaded verificará el flag y renderizará
       if (typeof window._onProductsLoaded === 'function') {
         window._onProductsLoaded(window.PRODUCTS);
       }
     })
-    .catch(() => { /* server unavailable — static fallback stays */ });
+    .catch(() => {
+      // API no disponible: mostrar error en el grid en vez de productos incorrectos
+      window._dbProductsError = true;
+      if (typeof window._onProductsError === 'function') {
+        window._onProductsError();
+      }
+    });
 })();

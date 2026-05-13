@@ -34,6 +34,8 @@ match ($action) {
     'forgot'       => handleForgot($body),
     'reset'        => handleReset($body),
     'verify'       => handleVerify($body),
+    'verify_email'         => handleVerifyEmail($body),
+    'resend_verification'  => handleResendVerification($body),
     'google'          => handleGoogleSignIn($body),
     'google_code'     => handleGoogleCode($body),
     'change_password'      => handleChangePassword($body),
@@ -47,29 +49,10 @@ match ($action) {
 };
 
 // ============================================================================
-// RATE LIMITING (simple, IP-based via $_SESSION)
+// RATE LIMITING — delega al rate limiter persistente por IP en app.php
 // ============================================================================
 function checkRateLimit(string $key, int $max = 5, int $windowSecs = 300): void {
-    $now = time();
-    $sessionKey = "rl_{$key}";
-
-    if (!isset($_SESSION[$sessionKey])) {
-        $_SESSION[$sessionKey] = ['count' => 0, 'reset_at' => $now + $windowSecs];
-    }
-
-    if ($now > $_SESSION[$sessionKey]['reset_at']) {
-        $_SESSION[$sessionKey] = ['count' => 0, 'reset_at' => $now + $windowSecs];
-    }
-
-    $_SESSION[$sessionKey]['count']++;
-
-    if ($_SESSION[$sessionKey]['count'] > $max) {
-        $wait = (int) ceil(($_SESSION[$sessionKey]['reset_at'] - $now) / 60);
-        jsonResponse([
-            'success' => false,
-            'message' => "Demasiados intentos. Espera {$wait} min e inténtalo de nuevo."
-        ], 429);
-    }
+    checkRateLimitDB($key, $max, $windowSecs);
 }
 
 // ============================================================================
@@ -82,8 +65,9 @@ function handleRegister(array $body): void {
     $apellido = sanitize($body['apellido'] ?? '');
     $email    = sanitize($body['email']    ?? '');
     $password = $body['password'] ?? '';
+    $telefono = sanitize($body['telefono'] ?? '');
 
-    // Validate
+    // Validaciones
     if (!$nombre) {
         jsonResponse(['success' => false, 'message' => 'El nombre es obligatorio.'], 422);
     }
@@ -96,45 +80,68 @@ function handleRegister(array $body): void {
     if (strlen($password) > 128) {
         jsonResponse(['success' => false, 'message' => 'La contraseña es demasiado larga.'], 422);
     }
+    if (!preg_match('/[A-Z]/', $password)) {
+        jsonResponse(['success' => false, 'message' => 'La contraseña debe tener al menos una letra mayúscula.'], 422);
+    }
+    if (!preg_match('/[0-9]/', $password)) {
+        jsonResponse(['success' => false, 'message' => 'La contraseña debe tener al menos un número.'], 422);
+    }
 
     $db = getDB();
 
-    // Check duplicate email
+    // Verificar email duplicado
     $check = $db->prepare("SELECT id FROM usuarios WHERE email = ? LIMIT 1");
     $check->execute([$email]);
     if ($check->fetch()) {
         jsonResponse(['success' => false, 'message' => 'Este correo ya está registrado. ¿Quieres iniciar sesión?'], 409);
     }
 
-    // Hash password with BCrypt cost 12
-    $hash      = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-    $fullName  = trim($nombre . ($apellido ? ' ' . $apellido : ''));
-    $verifyTok = bin2hex(random_bytes(32));
+    // Generar código de 6 dígitos (expira en 15 min)
+    $verifyCode     = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+    $verifyCodeHash = hash('sha256', $verifyCode);
+    $verifyExp      = time() + 900;
 
-    $stmt = $db->prepare("
-        INSERT INTO usuarios
-          (nombre, email, password_hash, rol, activo, email_verificado, token_verificacion, creado_en)
-        VALUES (?, ?, ?, 'cliente', 1, 0, ?, NOW())
-    ");
-    $stmt->execute([$fullName, $email, $hash, $verifyTok]);
-    $userId = (int) $db->lastInsertId();
+    // Guardar datos en sesión — la cuenta NO se crea hasta que el código sea verificado
+    $_SESSION['pending_register'] = [
+        'nombre'    => $nombre,
+        'apellido'  => $apellido,
+        'email'     => $email,
+        'telefono'  => $telefono,
+        'hash'      => password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]),
+        'code_hash' => $verifyCodeHash,
+        'expires'   => $verifyExp,
+    ];
 
-    // Guardar contraseña inicial en historial
-    savePasswordHistory($db, $userId, $hash);
+    // Enviar código al correo
+    $displayName = trim($nombre . ($apellido ? ' ' . $apellido : ''));
+    $emailSent   = false;
+    try {
+        $mail = new Mail();
+        $mail->to($email, $displayName)
+             ->subject('Verifica tu correo — Mercaitech')
+             ->body(
+                 Mail::templateCode($displayName, $verifyCode),
+                 "Hola {$displayName}, tu código de verificación es: {$verifyCode}\nExpira en 15 minutos."
+             )
+             ->send();
+        $emailSent = true;
+    } catch (\Throwable $e) {
+        @file_put_contents(
+            __DIR__ . '/../../storage/logs/mail.log',
+            date('Y-m-d H:i:s') . " [register_verify] to={$email} error=" . $e->getMessage() . PHP_EOL,
+            FILE_APPEND
+        );
+    }
 
-    // Open session
-    $_SESSION['user_id']    = $userId;
-    $_SESSION['user_email'] = $email;
-    $_SESSION['user_role']  = 'cliente';
+    clearRateLimitDB('register');
 
-    // Reset rate limit on success
-    unset($_SESSION['rl_register']);
-
-    // TODO: Send verification email
-    // sendVerificationEmail($email, $fullName, $verifyTok);
-
-    $user = ['id' => $userId, 'nombre' => $fullName, 'email' => $email, 'rol' => 'cliente'];
-    jsonResponse(['success' => true, 'user' => $user, 'message' => '¡Cuenta creada exitosamente!'], 201);
+    jsonResponse([
+        'success'           => true,
+        'needs_verification'=> true,
+        'email_sent'        => $emailSent,
+        'user'              => ['nombre' => $nombre, 'apellido' => $apellido, 'email' => $email, 'telefono' => $telefono],
+        'message'           => 'Revisa tu correo e ingresa el código de verificación.',
+    ], 200);
 }
 
 // ============================================================================
@@ -173,13 +180,14 @@ function handleLogin(array $body): void {
     $valid     = password_verify($password, $hash);
 
     if (!$user || !$valid) {
-        // Increment failed attempts
         if ($user) {
-            $attempts = (int)$user['intentos_fallidos'] + 1;
-            $lockUntil = $attempts >= 5 ? date('Y-m-d H:i:s', time() + 900) : null; // 15 min after 5 fails
+            $attempts  = (int)$user['intentos_fallidos'] + 1;
+            $lockUntil = $attempts >= 5 ? date('Y-m-d H:i:s', time() + 900) : null;
             $db->prepare("UPDATE usuarios SET intentos_fallidos = ?, bloqueado_hasta = ? WHERE id = ?")
                ->execute([$attempts, $lockUntil, $user['id']]);
         }
+        // Log intento fallido para auditoría
+        securityLog('login_fail', ['email' => $email, 'ip' => ipHash()]);
         jsonResponse(['success' => false, 'message' => 'Correo o contraseña incorrectos.'], 401);
     }
 
@@ -198,10 +206,13 @@ function handleLogin(array $body): void {
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role']  = $user['rol'];
 
-    // Remember-me cookie (30 days)
+    // Remember-me cookie (30 días)
+    // Seguridad: la cookie guarda el token raw; la BD guarda hash(token).
+    // Si la BD es comprometida, el hash no sirve para suplantar sesiones.
     if ($remember) {
-        $token = bin2hex(random_bytes(32));
-        $exp   = time() + 86400 * 30;
+        $token     = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+        $exp       = time() + 86400 * 30;
         setcookie('mt_remember', $token, [
             'expires'  => $exp,
             'path'     => '/',
@@ -209,12 +220,12 @@ function handleLogin(array $body): void {
             'samesite' => 'Strict',
             'secure'   => isset($_SERVER['HTTPS']),
         ]);
-        // Persist token in DB so it can be validated on next visit
         $db->prepare("UPDATE usuarios SET remember_token = ?, remember_expires = ? WHERE id = ?")
-           ->execute([$token, date('Y-m-d H:i:s', $exp), $user['id']]);
+           ->execute([$tokenHash, date('Y-m-d H:i:s', $exp), $user['id']]);
     }
 
-    unset($_SESSION['rl_login']);
+    clearRateLimitDB('login');
+    securityLog('login_ok', ['user_id' => $user['id']]);
 
     $userData = [
         'id'           => $user['id'],
@@ -299,14 +310,15 @@ function handleMe(): void {
 function tryRememberMe(string $token): void {
     if (!$token) return;
     try {
-        $db   = getDB();
-        $stmt = $db->prepare("
+        $db        = getDB();
+        $tokenHash = hash('sha256', $token); // comparar hash, nunca el token raw
+        $stmt      = $db->prepare("
             SELECT id, nombre, email, rol
             FROM usuarios
             WHERE remember_token = ? AND remember_expires > NOW() AND activo = 1
             LIMIT 1
         ");
-        $stmt->execute([$token]);
+        $stmt->execute([$tokenHash]);
         $user = $stmt->fetch();
         if ($user) {
             session_regenerate_id(true);
@@ -339,12 +351,14 @@ function handleForgot(array $body): void {
         jsonResponse($genericResponse);
     }
 
-    // Código de 6 dígitos, expira en 15 minutos
-    $code    = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
-    $expires = date('Y-m-d H:i:s', time() + 900);
+    // Código de 6 dígitos, expira en 5 minutos
+    // Seguridad: se guarda el hash SHA-256; el código raw solo viaja por correo.
+    $code     = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+    $codeHash = hash('sha256', $code);
+    $expires  = date('Y-m-d H:i:s', time() + 300);
 
     $db->prepare("UPDATE usuarios SET token_reset = ?, token_reset_exp = ? WHERE id = ?")
-       ->execute([$code, $expires, $user['id']]);
+       ->execute([$codeHash, $expires, $user['id']]);
 
     try {
         $mail = new Mail();
@@ -352,7 +366,7 @@ function handleForgot(array $body): void {
              ->subject('Tu código de verificación — Mercaitech')
              ->body(
                  Mail::templateCode($user['nombre'], $code),
-                 "Hola {$user['nombre']}, tu código para restablecer la contraseña es: {$code}\nExpira en 15 minutos.\nSi no lo solicitaste, ignora este mensaje."
+                 "Hola {$user['nombre']}, tu código para restablecer la contraseña es: {$code}\nExpira en 5 minutos.\nSi no lo solicitaste, ignora este mensaje."
              )
              ->send();
 
@@ -406,6 +420,8 @@ function savePasswordHistory(PDO $db, int $userId, string $hash): void {
 }
 
 function handleReset(array $body): void {
+    checkRateLimitDB('reset', 5, 300);
+
     $email    = sanitize($body['email']    ?? '');
     $code     = sanitize($body['code']     ?? '');
     $password = $body['password'] ?? '';
@@ -413,17 +429,25 @@ function handleReset(array $body): void {
     if (!$email || !$code) {
         jsonResponse(['success' => false, 'message' => 'Correo y código requeridos.'], 422);
     }
+    // Validación robusta de contraseña
     if (strlen($password) < 8) {
         jsonResponse(['success' => false, 'message' => 'La contraseña debe tener al menos 8 caracteres.'], 422);
     }
+    if (!preg_match('/[A-Z]/', $password)) {
+        jsonResponse(['success' => false, 'message' => 'La contraseña debe incluir al menos una mayúscula.'], 422);
+    }
+    if (!preg_match('/[0-9]/', $password)) {
+        jsonResponse(['success' => false, 'message' => 'La contraseña debe incluir al menos un número.'], 422);
+    }
 
-    $db   = getDB();
-    $stmt = $db->prepare("
+    $db       = getDB();
+    $codeHash = hash('sha256', $code); // comparar contra hash almacenado
+    $stmt     = $db->prepare("
         SELECT id, password_hash FROM usuarios
         WHERE email = ? AND token_reset = ? AND token_reset_exp > NOW() AND activo = 1
         LIMIT 1
     ");
-    $stmt->execute([$email, $code]);
+    $stmt->execute([$email, $codeHash]);
     $user = $stmt->fetch();
 
     if (!$user) {
@@ -578,6 +602,8 @@ function handleGoogleCode(array $body): void {
 // VERIFY RESET CODE — comprueba código sin cambiar la contraseña (paso 2 del modal)
 // ============================================================================
 function handleVerifyResetCode(array $body): void {
+    checkRateLimitDB('verify_code', 10, 300);
+
     $email = sanitize($body['email'] ?? '');
     $code  = sanitize($body['code']  ?? '');
 
@@ -585,13 +611,14 @@ function handleVerifyResetCode(array $body): void {
         jsonResponse(['success' => false, 'message' => 'Correo y código requeridos.'], 422);
     }
 
-    $db   = getDB();
-    $stmt = $db->prepare("
+    $db       = getDB();
+    $codeHash = hash('sha256', $code);
+    $stmt     = $db->prepare("
         SELECT id FROM usuarios
         WHERE email = ? AND token_reset = ? AND token_reset_exp > NOW() AND activo = 1
         LIMIT 1
     ");
-    $stmt->execute([$email, $code]);
+    $stmt->execute([$email, $codeHash]);
 
     if (!$stmt->fetch()) {
         jsonResponse(['success' => false, 'message' => 'Código incorrecto o expirado. Verifica e inténtalo de nuevo.'], 400);
@@ -798,4 +825,123 @@ function handleDeleteAvatar(): void {
     $db->prepare("UPDATE usuarios SET avatar_url = NULL, actualizado_en = NOW() WHERE id = ?")
        ->execute([$_SESSION['user_id']]);
     jsonResponse(['success' => true, 'message' => 'Foto de perfil eliminada.']);
+}
+
+// ============================================================================
+// VERIFY EMAIL — verifica el código enviado al registrarse
+// ============================================================================
+function handleVerifyEmail(array $body): void {
+    checkRateLimitDB('verify_email', 10, 300);
+
+    $code = sanitize($body['code'] ?? '');
+    if (!$code) {
+        jsonResponse(['success' => false, 'message' => 'Código requerido.'], 422);
+    }
+
+    // Verificar que hay un registro pendiente en sesión
+    $pending = $_SESSION['pending_register'] ?? null;
+    if (!$pending) {
+        jsonResponse(['success' => false, 'message' => 'No hay registro pendiente. Vuelve a crear tu cuenta.'], 400);
+    }
+
+    // Verificar expiración
+    if (time() > $pending['expires']) {
+        unset($_SESSION['pending_register']);
+        jsonResponse(['success' => false, 'message' => 'El código expiró. Vuelve a registrarte.'], 400);
+    }
+
+    // Verificar código
+    if (hash('sha256', $code) !== $pending['code_hash']) {
+        jsonResponse(['success' => false, 'message' => 'Código incorrecto. Inténtalo de nuevo.'], 400);
+    }
+
+    // Código correcto → crear la cuenta ahora
+    $db = getDB();
+
+    // Verificar que el email no fue registrado por alguien más mientras esperaba
+    $check = $db->prepare("SELECT id FROM usuarios WHERE email = ? LIMIT 1");
+    $check->execute([$pending['email']]);
+    if ($check->fetch()) {
+        unset($_SESSION['pending_register']);
+        jsonResponse(['success' => false, 'message' => 'Este correo ya fue registrado. Inicia sesión.'], 409);
+    }
+
+    $stmt = $db->prepare("
+        INSERT INTO usuarios
+          (nombre, apellido, email, password_hash, rol, activo, email_verificado, creado_en)
+        VALUES (?, ?, ?, ?, 'cliente', 1, 1, NOW())
+    ");
+    $stmt->execute([
+        $pending['nombre'],
+        $pending['apellido'] ?: null,
+        $pending['email'],
+        $pending['hash'],
+    ]);
+    $userId = (int) $db->lastInsertId();
+
+    // Guardar contraseña en historial
+    savePasswordHistory($db, $userId, $pending['hash']);
+
+    // Abrir sesión
+    session_regenerate_id(true);
+    $_SESSION['user_id']    = $userId;
+    $_SESSION['user_email'] = $pending['email'];
+    $_SESSION['user_role']  = 'cliente';
+    unset($_SESSION['pending_register']);
+
+    clearRateLimitDB('verify_email');
+
+    jsonResponse([
+        'success' => true,
+        'message' => '¡Correo verificado! Cuenta creada correctamente.',
+        'user'    => [
+            'id'               => $userId,
+            'nombre'           => $pending['nombre'],
+            'apellido'         => $pending['apellido'] ?? '',
+            'email'            => $pending['email'],
+            'telefono'         => $pending['telefono'] ?? '',
+            'rol'              => 'cliente',
+            'email_verificado' => 1,
+        ],
+    ]);
+}
+
+// ============================================================================
+// RESEND VERIFICATION — reenvía el código de verificación
+// ============================================================================
+function handleResendVerification(array $body): void {
+    checkRateLimitDB('resend_verify', 3, 300);
+
+    $pending = $_SESSION['pending_register'] ?? null;
+    if (!$pending) {
+        jsonResponse(['success' => false, 'message' => 'No hay registro pendiente.'], 400);
+    }
+
+    $code     = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+    $codeHash = hash('sha256', $code);
+
+    // Actualizar código en sesión
+    $_SESSION['pending_register']['code_hash'] = $codeHash;
+    $_SESSION['pending_register']['expires']   = time() + 900;
+
+    $displayName = trim($pending['nombre'] . ($pending['apellido'] ? ' ' . $pending['apellido'] : ''));
+
+    try {
+        $mail = new Mail();
+        $mail->to($pending['email'], $displayName)
+             ->subject('Nuevo código de verificación — Mercaitech')
+             ->body(
+                 Mail::templateCode($displayName, $code),
+                 "Tu nuevo código de verificación es: {$code}\nExpira en 15 minutos."
+             )
+             ->send();
+        jsonResponse(['success' => true, 'message' => 'Código reenviado. Revisa tu correo.']);
+    } catch (\Throwable $e) {
+        @file_put_contents(
+            __DIR__ . '/../../storage/logs/mail.log',
+            date('Y-m-d H:i:s') . " [resend_verify] " . $e->getMessage() . PHP_EOL,
+            FILE_APPEND
+        );
+        jsonResponse(['success' => false, 'message' => 'No se pudo enviar el correo. Inténtalo de nuevo.'], 500);
+    }
 }

@@ -10,6 +10,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['success' => false, 'error' => 'Method not allowed.'], 405);
 }
 
+// Rate limit: máx 3 suscripciones por IP cada 10 minutos
+checkRateLimitDB('newsletter', 3, 600);
+
 $body   = getJsonBody();
 $email  = sanitize($body['email']  ?? '');
 $nombre = sanitize($body['nombre'] ?? '');

@@ -1,51 +1,25 @@
 <?php
-require_once __DIR__ . '/config.php';
-
-if (APP_ENV !== 'development') {
-    http_response_code(403);
-    exit('Acceso denegado.');
-}
+declare(strict_types=1);
+require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../app/Helpers/Mail.php';
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
+if (APP_ENV !== 'development') { http_response_code(403); echo 'Solo en desarrollo'; exit; }
 
-header('Content-Type: application/json; charset=utf-8');
+$to = $_GET['to'] ?? SMTP_USER;
 
 try {
-    $mail = new PHPMailer(true);
+    $items = [['titulo' => 'Localizador Airtag Rastreador', 'qty' => 2, 'precio' => 89900.0]];
+    $envio = ['direccion' => 'Carrera 2A # 32-05', 'ciudad' => 'Puerto Boyacá', 'pais' => 'Colombia'];
+    $html  = Mail::templateOrder('Juan', 'Juan Francisco', '3103003738', 'MT-TEST01', 179800.0, $items, $envio);
 
-    // depuración SMTP (útil para ver errores en terminal)
-    $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+    (new Mail())
+        ->to($to, 'Test')
+        ->subject('✅ Test correo Mercaitech — ' . date('H:i:s'))
+        ->body($html, 'Correo de prueba enviado correctamente.')
+        ->send();
 
-    $mail->isSMTP();
-    $mail->Host       = SMTP_HOST;
-    $mail->Port       = SMTP_PORT;
-    $mail->SMTPAuth   = true;
-    $mail->Username   = SMTP_USER;
-    $mail->Password   = SMTP_PASS;
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-
-    $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
-
-    // correo donde quieres recibir la prueba
-    $mail->addAddress('juanflondonob@gmail.com');
-
-    $mail->isHTML(true);
-    $mail->Subject = 'Prueba SMTP Mercaitech';
-    $mail->Body    = '<p>Correo de prueba enviado correctamente.</p>';
-    $mail->AltBody = 'Correo de prueba enviado correctamente.';
-
-    $mail->send();
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'Correo enviado correctamente'
-    ]);
-} catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'error' => $mail->ErrorInfo
-    ]);
+    echo "<h2 style='font-family:sans-serif;color:green'>✅ Correo enviado a {$to}</h2><p>Revisa tu bandeja de entrada (y spam).</p>";
+} catch (\Throwable $e) {
+    echo "<h2 style='font-family:sans-serif;color:red'>❌ Error SMTP</h2><pre>" . htmlspecialchars($e->getMessage()) . "</pre>";
 }
