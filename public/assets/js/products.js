@@ -59,6 +59,15 @@ window.isOutOfStock = function isOutOfStock(p) {
       data.products.forEach(p => window.PRODUCTS.push(p));
       window._dbProductsReady = true;
 
+      // Sincronizar precios del carrito con los actuales de la BD
+      if (window.cart && typeof window.cart.syncPrices === 'function') {
+        window.cart.syncPrices(window.PRODUCTS);
+      }
+      // Re-renderizar el carrito si está abierto o si hay una función registrada
+      if (typeof window._renderCartAfterProductsLoad === 'function') {
+        window._renderCartAfterProductsLoad();
+      }
+
       // Si DOMContentLoaded ya ocurrió, disparar render inmediatamente
       // Si aún no ocurrió, DOMContentLoaded verificará el flag y renderizará
       if (typeof window._onProductsLoaded === 'function') {

@@ -338,9 +338,9 @@
 </div>
 
 <script src="assets/js/products.js?v=10"></script>
-<script src="assets/js/cart.js?v=12"></script>
+<script src="assets/js/cart.js?v=13"></script>
 <script src="assets/js/auth.js?v=11"></script>
-<script src="assets/js/search.js?v=10"></script>
+<script src="assets/js/search.js?v=11"></script>
 <script>
 'use strict';
 
@@ -375,7 +375,7 @@ function renderCartUI() {
     return;
   }
 
-  items.innerHTML = myCart.items.map(item => {
+  items.innerHTML = myCart.liveItems.map(item => {
     const full = (window.PRODUCTS||[]).find(p => p.id === item.id);
     const imageUrl = full?.image_url || item.image_url;
     const imgContent = imageUrl
@@ -646,16 +646,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Leer hash inicial
-  const hash = window.location.hash.replace('#', '').toLowerCase();
-  const valid = ['tecnologia','hogar','moda','deportes','gaming','belleza'];
-  const initialCat = valid.includes(hash) ? hash : 'todos';
+  // ── Determinar categoría inicial (query param > hash > 'todos') ──
+  const _qs      = new URLSearchParams(window.location.search);
+  const _catQS   = _qs.get('cat')  || '';
+  const _hash    = window.location.hash.replace('#', '').toLowerCase();
+  const _VALID   = ['tecnologia','hogar','moda','deportes','gaming','belleza'];
+  const initialCat = _VALID.includes(_catQS)  ? _catQS
+                   : _VALID.includes(_hash)   ? _hash
+                   : 'todos';
+
+  // Fijar pill y heading de inmediato (sin esperar productos) para eliminar flash
+  (function setInitialPillHeading() {
+    document.querySelectorAll('.cat-pill').forEach(btn => {
+      const c = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+      if (c) btn.classList.toggle('is-active', c === initialCat);
+    });
+    const CAT_NAMES = { todos:'Todos los productos', tecnologia:'Tecnología',
+      hogar:'Hogar', moda:'Moda', deportes:'Deportes', gaming:'Gaming', belleza:'Belleza' };
+    const titleEl    = document.getElementById('pg-title');
+    const overlineEl = document.getElementById('pg-overline');
+    if (titleEl)    titleEl.textContent    = CAT_NAMES[initialCat] || initialCat;
+    if (overlineEl) overlineEl.textContent = initialCat === 'todos' ? 'Catálogo completo' : 'Categoría';
+    // Limpiar hash de URL si venimos con ?cat= para mantenerla limpia
+    if (_catQS && _VALID.includes(_catQS)) {
+      history.replaceState(null, '', initialCat === 'todos' ? location.pathname : '#' + initialCat);
+    }
+  })();
 
   if (window._dbProductsReady) {
-    // API ya cargó (cache rápida) → renderizar directo
     applyFilter(initialCat);
   } else {
-    // Mostrar skeletons mientras llega el API
     const grid = document.getElementById('full-grid');
     if (grid) {
       const sk = `<div class="skeleton-card" aria-hidden="true"><div class="skeleton skeleton-card__img"></div><div class="skeleton-card__body"><div class="skeleton skeleton-card__line skeleton-card__line--sm"></div><div class="skeleton skeleton-card__line skeleton-card__line--lg"></div><div class="skeleton skeleton-card__price"></div><div class="skeleton skeleton-card__btn"></div></div></div>`;
@@ -665,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Handle ?product=ID (from search or wishlist links)
-  const _productParam = new URLSearchParams(window.location.search).get('product');
+  const _productParam = _qs.get('product');
   if (_productParam) setTimeout(() => openPdp(parseInt(_productParam)), 300);
 
   // Let search.js open PDP inline instead of navigating
@@ -673,8 +693,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Re-render cuando el API responda
   window._onProductsLoaded = function() {
-    const activeCat = document.querySelector('.cat-pill.is-active')
-      ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || initialCat || 'todos';
+    // Usar initialCat que ya se calculó correctamente desde ?cat= o hash
+    const pillCat = document.querySelector('.cat-pill.is-active')
+      ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    const activeCat = (pillCat && pillCat !== 'todos') ? pillCat : initialCat;
     applyFilter(activeCat);
     // Retry ?product= open after DB data arrives
     if (_productParam && !document.getElementById('pdp-overlay')?.classList.contains('open')) {

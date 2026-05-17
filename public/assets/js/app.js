@@ -20,6 +20,16 @@ function syncBodyOverflow() {
 const $ = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
 
+// ── XSS-safe HTML escaping ─────────────────────────────────────────────────
+window.escapeHtml = function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+};
+
 // ── Toast ──────────────────────────────────────────────────────────────────
 function showToast(message, type = 'success') {
   const icons = {
@@ -76,10 +86,13 @@ function renderCartItems() {
   }
 
   container.innerHTML = window.cart.items.map(item => {
-    const full = (window.PRODUCTS||[]).find(p => p.id === item.id);
+    const full = (window.PRODUCTS||[]).find(p => Number(p.id) === Number(item.id));
+    // Precio SIEMPRE desde window.PRODUCTS (BD actual); fallback al precio guardado
+    const displayPrice = (full && Number(full.price)) ? Number(full.price) : Number(item.price);
+    item = { ...item, price: displayPrice };
     const imageUrl = full?.image_url || item.image_url;
     const imgContent = imageUrl
-      ? `<img src="${imageUrl}" alt="${item.title}">`
+      ? `<img src="${imageUrl}" alt="${escapeHtml(item.title)}">`
       : getIcon(item.icon);
     const imgBg = imageUrl ? 'background:#111827' : `background:${item.bg}`;
     const atMax = isFinite(MercaitechCart.maxQty(item.stock)) && item.qty >= MercaitechCart.maxQty(item.stock);
@@ -87,8 +100,8 @@ function renderCartItems() {
     <div class="cart-line" data-id="${item.id}">
       <div class="cart-line__img" style="${imgBg};cursor:pointer" onclick="closeCart();openPdp(${item.id})">${imgContent}</div>
       <div class="cart-line__info">
-        <div class="cart-line__name" style="cursor:pointer" onclick="closeCart();openPdp(${item.id})">${item.title}</div>
-        <div class="cart-line__meta">${item.categoryLabel}</div>
+        <div class="cart-line__name" style="cursor:pointer" onclick="closeCart();openPdp(${item.id})">${escapeHtml(item.title)}</div>
+        <div class="cart-line__meta">${escapeHtml(item.categoryLabel || '')}</div>
         <div class="cart-line__bottom">
           <div class="cart-qty">
             <button class="cart-qty__btn" onclick="updateCartQty(${item.id},${item.qty - 1})" aria-label="Reducir">−</button>
@@ -98,13 +111,17 @@ function renderCartItems() {
           <div class="cart-line__price">${window.cart.formatPrice(item.price * item.qty)}</div>
         </div>
       </div>
-      <button class="icon-btn" onclick="removeFromCart(${item.id})" aria-label="Eliminar ${item.title}" style="flex-shrink:0">
+      <button class="icon-btn" onclick="removeFromCart(${item.id})" aria-label="Eliminar ${escapeHtml(item.title)}" style="flex-shrink:0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       </button>
     </div>`;
   }).join('');
 
-  const subtotal = window.cart.subtotal;
+  // Calcular subtotal usando precios actuales de window.PRODUCTS (igual que el ítem)
+  const subtotal = window.cart.items.reduce((s, i) => {
+    const p = (window.PRODUCTS||[]).find(pr => Number(pr.id) === Number(i.id));
+    return s + ((p && Number(p.price)) ? Number(p.price) : Number(i.price)) * i.qty;
+  }, 0);
   const iva      = Math.round(subtotal * 0.19 / 1.19);
   totalsEl.innerHTML = `
     <div class="cart-totals__row"><span>Subtotal</span><span>${window.cart.formatPrice(subtotal)}</span></div>
@@ -121,6 +138,14 @@ function openCart() {
   syncBodyOverflow();
   renderCartItems();
 }
+
+// Se llama desde products.js después de cargar productos para actualizar precios
+window._renderCartAfterProductsLoad = function() {
+  const drawer = $('cart-drawer');
+  if (drawer && drawer.classList.contains('open')) {
+    renderCartItems();
+  }
+};
 
 function closeCart() {
   $('cart-drawer').classList.remove('open');
@@ -199,23 +224,23 @@ function productCardHTML(p, i) {
   // El resto: lazy loading con fade-in
   const loadingAttr  = i < 4 ? 'eager' : 'lazy';
   const mediaContent = p.image_url
-    ? `<img src="${p.image_url}" loading="${loadingAttr}" decoding="async" style="width:100%;height:100%;object-fit:cover" alt="${p.title}" class="lazy-img${i >= 4 ? '' : ' loaded'}">`
+    ? `<img src="${p.image_url}" loading="${loadingAttr}" decoding="async" style="width:100%;height:100%;object-fit:cover" alt="${escapeHtml(p.title)}" class="lazy-img${i >= 4 ? '' : ' loaded'}">`
     : `<div class="product-card__icon">${getIcon(p.icon)}</div>`;
   return `
     <article class="product-card reveal visible${oos ? ' product-card--oos' : ''}" role="listitem" tabindex="0"
-             data-id="${p.id}" aria-label="${p.title}, ${window.cart.formatPrice(p.price)}"
+             data-id="${p.id}" aria-label="${escapeHtml(p.title)}, ${window.cart.formatPrice(p.price)}"
              style="transition-delay:${i * 60}ms">
       <div class="product-card__media" style="${mediaBg}">
         <div class="product-card__media-inner">
           ${mediaContent}
         </div>
-        ${p.badge && !lowStock && !oos ? `<span class="product-card__badge badge--${p.badge.kind}">${p.badge.label}</span>` : ''}
+        ${p.badge && !lowStock && !oos ? `<span class="product-card__badge badge--${p.badge.kind}">${escapeHtml(p.badge.label)}</span>` : ''}
         ${oos ? '<div class="product-card__oos">Agotado</div>' : ''}
         ${lowStock ? `<div class="product-card__low-stock">¡Solo quedan ${stockNum}!</div>` : ''}
       </div>
       <div class="product-card__body">
-        <span class="product-card__cat">${p.categoryLabel}</span>
-        <div class="product-card__title">${p.title}</div>
+        <span class="product-card__cat">${escapeHtml(p.categoryLabel || '')}</span>
+        <div class="product-card__title">${escapeHtml(p.title)}</div>
         <div class="product-card__row">
           <div class="product-card__prices">
             <span class="price-new">${window.cart.formatPrice(p.price)}</span>
@@ -434,13 +459,13 @@ function openPdp(id) {
           ${_vid && !_mainSrc
             ? buildVideoPlayer(_vid)
             : _mainSrc
-              ? `<img id="pdp-main-img" src="${_mainSrc}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`
+              ? `<img id="pdp-main-img" src="${_mainSrc}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${escapeHtml(p.title)}">`
               : `<div class="pdp-gallery__icon">${getIcon(p.icon)}</div>`}
-          ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2;position:absolute;top:12px;left:12px">${p.badge.label}</span>` : ''}
+          ${p.badge ? `<span class="product-card__badge badge--${p.badge.kind}" style="z-index:2;position:absolute;top:12px;left:12px">${escapeHtml(p.badge.label)}</span>` : ''}
         </div>
         <div class="pdp-gallery__thumbs">
           ${_imgs
-            ? _imgs.map((img, i) => `<div class="pdp-thumb ${i===0?'active':''}" data-img="${img.url}" style="background:#111827;overflow:hidden" tabindex="0"><img src="${img.url}" style="width:100%;height:100%;object-fit:cover" alt="${img.alt||p.title}"></div>`).join('') + _vidThumbs
+            ? _imgs.map((img, i) => `<div class="pdp-thumb ${i===0?'active':''}" data-img="${img.url}" style="background:#111827;overflow:hidden" tabindex="0"><img src="${img.url}" style="width:100%;height:100%;object-fit:cover" alt="${escapeHtml(img.alt||p.title)}"></div>`).join('') + _vidThumbs
             : _vid
               ? _vidThumbs
               : [0,1,2,3].map((i) => `<div class="pdp-thumb ${i===0?'active':''}" style="background:${p.bg}" tabindex="0" aria-label="Vista ${i+1}"><div style="width:32%;height:32%;color:rgba(255,255,255,.55)">${getIcon(p.icon)}</div></div>`).join('')
@@ -448,8 +473,8 @@ function openPdp(id) {
         </div>
       </div>
       <div class="pdp-info">
-        <span class="overline text-cyan">${p.categoryLabel}</span>
-        <h2 class="pdp-info__title">${p.title}</h2>
+        <span class="overline text-cyan">${escapeHtml(p.categoryLabel || '')}</span>
+        <h2 class="pdp-info__title">${escapeHtml(p.title)}</h2>
         <div class="pdp-info__rating">
           <span class="pdp-info__rating-stars">★★★★${p.rating >= 4.8 ? '★' : '½'}</span>
           <span>${p.rating} · ${p.reviews.toLocaleString('es')} reseñas</span>
@@ -467,12 +492,12 @@ function openPdp(id) {
             if (_low)  return `<div class="pdp-stock pdp-stock--low"><span class="stock-dot stock-dot--low"></span>¡Solo quedan <strong>${_s} unidades</strong>! · Envío en 24–48h</div>`;
             return `<div class="pdp-stock"><span class="stock-dot"></span>En stock · Envío en 24–48h</div>`;
           })()}
-        <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${p.description}</p>
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.6">${escapeHtml(p.description || '')}</p>
         <div class="pdp-specs">
           ${Object.entries(p.specs || {}).map(([k,v]) => `
             <div class="pdp-spec">
-              <span class="pdp-spec-label">${k}</span>
-              <span class="pdp-spec-value">${v}</span>
+              <span class="pdp-spec-label">${escapeHtml(k)}</span>
+              <span class="pdp-spec-value">${escapeHtml(v)}</span>
             </div>`).join('')}
         </div>
         ${!window.isOutOfStock(p) ? `
@@ -587,7 +612,7 @@ function openPdp(id) {
       } else if (thumb.dataset.img) {
         if (mainMedia) {
           mainMedia.style.background = '#111827';
-          mainMedia.innerHTML = `<img id="pdp-main-img" src="${thumb.dataset.img}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${p.title}">`;
+          mainMedia.innerHTML = `<img id="pdp-main-img" src="${thumb.dataset.img}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:inherit" alt="${escapeHtml(p.title)}">`;
         }
       }
     });
@@ -684,14 +709,14 @@ function performSearch(query) {
   ).slice(0, 6);
 
   if (results.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--fg-subtle);font-size:14px">Sin resultados para "${query}"</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--fg-subtle);font-size:14px">Sin resultados para "${escapeHtml(query)}"</div>`;
     return;
   }
 
   container.innerHTML = results.map(p => {
     const iconBg = p.image_url ? 'background:#111827' : `background:${p.bg}`;
     const iconContent = p.image_url
-      ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" alt="${p.title}">`
+      ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" alt="${escapeHtml(p.title)}">`
       : getIcon(p.icon);
     return `
     <div class="search-result" tabindex="0" data-id="${p.id}" role="option">
@@ -699,7 +724,7 @@ function performSearch(query) {
         ${iconContent}
       </div>
       <div class="search-result__info">
-        <div class="search-result__name">${p.title}</div>
+        <div class="search-result__name">${escapeHtml(p.title)}</div>
         <div class="search-result__price">${window.cart.formatPrice(p.price)}</div>
       </div>
     </div>`;

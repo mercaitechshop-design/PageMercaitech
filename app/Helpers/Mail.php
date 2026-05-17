@@ -72,6 +72,8 @@ class Mail {
     // ── Email templates ──────────────────────────────────────────────────────
 
     public static function templateCode(string $nombre, string $code): string {
+        $nombre = htmlspecialchars($nombre, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $code   = htmlspecialchars($code,   ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return <<<HTML
 <!DOCTYPE html>
 <html lang="es">
@@ -111,6 +113,8 @@ HTML;
     }
 
     public static function templateReset(string $nombre, string $resetUrl): string {
+        $nombre   = htmlspecialchars($nombre,   ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $resetUrl = htmlspecialchars($resetUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return <<<HTML
 <!DOCTYPE html>
 <html lang="es">
@@ -150,11 +154,12 @@ HTML;
     }
 
     public static function templateWelcome(string $nombre, string $verifyUrl = ''): string {
+        $safeUrl    = htmlspecialchars($verifyUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $ctaSection = $verifyUrl
-            ? "<a href=\"{$verifyUrl}\" style=\"display:inline-block;background:#0066FF;color:#fff;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:.07em;text-transform:uppercase;padding:14px 36px;border-radius:10px;box-shadow:0 6px 18px rgba(0,102,255,.4)\">VERIFICAR CORREO</a>"
+            ? "<a href=\"{$safeUrl}\" style=\"display:inline-block;background:#0066FF;color:#fff;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:.07em;text-transform:uppercase;padding:14px 36px;border-radius:10px;box-shadow:0 6px 18px rgba(0,102,255,.4)\">VERIFICAR CORREO</a>"
             : "<a href=\"#\" style=\"display:inline-block;background:#0066FF;color:#fff;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:.07em;text-transform:uppercase;padding:14px 36px;border-radius:10px;box-shadow:0 6px 18px rgba(0,102,255,.4)\">EXPLORAR PRODUCTOS</a>";
 
-        $firstName = explode(' ', trim($nombre))[0];
+        $firstName = htmlspecialchars(explode(' ', trim($nombre))[0], ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return <<<HTML
 <!DOCTYPE html>
@@ -270,21 +275,25 @@ HTML;
     ): string {
         $fmt        = fn(float $n) => '$ ' . number_format($n, 0, ',', '.');
         $baseUrl    = defined('APP_URL') ? rtrim(APP_URL, '/') : 'http://localhost:8080';
-        $pedidosUrl = $baseUrl . '/pedidos.html';
+        $pedidosUrl = htmlspecialchars($baseUrl . '/pedidos.html', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $firstName  = htmlspecialchars($firstName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-        $itemsHtml = implode('', array_map(fn($li) =>
-            "<tr>
+        $itemsHtml = implode('', array_map(function($li) use ($fmt) {
+            $titulo = htmlspecialchars($li['titulo'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $qty    = (int)$li['qty'];
+            $total  = $fmt((float)$li['precio'] * $qty);
+            return "<tr>
               <td style=\"padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)\">
-                <span style=\"font-size:14px;color:#fff;font-weight:600\">{$li['titulo']}</span>
+                <span style=\"font-size:14px;color:#fff;font-weight:600\">{$titulo}</span>
               </td>
               <td style=\"padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);text-align:center\">
-                <span style=\"font-size:13px;color:#8593B2\">&#215;{$li['qty']}</span>
+                <span style=\"font-size:13px;color:#8593B2\">&#215;{$qty}</span>
               </td>
               <td style=\"padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);text-align:right\">
-                <span style=\"font-size:14px;color:#1FD6FF;font-weight:700\">" . $fmt($li['precio'] * $li['qty']) . "</span>
+                <span style=\"font-size:14px;color:#1FD6FF;font-weight:700\">{$total}</span>
               </td>
-            </tr>",
-        $items));
+            </tr>";
+        }, $items));
 
         $totalFmt    = $fmt($total);
         $direccion   = htmlspecialchars($envio['direccion']     ?? '', ENT_QUOTES);

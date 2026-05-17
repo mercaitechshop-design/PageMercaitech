@@ -1079,6 +1079,59 @@
 'use strict';
 
 // ── Tab switching ──────────────────────────────────────────
+function resetRegisterPanel() {
+  const panel = document.getElementById('panel-register');
+
+  // Restaurar elementos que se ocultan durante la pantalla de éxito
+  const elSocials = panel.querySelector('.auth-socials');
+  const elDivider = panel.querySelector('.auth-divider');
+  const elFooter  = panel.querySelector('.auth-footer-note');
+  if (elSocials) elSocials.style.display = '';
+  if (elDivider) elDivider.style.display = '';
+  if (elFooter)  elFooter.style.display  = '';
+
+  // Restaurar formulario de registro
+  const form = document.getElementById('register-form');
+  if (form) form.style.display = '';
+
+  // Restaurar pantalla de éxito/verificación a su estado inicial (oculta)
+  const successEl = document.getElementById('register-success');
+  if (successEl) {
+    successEl.className = 'forgot-code-view';
+    successEl.style     = 'display:none;text-align:center';
+    successEl.innerHTML = `
+      <div class="forgot-modal__icon" style="background:rgba(31,214,255,.1);border-color:rgba(31,214,255,.3);color:var(--mt-cyan-400)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      </div>
+      <h2 class="forgot-modal__title">Verifica tu correo</h2>
+      <p class="forgot-modal__sub" id="verify-email-hint">Te enviamos un código de 6 dígitos. Revisa también la carpeta de spam.</p>
+      <div class="code-inputs">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" id="vc0" data-idx="0">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc1" data-idx="1">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc2" data-idx="2">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc3" data-idx="3">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc4" data-idx="4">
+        <input class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="vc5" data-idx="5">
+      </div>
+      <div class="forgot-resend"><span id="reg-resend-timer"></span> <button id="resend-code-btn" onclick="resendRegCode()" disabled>Reenviar código</button></div>
+      <div class="forgot-modal__error" id="verify-code-err"></div>
+      <div class="forgot-modal__form" style="margin-top:8px">
+        <button class="forgot-modal__btn" id="verify-code-btn" type="button">
+          <span class="fm-label">VERIFICAR CÓDIGO</span>
+          <svg class="fm-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          <div class="fm-spinner"></div>
+        </button>
+      </div>`;
+  }
+
+  // Ocultar el panel de "email ya registrado"
+  const existsEl = document.getElementById('register-exists');
+  if (existsEl) existsEl.style.display = 'none';
+
+  // Limpiar datos de registro pendiente
+  window._pendingUser = null;
+}
+
 function switchTab(tab) {
   const isLogin = tab === 'login';
   document.getElementById('tab-login').classList.toggle('active', isLogin);
@@ -1087,6 +1140,16 @@ function switchTab(tab) {
   document.getElementById('tab-register').setAttribute('aria-selected', !isLogin);
   document.getElementById('panel-login').style.display = isLogin ? '' : 'none';
   document.getElementById('panel-register').style.display = isLogin ? 'none' : '';
+  // Resetear panel de registro siempre al cambiar de pestaña
+  resetRegisterPanel();
+
+  // Resetear panel de login: mostrar el formulario si no hay pantalla de éxito activa
+  const loginSuccess = document.getElementById('login-success');
+  if (loginSuccess && !loginSuccess.classList.contains('show')) {
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) loginForm.style.display = '';
+  }
+
   // Clear errors
   document.querySelectorAll('.field__error').forEach(el => el.classList.remove('show'));
   document.querySelectorAll('.field__input').forEach(el => el.classList.remove('error','success'));
@@ -1453,9 +1516,13 @@ function signInWithGoogle(btn) {
 
 // ── Core: process a Google user object and create/login ───────────
 async function handleGoogleUserInfo(info) {
+  // Google provee given_name (nombres) y family_name (apellidos) por separado.
+  // Si no vienen, se divide el name completo como fallback.
+  const nameParts  = (info.name || '').trim().split(/\s+/);
   const googleUser = {
     googleId: info.sub,
-    nombre:   info.name,
+    nombre:   info.given_name  || nameParts[0]              || '',
+    apellido: info.family_name || nameParts.slice(1).join(' ') || '',
     email:    info.email,
     avatar:   info.picture,
   };
@@ -1502,31 +1569,81 @@ async function handleGoogleCredential(response) {
   const [, b64] = response.credential.split('.');
   const payload = JSON.parse(atob(b64.replace(/-/g,'+').replace(/_/g,'/')));
   await handleGoogleUserInfo({
-    sub:     payload.sub,
-    name:    payload.name,
-    email:   payload.email,
-    picture: payload.picture,
+    sub:         payload.sub,
+    name:        payload.name,
+    given_name:  payload.given_name,
+    family_name: payload.family_name,
+    email:       payload.email,
+    picture:     payload.picture,
   });
 }
 
 function finishGoogleLogin(user, isNew = false) {
-  localStorage.setItem('mt_user', JSON.stringify(user));
-  if (window.cart && user?.id) window.cart.switchUser(user.id);
-
   if (isNew) {
-    // Cuenta nueva — mostrar pantalla de registro exitoso independientemente del panel
+    // ── Cuenta NUEVA vía Google ────────────────────────────────────────────
+    // No auto-login: el usuario debe iniciar sesión manualmente, igual que el registro normal.
+
+    // Asegurar que el panel de registro sea el visible
+    document.getElementById('panel-login').style.display    = 'none';
+    document.getElementById('panel-register').style.display = '';
+    document.getElementById('tab-login').classList.remove('active');
+    document.getElementById('tab-register').classList.add('active');
+    document.getElementById('tab-login').setAttribute('aria-selected', 'false');
+    document.getElementById('tab-register').setAttribute('aria-selected', 'true');
+
+    // Ocultar elementos del panel que no deben verse en la pantalla de éxito
+    const regPanel  = document.getElementById('panel-register');
+    const elSocials = regPanel.querySelector('.auth-socials');
+    const elDivider = regPanel.querySelector('.auth-divider');
+    const elFooter  = regPanel.querySelector('.auth-footer-note');
+    if (elSocials) elSocials.style.display = 'none';
+    if (elDivider) elDivider.style.display = 'none';
+    if (elFooter)  elFooter.style.display  = 'none';
+
     document.getElementById('register-form').style.display = 'none';
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('register-success').classList.add('show');
+
+    const successEl = document.getElementById('register-success');
+    successEl.className = 'auth-success show';
+    successEl.style     = 'padding: 32px 0 8px';
+    successEl.innerHTML = `
+      <div class="auth-success__icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <h3 class="auth-success__title">¡Cuenta creada!</h3>
+        <p class="auth-success__sub" style="margin:0">Tu cuenta de Google fue registrada correctamente.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(0,102,255,.08);border:1px solid rgba(0,102,255,.2);border-radius:10px;padding:10px 16px;width:100%;box-sizing:border-box;justify-content:center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--mt-blue-400)" stroke-width="2" style="width:15px;height:15px;flex-shrink:0"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        <span style="font-size:13px;color:var(--mt-blue-300);font-weight:600;word-break:break-all">${user.email || ''}</span>
+      </div>
+      <div style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:left;display:flex;gap:10px;align-items:flex-start;box-sizing:border-box">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--mt-cyan-400)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <p style="margin:0;font-size:12px;color:var(--fg-muted);line-height:1.6">
+          Para acceder a tu cuenta debes <strong style="color:var(--fg)">iniciar sesión</strong> con tu cuenta de Google.
+        </p>
+      </div>
+      <button class="auth-submit" id="go-login-google-btn" type="button" style="width:100%;margin-top:4px;border:none">
+        INICIAR SESIÓN
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>`;
+
+    document.getElementById('go-login-google-btn').addEventListener('click', () => {
+      resetRegisterPanel();
+      switchTab('login');
+    });
+
   } else {
-    // Cuenta existente — siempre mostrar bienvenida de login
-    document.getElementById('login-form').style.display = 'none';
+    // ── Cuenta EXISTENTE — flujo normal de login ───────────────────────────
+    localStorage.setItem('mt_user', JSON.stringify(user));
+    if (window.cart && user?.id) window.cart.switchUser(user.id);
+    document.getElementById('login-form').style.display    = 'none';
     document.getElementById('register-form').style.display = 'none';
     document.getElementById('login-success-msg').textContent =
-      `Bienvenido de vuelta, ${user.nombre.split(' ')[0]}. Redirigiendo…`;
+      `Bienvenido de vuelta, ${(user.nombre || '').split(' ')[0]}. Redirigiendo…`;
     document.getElementById('login-success').classList.add('show');
+    setTimeout(() => { window.location.href = window._loginRedirect || 'index.html'; }, 1800);
   }
-  setTimeout(() => { window.location.href = 'index.html'; }, 1800);
 }
 
 // ── Forgot password ────────────────────────────────────────
@@ -1947,32 +2064,61 @@ function initVerifyCodeUI() {
       const data = await res.json();
 
       if (data.success) {
-        // Ahora sí guardar en localStorage — correo verificado
-        const u = window._pendingUser || {};
-        const userToSave = {
-          id:               u.id,
-          nombre:           u.nombre   || '',
-          apellido:         u.apellido || '',
-          email:            u.email    || '',
-          telefono:         u.telefono || '',
-          email_verificado: 1,
-        };
-        localStorage.setItem('mt_user', JSON.stringify(userToSave));
-        if (window.cart && u.id) window.cart.switchUser(u.id);
-        // Mostrar éxito con la misma UI del login success (auth-success)
+        // NO se guarda en localStorage ni se abre sesión — el usuario debe iniciar sesión manualmente
+        const savedEmail = (window._pendingUser || {}).email || '';
+        window._pendingUser = null;
+
+        // Ocultar Google btn, divisor y footer para dejar la pantalla limpia
+        const regPanel = document.getElementById('panel-register');
+        const elSocials  = regPanel.querySelector('.auth-socials');
+        const elDivider  = regPanel.querySelector('.auth-divider');
+        const elFooter   = regPanel.querySelector('.auth-footer-note');
+        if (elSocials) elSocials.style.display = 'none';
+        if (elDivider) elDivider.style.display = 'none';
+        if (elFooter)  elFooter.style.display  = 'none';
+
         const regSuccessEl = document.getElementById('register-success');
         regSuccessEl.className = 'auth-success show';
-        regSuccessEl.style = '';
+        regSuccessEl.style = 'padding: 32px 0 8px';
         regSuccessEl.innerHTML = `
           <div class="auth-success__icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
           </div>
-          <h3 class="auth-success__title">¡Correo verificado!</h3>
-          <p class="auth-success__sub">Tu cuenta está lista. Ya puedes empezar a comprar.</p>
-          <a href="${window._loginRedirect || 'index.html'}" class="auth-success__btn">
-            IR A LA TIENDA
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            <h3 class="auth-success__title">¡Cuenta creada!</h3>
+            <p class="auth-success__sub" style="margin:0">Tu correo fue verificado correctamente.</p>
+          </div>
+
+          ${savedEmail ? `
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(0,102,255,.08);border:1px solid rgba(0,102,255,.2);border-radius:10px;padding:10px 16px;width:100%;box-sizing:border-box;justify-content:center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--mt-blue-400)" stroke-width="2" style="width:15px;height:15px;flex-shrink:0"><rect width="16" height="13" x="4" y="7" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <span style="font-size:13px;color:var(--mt-blue-300);font-weight:600;word-break:break-all">${savedEmail}</span>
+          </div>` : ''}
+
+          <div style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:left;display:flex;gap:10px;align-items:flex-start;box-sizing:border-box">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--mt-cyan-400)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            <p style="margin:0;font-size:12px;color:var(--fg-muted);line-height:1.6">
+              Para acceder a tu cuenta debes <strong style="color:var(--fg)">iniciar sesión</strong> con tu correo y contraseña.
+            </p>
+          </div>
+
+          <button class="auth-submit" id="go-login-after-register-btn" type="button" style="width:100%;margin-top:4px;border:none">
+            INICIAR SESIÓN
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </a>`;
+          </button>`;
+
+        document.getElementById('go-login-after-register-btn').addEventListener('click', () => {
+          // Restaurar elementos ocultos por si el usuario vuelve al registro
+          if (elSocials) elSocials.style.display = '';
+          if (elDivider) elDivider.style.display = '';
+          if (elFooter)  elFooter.style.display  = '';
+          switchTab('login');
+          const loginEmail = document.getElementById('login-email');
+          if (loginEmail) { loginEmail.value = savedEmail; }
+          const loginPwd = document.getElementById('login-password');
+          if (loginPwd) loginPwd.focus();
+        });
       } else {
         errEl.textContent = data.message || 'Código incorrecto o expirado.';
         inputs.forEach(inp => { inp.value = ''; inp.style.borderColor = 'var(--error, #ff5470)'; });

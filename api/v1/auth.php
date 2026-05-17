@@ -506,6 +506,7 @@ function handleVerify(array $body): void {
 function handleGoogleSignIn(array $body): void {
     $email    = sanitize($body['email']    ?? '');
     $nombre   = sanitize($body['nombre']   ?? '');
+    $apellido = sanitize($body['apellido'] ?? '');
     $googleId = sanitize($body['googleId'] ?? '');
 
     if (!$email || !validEmail($email)) {
@@ -546,12 +547,12 @@ function handleGoogleSignIn(array $body): void {
         $nombre = $nombre ?: explode('@', $email)[0];
         $db->prepare("
             INSERT INTO usuarios
-              (nombre, email, password_hash, rol, activo, email_verificado, google_id, avatar_url, creado_en)
-            VALUES (?, ?, '', 'cliente', 1, 1, ?, ?, NOW())
-        ")->execute([$nombre, $email, $googleId, $avatar ?: null]);
+              (nombre, apellido, email, password_hash, rol, activo, email_verificado, google_id, avatar_url, creado_en)
+            VALUES (?, ?, ?, '', 'cliente', 1, 1, ?, ?, NOW())
+        ")->execute([$nombre, $apellido ?: null, $email, $googleId, $avatar ?: null]);
 
         $userId = (int) $db->lastInsertId();
-        $user   = ['id' => $userId, 'nombre' => $nombre, 'apellido' => '', 'email' => $email,
+        $user   = ['id' => $userId, 'nombre' => $nombre, 'apellido' => $apellido, 'email' => $email,
                    'rol' => 'cliente', 'avatar_url' => $avatar, 'telefono' => '', 'password_hash' => ''];
     } else {
         if (!$user['activo']) {
@@ -568,16 +569,20 @@ function handleGoogleSignIn(array $body): void {
         }
     }
 
-    session_regenerate_id(true);
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_role']  = $user['rol'];
+    // Solo abrir sesión para cuentas existentes (login).
+    // Las cuentas nuevas deben iniciar sesión manualmente después del registro.
+    if (!$isNew) {
+        session_regenerate_id(true);
+        $_SESSION['user_id']    = $user['id'];
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_role']  = $user['rol'];
+    }
 
     jsonResponse([
         'success'  => true,
         'is_new'   => $isNew,
         'user'     => [
-            'id'           => $user['id'],
+            'id'           => $isNew ? null : $user['id'],
             'nombre'       => $user['nombre'],
             'apellido'     => $user['apellido'] ?? '',
             'email'        => $user['email'],
@@ -868,39 +873,34 @@ function handleVerifyEmail(array $body): void {
 
     $stmt = $db->prepare("
         INSERT INTO usuarios
-          (nombre, apellido, email, password_hash, rol, activo, email_verificado, creado_en)
-        VALUES (?, ?, ?, ?, 'cliente', 1, 1, NOW())
+          (nombre, apellido, email, password_hash, telefono, rol, activo, email_verificado, creado_en)
+        VALUES (?, ?, ?, ?, ?, 'cliente', 1, 1, NOW())
     ");
     $stmt->execute([
         $pending['nombre'],
         $pending['apellido'] ?: null,
         $pending['email'],
         $pending['hash'],
+        $pending['telefono'] ?: null,
     ]);
     $userId = (int) $db->lastInsertId();
 
     // Guardar contraseña en historial
     savePasswordHistory($db, $userId, $pending['hash']);
 
-    // Abrir sesión
-    session_regenerate_id(true);
-    $_SESSION['user_id']    = $userId;
-    $_SESSION['user_email'] = $pending['email'];
-    $_SESSION['user_role']  = 'cliente';
+    // Limpiar datos de registro pendiente — NO se abre sesión.
+    // El usuario debe iniciar sesión manualmente tras verificar el correo.
     unset($_SESSION['pending_register']);
 
     clearRateLimitDB('verify_email');
 
     jsonResponse([
         'success' => true,
-        'message' => '¡Correo verificado! Cuenta creada correctamente.',
+        'message' => '¡Correo verificado! Ya puedes iniciar sesión.',
         'user'    => [
-            'id'               => $userId,
             'nombre'           => $pending['nombre'],
             'apellido'         => $pending['apellido'] ?? '',
             'email'            => $pending['email'],
-            'telefono'         => $pending['telefono'] ?? '',
-            'rol'              => 'cliente',
             'email_verificado' => 1,
         ],
     ]);

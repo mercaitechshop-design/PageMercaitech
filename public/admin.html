@@ -317,9 +317,14 @@
       </div>
     </div>
     <nav class="sidebar__nav">
-      <button class="sidebar__item active" onclick="showSection('products')">
+      <button class="sidebar__item active" onclick="showSection('products',this)">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
         Productos
+      </button>
+      <button class="sidebar__item" onclick="showSection('orders',this)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Pedidos
+        <span id="ord-badge" style="margin-left:auto;display:none;background:rgba(245,158,11,.2);color:#F59E0B;border:1px solid rgba(245,158,11,.3);border-radius:999px;font-size:10px;font-weight:700;padding:1px 7px"></span>
       </button>
       <a href="index.html" class="sidebar__item" style="text-decoration:none">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -342,7 +347,7 @@
     <div class="topbar">
       <div class="topbar__title" id="section-title">Productos</div>
       <div class="topbar__actions">
-        <button class="btn-primary" onclick="openPanel()">
+        <button class="btn-primary" id="btn-new-product" onclick="openPanel()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
           Nuevo producto
         </button>
@@ -399,6 +404,59 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Sección Pedidos ── -->
+    <div class="content" id="orders-section" style="display:none">
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card__label">Total pedidos</div>
+          <div class="stat-card__val" id="ord-stat-total">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__label">Aprobados</div>
+          <div class="stat-card__val" id="ord-stat-done" style="color:var(--mt-green-400)">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__label">Enviados / Entregados</div>
+          <div class="stat-card__val" id="ord-stat-shipped" style="color:#1FD6FF">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__label">Ingresos totales</div>
+          <div class="stat-card__val" id="ord-stat-revenue" style="color:var(--mt-cyan-400);font-size:22px">—</div>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-wrap">
+        <div class="table-head">
+          <div class="search-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="search" class="search-input" placeholder="Buscar por nº de pedido o cliente…" id="ord-search" oninput="searchOrders(this.value)">
+          </div>
+          <div style="font-size:12px;color:var(--fg-subtle)" id="ord-count-label"></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="orders-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Productos</th>
+                <th>Total</th>
+                <th>Envío</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody">
+              <tr class="loading-row"><td colspan="7">Cargando pedidos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /orders-section -->
   </main>
 </div>
 
@@ -1078,9 +1136,179 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function showSection(s) {
+function showSection(s, btn) {
   document.querySelectorAll('.sidebar__item').forEach(i => i.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  const isProducts = s === 'products';
+  document.getElementById('products-section').style.display = isProducts ? '' : 'none';
+  document.getElementById('orders-section').style.display   = isProducts ? 'none' : '';
+  document.getElementById('btn-new-product').style.display  = isProducts ? '' : 'none';
+  document.getElementById('section-title').textContent      = isProducts ? 'Productos' : 'Pedidos';
+
+  if (s === 'orders') loadOrders();
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────────
+const COP_FMT = n => new Intl.NumberFormat('es-CO', {
+  style: 'currency', currency: 'COP',
+  minimumFractionDigits: 0, maximumFractionDigits: 0,
+}).format(parseFloat(n) || 0);
+
+const ORD_STATUS = {
+  pendiente:  { label:'Pendiente',  color:'#F59E0B', bg:'rgba(245,158,11,.12)',  border:'rgba(245,158,11,.3)'  },
+  aprobado:   { label:'Aprobado',   color:'#10E896', bg:'rgba(16,232,150,.12)',  border:'rgba(16,232,150,.3)'  },
+  procesando: { label:'Procesando', color:'#3B82F6', bg:'rgba(59,130,246,.12)',  border:'rgba(59,130,246,.3)'  },
+  enviado:    { label:'Enviado',    color:'#1FD6FF', bg:'rgba(31,214,255,.12)',  border:'rgba(31,214,255,.3)'  },
+  entregado:  { label:'Entregado',  color:'#2EE6A6', bg:'rgba(46,230,166,.12)',  border:'rgba(46,230,166,.3)'  },
+  cancelado:  { label:'Cancelado',  color:'#EF4444', bg:'rgba(239,68,68,.12)',   border:'rgba(239,68,68,.3)'   },
+};
+
+let _allOrders = [];
+let _ordFilter = 'aprobado';
+let _ordSearch = '';
+
+async function loadOrders() {
+  const tbody = document.getElementById('orders-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Cargando pedidos…</td></tr>';
+  try {
+    const r = await fetch('api/orders.php?all=1', { credentials: 'same-origin' });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Error al cargar');
+    _allOrders = d.data || [];
+    renderOrdersStats(_allOrders);
+    applyOrdersFilter();
+    updateOrdBadge();
+  } catch (e) {
+    tbody.innerHTML = `<tr class="loading-row"><td colspan="7" style="color:#EF4444">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function renderOrdersStats(orders) {
+  const approved = orders.filter(o => o.estado === 'aprobado').length;
+  const shipped  = orders.filter(o => ['enviado','entregado'].includes(o.estado)).length;
+  const revenue  = orders
+    .filter(o => ['aprobado','procesando','enviado','entregado'].includes(o.estado))
+    .reduce((s, o) => s + parseFloat(o.total || 0), 0);
+  document.getElementById('ord-stat-total').textContent   = orders.length;
+  document.getElementById('ord-stat-done').textContent    = approved;
+  document.getElementById('ord-stat-shipped').textContent = shipped;
+  document.getElementById('ord-stat-revenue').textContent = COP_FMT(revenue);
+}
+
+function updateOrdBadge() {
+  const pending = _allOrders.filter(o => o.estado === 'pendiente').length;
+  const badge   = document.getElementById('ord-badge');
+  if (badge) { badge.textContent = pending || ''; badge.style.display = pending ? '' : 'none'; }
+}
+
+function filterOrders(status, btn) {
+  _ordFilter = status;
+  document.querySelectorAll('.ord-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  applyOrdersFilter();
+}
+
+function searchOrders(q) {
+  _ordSearch = q.toLowerCase().trim();
+  applyOrdersFilter();
+}
+
+function applyOrdersFilter() {
+  let filtered = _allOrders;
+  if (_ordFilter !== 'all') filtered = filtered.filter(o => o.estado === _ordFilter);
+  if (_ordSearch)           filtered = filtered.filter(o =>
+    o.numero_orden?.toLowerCase().includes(_ordSearch) ||
+    o.nombre_cliente?.toLowerCase().includes(_ordSearch) ||
+    o.email_cliente?.toLowerCase().includes(_ordSearch)
+  );
+  renderOrdersTable(filtered);
+}
+
+function renderOrdersTable(orders) {
+  const tbody = document.getElementById('orders-tbody');
+  document.getElementById('ord-count-label').textContent =
+    `${orders.length} pedido${orders.length !== 1 ? 's' : ''}`;
+
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="7">
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/></svg>
+        <div>No hay pedidos que mostrar</div>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = orders.map((o, idx) => {
+    const items     = o.items || [];
+    const itemNames = items.map(i => i.titulo || 'Producto').join(', ');
+    const itemsQty  = items.reduce((s, i) => s + (i.cantidad || 0), 0);
+    const dt        = new Date(o.creado_en);
+    const dateStr   = dt.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr   = dt.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
+
+    return `<tr>
+      <td style="color:var(--fg-subtle);font-size:12px;font-weight:600">${orders.length - idx}</td>
+      <td>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--mt-cyan-400);font-weight:700;letter-spacing:.04em">${o.numero_orden}</div>
+        <div style="font-size:11px;color:var(--fg-subtle);margin-top:3px;display:flex;align-items:center;gap:4px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;opacity:.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          ${dateStr} · ${timeStr}
+        </div>
+      </td>
+      <td>
+        <div style="font-size:13px;font-weight:600;color:var(--fg)">${o.nombre_cliente || '—'}</div>
+        <div style="font-size:11px;color:var(--mt-blue-300);margin-top:2px">${o.email_cliente || ''}</div>
+        ${o.telefono_cliente ? `<div style="font-size:11px;color:var(--fg-subtle)">${o.telefono_cliente}</div>` : ''}
+      </td>
+      <td style="max-width:200px">
+        <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px" title="${itemNames}">${itemNames || '—'}</div>
+        <div style="font-size:11px;color:var(--fg-subtle);margin-top:2px">${itemsQty} unidad${itemsQty !== 1 ? 'es' : ''}</div>
+      </td>
+      <td style="font-weight:800;font-size:15px;white-space:nowrap;color:var(--fg)">${COP_FMT(o.total)}</td>
+      <td>
+        ${o.ciudad ? `<div style="font-size:12px;font-weight:500">${o.ciudad}</div>` : ''}
+        ${o.pais   ? `<div style="font-size:11px;color:var(--fg-subtle)">${o.pais}</div>` : ''}
+        ${o.direccion_envio ? `<div style="font-size:11px;color:var(--fg-subtle);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.direccion_envio}">${o.direccion_envio}</div>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function updateOrderStatus(sel) {
+  const ref      = sel.dataset.ref;
+  const newState = sel.value;
+  const prevState= sel.dataset.prev;
+  const st       = ORD_STATUS[newState];
+
+  try {
+    const r = await fetch('api/orders.php', {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero_orden: ref, estado: newState }),
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+
+    // Actualizar dato local
+    const ord = _allOrders.find(o => o.numero_orden === ref);
+    if (ord) ord.estado = newState;
+    sel.dataset.prev = newState;
+
+    // Actualizar color del select
+    sel.style.background = st.bg;
+    sel.style.borderColor = st.border;
+    sel.style.color = st.color;
+
+    renderOrdersStats(_allOrders);
+    updateOrdBadge();
+    showToast('Estado actualizado correctamente.', 'success');
+  } catch {
+    sel.value = prevState;
+    showToast('Error al actualizar el estado.', 'error');
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────

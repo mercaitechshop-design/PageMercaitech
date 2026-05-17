@@ -6,6 +6,15 @@
 
   const $ = id => document.getElementById(id);
 
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  }
+
   // Icons copiados de products.js para independencia total
   const ICONS = {
     headphones: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,.85)"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>',
@@ -64,14 +73,14 @@
     ).slice(0, 6);
 
     if (!results.length) {
-      container.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--fg-subtle);font-size:14px">Sin resultados para "${query}"</div>`;
+      container.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--fg-subtle);font-size:14px">Sin resultados para "${escapeHtml(query)}"</div>`;
       return;
     }
 
     container.innerHTML = results.map(p => {
       const iconBg = p.image_url ? 'background:#111827' : `background:${p.bg}`;
       const iconContent = p.image_url
-        ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" alt="${p.title}">`
+        ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" alt="${escapeHtml(p.title)}">`
         : getIcon(p.icon);
       return `
       <div class="search-result" tabindex="0" data-id="${p.id}" role="option">
@@ -79,7 +88,7 @@
           ${iconContent}
         </div>
         <div class="search-result__info">
-          <div class="search-result__name">${p.title}</div>
+          <div class="search-result__name">${escapeHtml(p.title)}</div>
           <div class="search-result__price">${fmt(p.price)}</div>
         </div>
       </div>`;

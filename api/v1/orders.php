@@ -19,6 +19,67 @@ $method = $_SERVER['REQUEST_METHOD'];
 // ── GET ────────────────────────────────────────────────────────────────────────
 if ($method === 'GET') {
 
+    // Admin: listar TODOS los pedidos
+    if (isset($_GET['all'])) {
+        if (empty($_SESSION['user_id'])) {
+            jsonResponse(['success' => false, 'error' => 'No autenticado.'], 401);
+        }
+        $db = getDB();
+        $roleStmt = $db->prepare("SELECT rol FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
+        $roleStmt->execute([$_SESSION['user_id']]);
+        $me = $roleStmt->fetch();
+        if (!$me || $me['rol'] !== 'admin') {
+            jsonResponse(['success' => false, 'error' => 'No autorizado.'], 403);
+        }
+
+        $page    = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = min(500, max(10, (int)($_GET['per_page'] ?? 200)));
+        $offset  = ($page - 1) * $perPage;
+
+        $total   = (int)$db->query("SELECT COUNT(*) FROM ordenes")->fetchColumn();
+
+        $stmt = $db->prepare("
+            SELECT id, numero_orden, nombre_cliente, email_cliente, telefono_cliente,
+                   subtotal, total, estado, metodo_pago,
+                   direccion_envio, ciudad, pais, creado_en
+            FROM ordenes
+            ORDER BY creado_en DESC
+            LIMIT ? OFFSET ?
+        ");
+        $stmt->execute([$perPage, $offset]);
+        $orders = $stmt->fetchAll();
+
+        // Batch load items — single query instead of N queries (N+1 prevention)
+        $orderIds = array_column($orders, 'id');
+        $itemsByOrder = [];
+        if (!empty($orderIds)) {
+            $ph = implode(',', array_fill(0, count($orderIds), '?'));
+            $itemStmt = $db->prepare("
+                SELECT oi.orden_id, p.titulo, oi.cantidad, oi.precio_unitario, oi.subtotal
+                FROM orden_items oi
+                LEFT JOIN productos p ON oi.producto_id = p.id
+                WHERE oi.orden_id IN ($ph)
+                ORDER BY oi.id
+            ");
+            $itemStmt->execute($orderIds);
+            foreach ($itemStmt->fetchAll() as $row) {
+                $itemsByOrder[$row['orden_id']][] = $row;
+            }
+        }
+        foreach ($orders as &$order) {
+            $order['items'] = $itemsByOrder[$order['id']] ?? [];
+        }
+        unset($order);
+
+        jsonResponse([
+            'success'  => true,
+            'data'     => $orders,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+        ]);
+    }
+
     // List all orders for a user email (used by pedidos.html)
     // SECURITY: requiere sesión activa + solo puede ver sus propias órdenes (admin ve todas)
     if (isset($_GET['usuario'])) {
@@ -59,16 +120,25 @@ if ($method === 'GET') {
         $stmt->execute([$email]);
         $orders = $stmt->fetchAll();
 
-        // Attach items to each order
-        $itemStmt = $db->prepare("
-            SELECT p.titulo, oi.cantidad, oi.precio_unitario, oi.subtotal
-            FROM orden_items oi
-            LEFT JOIN productos p ON oi.producto_id = p.id
-            WHERE oi.orden_id = ?
-        ");
+        // Batch load items — single query instead of N queries (N+1 prevention)
+        $orderIds = array_column($orders, 'id');
+        $itemsByOrder = [];
+        if (!empty($orderIds)) {
+            $ph = implode(',', array_fill(0, count($orderIds), '?'));
+            $itemStmt = $db->prepare("
+                SELECT oi.orden_id, p.titulo, oi.cantidad, oi.precio_unitario, oi.subtotal
+                FROM orden_items oi
+                LEFT JOIN productos p ON oi.producto_id = p.id
+                WHERE oi.orden_id IN ($ph)
+                ORDER BY oi.id
+            ");
+            $itemStmt->execute($orderIds);
+            foreach ($itemStmt->fetchAll() as $row) {
+                $itemsByOrder[$row['orden_id']][] = $row;
+            }
+        }
         foreach ($orders as &$order) {
-            $itemStmt->execute([$order['id']]);
-            $order['items'] = $itemStmt->fetchAll();
+            $order['items'] = $itemsByOrder[$order['id']] ?? [];
         }
         unset($order);
 
@@ -279,6 +349,91 @@ if ($method === 'POST') {
         $db->rollBack();
         jsonResponse(['success' => false, 'error' => 'Error al procesar la orden.'], 500);
     }
+}
+
+// ── PATCH — actualizar estado de un pedido (solo admin) ───────────────────────
+if ($method === 'PATCH') {
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['success' => false, 'error' => 'No autenticado.'], 401);
+    }
+    $db = getDB();
+    $roleStmt = $db->prepare("SELECT rol FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
+    $roleStmt->execute([$_SESSION['user_id']]);
+    $me = $roleStmt->fetch();
+    if (!$me || $me['rol'] !== 'admin') {
+        jsonResponse(['success' => false, 'error' => 'No autorizado.'], 403);
+    }
+
+    $body        = getJsonBody();
+    $numeroOrden = sanitize($body['numero_orden'] ?? '');
+    $estado      = sanitize($body['estado']       ?? '');
+
+    $validos = ['pendiente', 'aprobado', 'procesando', 'enviado', 'entregado', 'cancelado'];
+    if (!$numeroOrden || !in_array($estado, $validos)) {
+        jsonResponse(['success' => false, 'error' => 'Datos inválidos.'], 422);
+    }
+
+    $db->prepare("UPDATE ordenes SET estado = ? WHERE numero_orden = ?")
+       ->execute([$estado, $numeroOrden]);
+
+    securityLog('order_status_updated', [
+        'admin_id'     => $_SESSION['user_id'],
+        'numero_orden' => $numeroOrden,
+        'nuevo_estado' => $estado,
+    ]);
+
+    jsonResponse(['success' => true, 'message' => 'Estado actualizado.']);
+}
+
+// ── DELETE — anular pedido pendiente ──────────────────────────────────────────
+if ($method === 'DELETE') {
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['success' => false, 'error' => 'No autenticado.'], 401);
+    }
+
+    $body        = getJsonBody();
+    $numeroOrden = sanitize($body['numero_orden'] ?? '');
+
+    if (!$numeroOrden) {
+        jsonResponse(['success' => false, 'error' => 'Número de orden requerido.'], 422);
+    }
+
+    $db = getDB();
+
+    // Obtener email del usuario en sesión
+    $selfStmt = $db->prepare("SELECT email, rol FROM usuarios WHERE id = ? AND activo = 1 LIMIT 1");
+    $selfStmt->execute([$_SESSION['user_id']]);
+    $self = $selfStmt->fetch();
+
+    if (!$self) {
+        jsonResponse(['success' => false, 'error' => 'Sesión inválida.'], 401);
+    }
+
+    // Buscar la orden: debe ser 'pendiente' y pertenecer al usuario
+    $stmt = $db->prepare("
+        SELECT id, estado FROM ordenes
+        WHERE numero_orden = ?
+          AND email_cliente = ?
+          AND estado = 'pendiente'
+        LIMIT 1
+    ");
+    $stmt->execute([$numeroOrden, $self['email']]);
+    $order = $stmt->fetch();
+
+    if (!$order) {
+        jsonResponse(['success' => false, 'error' => 'Pedido no encontrado o no puede anularse.'], 404);
+    }
+
+    $db->prepare("UPDATE ordenes SET estado = 'cancelado' WHERE id = ?")
+       ->execute([$order['id']]);
+
+    securityLog('order_cancelled', [
+        'user_id'      => $_SESSION['user_id'],
+        'order_id'     => $order['id'],
+        'numero_orden' => $numeroOrden,
+    ]);
+
+    jsonResponse(['success' => true, 'message' => 'Pedido anulado correctamente.']);
 }
 
 jsonResponse(['success' => false, 'error' => 'Method not allowed.'], 405);

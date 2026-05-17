@@ -8,6 +8,26 @@ class MercaitechCart {
     this._key       = 'mt_cart_guest';
     this.items      = this._load();
     this._listeners = [];
+
+    // ── Sincronización entre pestañas ──────────────────────────────────────
+    // BroadcastChannel envía mensajes directamente a otras pestañas del mismo
+    // origen de forma inmediata y confiable, sin depender del evento storage.
+    if (typeof BroadcastChannel !== 'undefined') {
+      this._bc = new BroadcastChannel('mt_cart_sync');
+      this._bc.onmessage = ({ data }) => {
+        if (data.key !== this._key) return;
+        this.items = Array.isArray(data.items) ? data.items : [];
+        this._listeners.forEach(fn => fn(this.items));
+      };
+    } else {
+      // Fallback para navegadores sin BroadcastChannel (Safari < 15.4)
+      this._bc = null;
+      window.addEventListener('storage', (e) => {
+        if (e.key !== this._key) return;
+        this.items = e.newValue ? JSON.parse(e.newValue) : [];
+        this._listeners.forEach(fn => fn(this.items));
+      });
+    }
   }
 
   // ── Storage helpers ────────────────────────────────────────────
@@ -21,6 +41,10 @@ class MercaitechCart {
   _save() {
     try {
       localStorage.setItem(this._key, JSON.stringify(this.items));
+      // Notificar a otras pestañas inmediatamente
+      if (this._bc) {
+        this._bc.postMessage({ key: this._key, items: this.items });
+      }
     } catch { console.warn('Cart: localStorage not available'); }
     this._listeners.forEach(fn => fn(this.items));
   }
@@ -112,9 +136,60 @@ class MercaitechCart {
     return this;
   }
 
+  // ── Sincronizar precios con el catálogo actual ─────────────────
+  // Se llama después de cargar los productos desde la API.
+  // Actualiza precio, título y stock de cada item en el carrito.
+  // Si un producto ya no existe o está inactivo, lo elimina del carrito.
+  syncPrices(products) {
+    if (!Array.isArray(products) || !products.length) return;
+    let changed = false;
+
+    this.items = this.items.filter(item => {
+      const p = products.find(pr => Number(pr.id) === Number(item.id));
+      if (!p || p.activo === false || p.activo === 0) {
+        changed = true;
+        return false;
+      }
+      // Usar Number() para evitar problemas de tipo string vs number
+      const freshPrice = Number(p.price);
+      if (freshPrice && freshPrice !== Number(item.price)) {
+        item.price = freshPrice;
+        changed = true;
+      }
+      if (p.title && p.title !== item.title) {
+        item.title = p.title;
+        changed = true;
+      }
+      if (p.stock !== undefined && p.stock !== item.stock) {
+        item.stock = p.stock;
+        changed = true;
+      }
+      return true;
+    });
+
+    if (changed) this._save();
+    // Siempre notificar para que la UI refleje los precios actuales
+    this._listeners.forEach(fn => fn(this.items));
+  }
+
+  // ── liveItems: items con precios siempre frescos de window.PRODUCTS ──────────
+  // Garantiza que el renderizado del carrito siempre muestre el precio de la BD,
+  // incluso si syncPrices aún no actualizó localStorage.
+  get liveItems() {
+    const catalog = window.PRODUCTS;
+    if (!Array.isArray(catalog) || !catalog.length) return this.items;
+    return this.items.map(item => {
+      const p = catalog.find(p => Number(p.id) === Number(item.id));
+      if (!p) return item;
+      const livePrice = Number(p.price);
+      if (!livePrice || livePrice === Number(item.price)) return item;
+      return { ...item, price: livePrice };
+    });
+  }
+
   // ── Getters ────────────────────────────────────────────────────
   get count()    { return this.items.reduce((s, i) => s + i.qty, 0); }
-  get subtotal() { return this.items.reduce((s, i) => s + i.price * i.qty, 0); }
+  get subtotal() { return this.liveItems.reduce((s, i) => s + i.price * i.qty, 0); }
   get isEmpty()  { return this.items.length === 0; }
 
   formatPrice(n) {

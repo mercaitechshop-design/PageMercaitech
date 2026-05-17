@@ -23,7 +23,21 @@
     }
     .form-input:focus, .form-select:focus { border-color: var(--mt-blue-400); box-shadow: 0 0 0 3px rgba(0,102,255,.15); }
     .form-input::placeholder { color: var(--fg-subtle); }
-    .form-select { -webkit-appearance: none; appearance: none; cursor: pointer; }
+    .form-select {
+      -webkit-appearance: none; appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 18px;
+      padding-right: 38px;
+    }
+    .form-select:focus {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230066ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+    .form-select:disabled {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233d4456' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      opacity: .5; cursor: not-allowed;
+    }
     .payment-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-5); }
     .payment-method { padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; text-align: center; transition: all var(--dur-base) var(--ease-standard); }
     .payment-method.active { border-color: var(--mt-blue-400); background: rgba(0,102,255,.08); }
@@ -163,8 +177,8 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="telefono">Teléfono</label>
-            <input type="tel" class="form-input" id="telefono" placeholder="+57 300 000 0000" autocomplete="tel">
+            <label class="form-label" for="telefono">Teléfono *</label>
+            <input type="tel" class="form-input" id="telefono" placeholder="+57 300 000 0000" required autocomplete="tel">
           </div>
         </div>
 
@@ -180,31 +194,28 @@
           </div>
           <div class="form-group--row">
             <div class="form-group">
-              <label class="form-label" for="ciudad">Ciudad *</label>
-              <input type="text" class="form-input" id="ciudad" placeholder="Bogotá" required autocomplete="address-level2">
+              <label class="form-label" for="departamento">Departamento *</label>
+              <select class="form-select" id="departamento" required>
+                <option value="">Selecciona un departamento</option>
+              </select>
             </div>
             <div class="form-group">
-              <label class="form-label" for="departamento">Departamento</label>
-              <input type="text" class="form-input" id="departamento" placeholder="Cundinamarca" autocomplete="address-level1">
+              <label class="form-label" for="ciudad">Ciudad / Municipio *</label>
+              <select class="form-select" id="ciudad" required disabled>
+                <option value="">Primero elige un departamento</option>
+              </select>
             </div>
           </div>
           <div class="form-group--row">
             <div class="form-group">
               <label class="form-label" for="pais">País *</label>
-              <select class="form-select" id="pais" autocomplete="country-name">
-                <option value="Colombia" selected>Colombia</option>
-                <option value="México">México</option>
-                <option value="Argentina">Argentina</option>
-                <option value="Chile">Chile</option>
-                <option value="Perú">Perú</option>
-                <option value="Venezuela">Venezuela</option>
-                <option value="Ecuador">Ecuador</option>
-                <option value="Bolivia">Bolivia</option>
+              <select class="form-select" id="pais" autocomplete="country-name" required>
+                <option value="Colombia" selected>🇨🇴 Colombia</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label" for="cp">Código postal</label>
-              <input type="text" class="form-input" id="cp" placeholder="110111" autocomplete="postal-code">
+              <label class="form-label" for="cp">Código postal *</label>
+              <input type="text" class="form-input" id="cp" placeholder="Se completa automáticamente" autocomplete="postal-code" required readonly style="background:var(--bg-elevated);color:var(--fg-muted);cursor:not-allowed">
             </div>
           </div>
         </div>
@@ -278,7 +289,7 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script src="assets/js/products.js"></script>
-<script src="assets/js/cart.js?v=12"></script>
+<script src="assets/js/cart.js?v=13"></script>
 <script src="assets/js/auth.js?v=11"></script>
 <script>
 'use strict';
@@ -320,7 +331,7 @@ function renderCheckoutSummary() {
     return;
   }
 
-  itemsEl.innerHTML = window.cart.items.map(item => {
+  itemsEl.innerHTML = window.cart.liveItems.map(item => {
     const full = (window.PRODUCTS||[]).find(p => p.id === item.id);
     const imageUrl = full?.image_url || item.image_url;
     const imgContent = imageUrl
@@ -518,14 +529,17 @@ $('place-order-btn').addEventListener('click', async () => {
     return;
   }
 
-  const btn      = $('place-order-btn');
-  const nombre   = $('nombre').value.trim();
-  const apellido = $('apellido').value.trim();
-  const email    = $('email').value.trim();
-  const direccion= $('direccion').value.trim();
-  const ciudad   = $('ciudad').value.trim();
+  const btn          = $('place-order-btn');
+  const nombre       = $('nombre').value.trim();
+  const apellido     = $('apellido').value.trim();
+  const email        = $('email').value.trim();
+  const telefono     = $('telefono').value.trim();
+  const direccion    = $('direccion').value.trim();
+  const departamento = $('departamento').value;
+  const ciudad       = $('ciudad').value;
+  const cp           = $('cp').value.trim();
 
-  if (!nombre || !apellido || !email || !direccion || !ciudad) {
+  if (!nombre || !apellido || !email || !telefono || !direccion || !departamento || !ciudad || !cp) {
     showToast('Por favor completa todos los campos obligatorios.', 'error');
     return;
   }
@@ -549,8 +563,8 @@ $('place-order-btn').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items:      window.cart.items.map(i => ({ id: i.id, title: i.title, qty: i.qty, price: i.price })),
-        cliente:    { nombre: `${nombre} ${apellido}`, email, telefono: $('telefono').value.trim() },
-        envio:      { direccion, ciudad, pais: $('pais').value, codigo_postal: $('cp').value.trim() },
+        cliente:    { nombre: `${nombre} ${apellido}`, email, telefono },
+        envio:      { direccion, departamento, ciudad, pais: $('pais').value, codigo_postal: cp },
         usuario_id: _authUser?.id ?? null,
         discount:   appliedDiscount,
       }),
@@ -577,14 +591,17 @@ $('place-order-btn').addEventListener('click', async () => {
 
 // ── Botón de prueba (simular pago aprobado) ────────────────────────────────
 $('test-order-btn').addEventListener('click', async () => {
-  const btn      = $('test-order-btn');
-  const nombre   = $('nombre').value.trim();
-  const apellido = $('apellido').value.trim();
-  const email    = $('email').value.trim();
-  const direccion= $('direccion').value.trim();
-  const ciudad   = $('ciudad').value.trim();
+  const btn          = $('test-order-btn');
+  const nombre       = $('nombre').value.trim();
+  const apellido     = $('apellido').value.trim();
+  const email        = $('email').value.trim();
+  const telefono     = $('telefono').value.trim();
+  const direccion    = $('direccion').value.trim();
+  const departamento = $('departamento').value;
+  const ciudad       = $('ciudad').value;
+  const cp           = $('cp').value.trim();
 
-  if (!nombre || !apellido || !email || !direccion || !ciudad) {
+  if (!nombre || !apellido || !email || !telefono || !direccion || !departamento || !ciudad || !cp) {
     showToast('Por favor completa todos los campos obligatorios.', 'error');
     return;
   }
@@ -600,8 +617,8 @@ $('test-order-btn').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items:      window.cart.items.map(i => ({ id: i.id, qty: i.qty })),
-        cliente:    { nombre: `${nombre} ${apellido}`, email, telefono: $('telefono').value.trim() },
-        envio:      { direccion, ciudad, pais: $('pais').value, codigo_postal: $('cp').value.trim() },
+        cliente:    { nombre: `${nombre} ${apellido}`, email, telefono },
+        envio:      { direccion, departamento, ciudad, pais: $('pais').value, codigo_postal: cp },
         usuario_id: _authUser?.id ?? null,
       }),
     });
@@ -614,6 +631,87 @@ $('test-order-btn').addEventListener('click', async () => {
   }
 });
 
+// ── Colombia: departamentos, municipios y códigos postales ─────────────────
+const COLOMBIA = {
+  'Amazonas':            [['El Encanto','910201'],['La Chorrera','910301'],['La Pedrera','910401'],['La Victoria','911001'],['Leticia','910001'],['Mirití-Paraná','910601'],['Puerto Alegría','910701'],['Puerto Arica','910801'],['Puerto Nariño','910501'],['Tarapacá','910901']],
+  'Antioquia':           [['Abejorral','050006'],['Abriaquí','050010'],['Alejandría','050030'],['Amagá','050034'],['Amalfi','050036'],['Andes','050040'],['Angelópolis','050044'],['Angostura','050045'],['Anorí','050050'],['Anzá','050060'],['Apartadó','057440'],['Arboletes','050070'],['Argelia','050073'],['Barbosa','050088'],['Bello','051010'],['Betania','050097'],['Betulia','050098'],['Briceño','050113'],['Buriticá','050116'],['Cáceres','050124'],['Caicedo','050130'],['Caldas','051020'],['Campamento','050138'],['Cañasgordas','050142'],['Caracolí','050150'],['Caramanta','050154'],['Carepa','050158'],['Carolina del Príncipe','050162'],['Caucasia','050172'],['Chigorodó','057460'],['Cisneros','050190'],['Ciudad Bolívar','050109'],['Cocorná','050197'],['Concepción','050206'],['Concordia','050209'],['Copacabana','051030'],['Dabeiba','050226'],['Don Matías','050233'],['Ebéjico','050236'],['El Bagre','050240'],['El Santuario','054020'],['Entrerríos','050258'],['Envigado','055422'],['Fredonia','050270'],['Frontino','050277'],['Giraldo','050282'],['Girardota','051040'],['Gómez Plata','050292'],['Granada','050294'],['Guadalupe','050298'],['Guarne','051050'],['Guatapé','050306'],['Heliconia','050313'],['Hispania','050318'],['Itagüí','055413'],['Ituango','050330'],['Jardín','050338'],['Jericó','050345'],['La Ceja','054040'],['La Estrella','055416'],['La Pintada','050370'],['La Unión','050374'],['Liborina','050377'],['Maceo','050386'],['Marinilla','054030'],['Medellín','050001'],['Montebello','050405'],['Murindó','050415'],['Mutatá','050418'],['Nariño','050425'],['Nechí','050430'],['Necoclí','050433'],['Olaya','050436'],['Peñol','054010'],['Peque','050444'],['Pueblorrico','050450'],['Puerto Berrío','050455'],['Puerto Nare','050460'],['Puerto Triunfo','050468'],['Remedios','050473'],['Retiro','055430'],['Rionegro','054001'],['Sabanalarga','050490'],['Sabaneta','055419'],['Salgar','050494'],['San Andrés de Cuerquia','050497'],['San Carlos','050500'],['San Francisco','050504'],['San Jerónimo','050508'],['San José de la Montaña','050512'],['San Juan de Urabá','050515'],['San Luis','050517'],['San Pedro de los Milagros','050521'],['San Pedro de Urabá','050523'],['San Rafael','050535'],['San Roque','050541'],['San Vicente Ferrer','050544'],['Santa Bárbara','050547'],['Santa Fe de Antioquia','050055'],['Santa Rosa de Osos','050553'],['Santo Domingo','050559'],['Segovia','050562'],['Sonsón','050568'],['Sopetrán','050571'],['Támesis','050577'],['Tarazá','050580'],['Tarso','050585'],['Titiribí','050590'],['Toledo','050594'],['Turbo','057450'],['Uramita','050607'],['Urrao','050610'],['Valdivia','050613'],['Valparaíso','050616'],['Vegachí','050619'],['Venecia','050622'],['Vigía del Fuerte','050625'],['Yalí','050628'],['Yolombó','050634'],['Yondó','050636'],['Zaragoza','050640']],
+  'Arauca':              [['Arauca','810001'],['Arauquita','810011'],['Cravo Norte','810201'],['Fortul','810401'],['Puerto Rondón','810501'],['Saravena','810601'],['Tame','810701']],
+  'Atlántico':           [['Baranoa','080020'],['Barranquilla','080001'],['Campo de la Cruz','080078'],['Candelaria','080090'],['Galapa','080245'],['Juan de Acosta','080360'],['Luruaco','080421'],['Malambo','080433'],['Manatí','080436'],['Palmar de Varela','080520'],['Piojó','080549'],['Polonuevo','080558'],['Ponedera','080560'],['Puerto Colombia','080573'],['Repelón','080606'],['Sabanagrande','080634'],['Sabanalarga','080635'],['Santa Lucía','080675'],['Santo Tomás','080680'],['Soledad','080758'],['Suán','080770'],['Tubará','080820'],['Usiacurí','080840']],
+  'Bogotá D.C.':         [['Bogotá D.C.','110111']],
+  'Bolívar':             [['Achí','130006'],['Altos del Rosario','130030'],['Arenal','130042'],['Arjona','130045'],['Arroyohondo','130051'],['Barranco de Loba','130067'],['Calamar','130073'],['Cantagallo','130090'],['Cartagena','130001'],['Cicuco','130120'],['Clemencia','130142'],['Córdoba','130138'],['El Carmen de Bolívar','130160'],['El Guamo','130248'],['El Peñón','130268'],['Hatillo de Loba','130300'],['Magangué','130403'],['Mahates','130411'],['Margarita','130418'],['María la Baja','130433'],['Mompós','130450'],['Montecristo','130473'],['Morales','130490'],['Norosí','130500'],['Pinillos','130549'],['Regidor','130580'],['Río Viejo','130600'],['San Cristóbal','130620'],['San Estanislao','130657'],['San Fernando','130667'],['San Jacinto','130670'],['San Jacinto del Cauca','130673'],['San Juan Nepomuceno','130680'],['San Martín de Loba','130683'],['San Pablo','130685'],['Santa Catalina','130693'],['Santa Rosa','130694'],['Santa Rosa del Sur','130696'],['Simití','130713'],['Soplaviento','130757'],['Talaigua Nuevo','130773'],['Tiquisio','130780'],['Turbaco','130827'],['Turbaná','130828'],['Villanueva','130874'],['Zambrano','130883']],
+  'Boyacá':              [['Almeida','150030'],['Aquitania','150051'],['Arcabuco','150053'],['Belén','150088'],['Berbeo','150097'],['Betéitiva','150098'],['Boavita','150109'],['Boyacá','150110'],['Briceño','150113'],['Buenavista','150114'],['Busbanzá','150117'],['Caldas','150124'],['Campohermoso','150127'],['Cerinza','150148'],['Chinavita','150168'],['Chiquinquirá','150172'],['Chiscas','150176'],['Chita','150180'],['Chitaraque','150183'],['Chivatá','150187'],['Chivor','150215'],['Chíquiza','150214'],['Ciénega','150189'],['Cómbita','150197'],['Coper','150201'],['Corrales','150205'],['Covarachía','150207'],['Cubará','150208'],['Cucaita','150209'],['Cuítiva','150212'],['Duitama','152210'],['El Cocuy','150230'],['El Espino','150232'],['Firavitoba','150236'],['Floresta','150238'],['Gachantivá','150243'],['Gámeza','150248'],['Garagoa','150255'],['Guacamayas','150261'],['Guateque','150264'],['Guayatá','150266'],['Güicán','150270'],['Iza','150300'],['Jenesano','150312'],['Jericó','150318'],['La Capilla','150350'],['La Uvita','150370'],['La Victoria','150380'],['Labranzagrande','150345'],['Leyva','150400'],['Macanal','150425'],['Maripí','150442'],['Miraflores','150455'],['Mongua','150460'],['Monguí','150463'],['Moniquirá','150466'],['Motavita','150469'],['Muzo','150476'],['Nobsa','150480'],['Nuevo Colón','150491'],['Oicatá','150494'],['Otanche','150500'],['Pachavita','150507'],['Páez','150511'],['Paipa','154810'],['Pajarito','150516'],['Panqueba','150518'],['Pauna','150523'],['Paya','150524'],['Paz de Río','150527'],['Pesca','150532'],['Pisba','150533'],['Puerto Boyacá','150547'],['Quípama','150572'],['Ramiriquí','150580'],['Ráquira','150585'],['Rondón','150607'],['Saboyá','150615'],['Sáchica','150618'],['Samacá','150624'],['San Eduardo','150631'],['San José de Pare','150638'],['San Luis de Gaceno','150645'],['San Mateo','150650'],['San Miguel de Sema','150655'],['San Pablo de Borbur','150660'],['Santa María','150673'],['Santa Rosa de Viterbo','153820'],['Santa Sofía','150685'],['Santana','150676'],['Sativanorte','150690'],['Sativasur','150691'],['Siachoque','150696'],['Soatá','150720'],['Socha','150719'],['Socotá','150723'],['Sogamoso','152210'],['Somondoco','150733'],['Sora','150736'],['Soracá','150738'],['Sotaquirá','150740'],['Susacón','150756'],['Sutamarchán','150757'],['Sutatenza','150759'],['Tasco','150761'],['Tenza','150763'],['Tibaná','150767'],['Tibasosa','150770'],['Tinjacá','150773'],['Tipacoque','150776'],['Toca','150779'],['Togüí','150753'],['Tópaga','150781'],['Tota','150783'],['Tunja','150001'],['Tununguá','150787'],['Turmequé','150793'],['Tuta','150797'],['Tutazá','150798'],['Úmbita','150804'],['Ventaquemada','150820'],['Villa de Leyva','154001'],['Viracachá','150861'],['Zetaquira','150879']],
+  'Caldas':              [['Aguadas','170006'],['Anserma','170013'],['Aranzazu','170042'],['Belalcázar','170088'],['Chinchiná','170168'],['Filadelfia','170236'],['La Dorada','170380'],['La Merced','170388'],['Manizales','170001'],['Manzanares','170433'],['Marmato','170442'],['Marquetalia','170443'],['Marulanda','170444'],['Neira','170480'],['Norcasia','170481'],['Pácora','170508'],['Palestina','170513'],['Pensilvania','170532'],['Riosucio','170616'],['Risaralda','170618'],['Salamina','170636'],['Samaná','170645'],['San José','170655'],['Supía','170757'],['Victoria','170820'],['Villamaría','170854'],['Viterbo','170861']],
+  'Caquetá':             [['Albania','180011'],['Belén de los Andaquíes','180092'],['Cartagena del Chairá','180150'],['Curillo','180205'],['El Doncello','180230'],['El Paujil','180245'],['Florencia','180001'],['La Montañita','180370'],['Milán','180454'],['Morelia','180466'],['Puerto Rico','180560'],['San José del Fragua','180653'],['San Vicente del Caguán','180667'],['Solano','180750'],['Solita','180753'],['Valparaíso','180816']],
+  'Casanare':            [['Aguazul','850006'],['Chámeza','850020'],['Hato Corozal','850030'],['La Salina','850040'],['Maní','850050'],['Monterrey','850310'],['Nunchía','850060'],['Orocué','850070'],['Paz de Ariporo','850080'],['Pore','850090'],['Recetor','850100'],['Sabanalarga','850110'],['Sácama','850120'],['San Luis de Palenque','850130'],['Támara','850140'],['Tauramena','850150'],['Trinidad','851001'],['Villanueva','851001'],['Yopal','850001']],
+  'Cauca':               [['Almaguer','190006'],['Argelia','190036'],['Balboa','190058'],['Bolívar','190110'],['Buenos Aires','190118'],['Cajibío','190122'],['Caldono','190130'],['Caloto','190134'],['Corinto','190212'],['El Tambo','190245'],['Florencia','190240'],['Guachené','190248'],['Guapi','190258'],['Inzá','190290'],['Jambaló','190300'],['La Sierra','190360'],['La Vega','190370'],['López de Micay','190401'],['Mercaderes','190450'],['Miranda','190460'],['Morales','190473'],['Padilla','190512'],['Páez','190516'],['Patía','190532'],['Piamonte','190533'],['Piendamó','190548'],['Popayán','190001'],['Puerto Tejada','190573'],['Puracé','190579'],['Rosas','190613'],['San Sebastián','190660'],['Santa Rosa','190693'],['Santander de Quilichao','190682'],['Silvia','190720'],['Sotará','190740'],['Suárez','190750'],['Sucre','190755'],['Timbío','190780'],['Timbiquí','190785'],['Toribío','190800'],['Totoró','190803'],['Villa Rica','190850']],
+  'Cesar':               [['Aguachica','200006'],['Agustín Codazzi','200010'],['Astrea','200045'],['Becerril','200052'],['Bosconia','200060'],['Chimichagua','200105'],['Chiriguaná','200110'],['Curumaní','200205'],['El Copey','200212'],['El Paso','200215'],['Gamarra','200245'],['González','200250'],['La Gloria','200360'],['La Jagua de Ibirico','200370'],['La Paz','201030'],['Manaure Balcón del Cesar','200400'],['Pailitas','200510'],['Pelaya','200520'],['Pueblo Bello','200570'],['Río de Oro','200605'],['San Alberto','200633'],['San Diego','200634'],['San Martín','200650'],['Tamalameque','200773'],['Valledupar','200001']],
+  'Chocó':               [['Acandí','270006'],['Alto Baudó','270025'],['Atrato','270050'],['Bagadó','270065'],['Bahía Solano','270066'],['Bajo Baudó','270067'],['Bojayá','270100'],['Carmen del Darién','270109'],['El Cantón del San Pablo','270135'],['El Carmen de Atrato','270160'],['El Litoral del San Juan','270233'],['Istmina','270291'],['Juradó','270300'],['Lloró','270400'],['Medio Atrato','270425'],['Medio Baudó','270430'],['Medio San Juan','270450'],['Nóvita','270491'],['Nuquí','270495'],['Quibdó','270001'],['Río Iro','270600'],['Río Quito','270615'],['Riosucio','270616'],['San José del Palmar','270658'],['Sipí','270690'],['Tadó','270761'],['Unguía','270800'],['Unión Panamericana','270810']],
+  'Córdoba':             [['Ayapel','230060'],['Buenavista','230090'],['Canalete','230100'],['Cereté','230160'],['Chimá','230167'],['Chinú','230169'],['Ciénaga de Oro','230190'],['Cotorra','230212'],['La Apartada','230350'],['Lorica','230417'],['Los Córdobas','230420'],['Momil','230462'],['Montelíbano','230466'],['Montería','230001'],['Moñitos','230468'],['Planeta Rica','230550'],['Pueblo Nuevo','230566'],['Puerto Escondido','230573'],['Puerto Libertador','230574'],['Purísima','230580'],['Sahagún','230640'],['San Andrés de Sotavento','230660'],['San Antero','230663'],['San Bernardo del Viento','230670'],['San Carlos','230671'],['San José de Uré','230680'],['San Pelayo','230684'],['Tierralta','230787'],['Tuchín','230800'],['Valencia','230816']],
+  'Cundinamarca':        [['Agua de Dios','250006'],['Albán','250010'],['Anapoima','250030'],['Anolaima','250036'],['Apulo','250602'],['Arbeláez','250040'],['Beltrán','250077'],['Bituima','250097'],['Bojacá','250099'],['Cabrera','250120'],['Cachipay','250123'],['Cajicá','250124'],['Caparrapí','250140'],['Caqueza','250141'],['Carmen de Carupa','250145'],['Chaguaní','250158'],['Chía','250170'],['Chipaque','250171'],['Choachí','250172'],['Chocontá','250174'],['Cogua','250199'],['Cota','250200'],['Cucunubá','250209'],['El Colegio','250226'],['El Peñón','250248'],['El Rosal','250251'],['Fomeque','250257'],['Fosca','250258'],['Funza','250270'],['Fúquene','250272'],['Fusagasugá','252211'],['Gachalá','250278'],['Gachancipá','250281'],['Gachetá','250283'],['Gama','250285'],['Girardot','252421'],['Granada','250291'],['Guachetá','250293'],['Guaduas','250297'],['Guasca','250299'],['Guataquí','250300'],['Guatavita','250302'],['Guayabal de Síquima','250304'],['Guayabetal','250305'],['Gutiérrez','250307'],['Jerusalén','250316'],['Junín','250318'],['La Calera','250345'],['La Mesa','250370'],['La Palma','250390'],['La Peña','250400'],['La Vega','250410'],['Lenguazaque','250400'],['Machetá','250423'],['Madrid','250428'],['Manta','250430'],['Medina','250436'],['Mosquera','250473'],['Nariño','250476'],['Nemocón','250480'],['Nilo','250483'],['Nimaima','250486'],['Nocaima','250488'],['Pacho','250515'],['Paime','250518'],['Pandi','250524'],['Paratebueno','250530'],['Pasca','250535'],['Puerto Salgar','250577'],['Pulí','250580'],['Quebradanegra','250593'],['Quetame','250594'],['Quipile','250596'],['Ricaurte','250605'],['San Antonio del Tequendama','250615'],['San Bernardo','250620'],['San Cayetano','250630'],['San Francisco','250635'],['San Juan de Río Seco','250640'],['Sasaima','250660'],['Sesquilé','250663'],['Sibaté','250667'],['Silvania','250668'],['Simijaca','250670'],['Soacha','251010'],['Sopó','250736'],['Subachoque','250740'],['Suesca','250745'],['Supatá','250749'],['Susa','250750'],['Sutatausa','250753'],['Tabio','250757'],['Tausa','250760'],['Tena','250763'],['Tenjo','250770'],['Tibacuy','250773'],['Tibiritá','250776'],['Tocaima','250780'],['Tocancipá','250785'],['Topaipí','250787'],['Ubalá','250799'],['Ubaque','250801'],['Une','250810'],['Útica','250815'],['Venecia','250493'],['Vergara','250823'],['Vianí','250826'],['Villa de San Diego de Ubaté','250817'],['Villagómez','250845'],['Villapinzón','250848'],['Villeta','250851'],['Viotá','250854'],['Yacopí','250871'],['Zipacón','250876'],['Zipaquirá','250251']],
+  'Guainía':             [['Barranco Minas','940100'],['Cacahual','940110'],['Inírida','940001'],['La Guadalupe','940200'],['Mapiripana','940400'],['Morichal','940500'],['Pana Pana','940600'],['Puerto Colombia','940700'],['San Felipe','940800']],
+  'Guaviare':            [['Calamar','950100'],['El Retorno','950200'],['Miraflores','950300'],['San José del Guaviare','950001']],
+  'Huila':               [['Acevedo','410006'],['Agrado','410010'],['Aipe','410013'],['Algeciras','410015'],['Altamira','410016'],['Baraya','410040'],['Campoalegre','410061'],['Colombia','410075'],['Elías','410110'],['Garzón','410240'],['Gigante','410245'],['Guadalupe','410255'],['Hobo','410270'],['Iquira','410280'],['Isnos','410285'],['La Argentina','410355'],['La Plata','410360'],['Nátaga','410440'],['Neiva','410001'],['Oporapa','410450'],['Paicol','410460'],['Palermo','410466'],['Palestina','410467'],['Pital','410468'],['Pitalito','414240'],['Rivera','410570'],['Saladoblanco','410610'],['San Agustín','411620'],['Santa María','410648'],['Suaza','410680'],['Tarqui','410720'],['Tello','410730'],['Teruel','410753'],['Tesalia','410745'],['Timaná','410760'],['Villavieja','410821'],['Yaguará','410840']],
+  'La Guajira':          [['Albania','440006'],['Barrancas','440051'],['Dibulla','440078'],['Distracción','440079'],['El Molino','440085'],['Fonseca','440093'],['Hatonuevo','440110'],['La Jagua del Pilar','440115'],['Maicao','440401'],['Manaure','441001'],['Riohacha','440001'],['San Juan del Cesar','440634'],['Uribia','444001'],['Urumita','440805'],['Villanueva','440840']],
+  'Magdalena':           [['Algarrobo','470015'],['Aracataca','470031'],['Ariguaní','470045'],['Cerro de San Antonio','470053'],['Chivolo','470058'],['Ciénaga','470130'],['El Banco','470115'],['El Piñón','470120'],['El Retén','470124'],['Fundación','470165'],['Guamal','470170'],['Nueva Granada','470177'],['Pedraza','470180'],['Pijiño del Carmen','470190'],['Pivijay','470198'],['Plato','470200'],['Pueblo Viejo','470212'],['Remolino','470220'],['Sabanas de San Ángel','470221'],['Salamina','470224'],['San Sebastián de Buenavista','470226'],['San Zenón','470228'],['Santa Ana','470230'],['Santa Bárbara de Pinto','470233'],['Santa Marta','470001'],['Sitionuevo','470235'],['Tenerife','470237'],['Zapayán','470238'],['Zona Bananera','470239']],
+  'Meta':                [['Acacías','500006'],['Barranca de Upía','500053'],['Cabuyaro','500077'],['Castilla la Nueva','500109'],['Cubarral','500150'],['Cumaral','500160'],['El Calvario','500190'],['El Castillo','500195'],['El Dorado','500200'],['Fuente de Oro','500245'],['Granada','500270'],['Guamal','500277'],['La Macarena','500313'],['La Uribe','500325'],['Lejanías','500317'],['Mapiripán','500325'],['Mesetas','500330'],['Puerto Concordia','500450'],['Puerto Gaitán','500450'],['Puerto Lleras','500450'],['Puerto López','504010'],['Puerto Rico','500450'],['Restrepo','500450'],['San Carlos de Guaroa','500450'],['San Juan de Arama','500450'],['San Juanito','500450'],['San Martín','503620'],['Villavicencio','500001'],['Vistahermosa','500450']],
+  'Nariño':              [['Albán','520010'],['Aldana','520013'],['Ancuya','520030'],['Arboleda','520031'],['Barbacoas','520045'],['Belén','520052'],['Buesaco','520053'],['Colón','520078'],['Consacá','520079'],['Contadero','520080'],['Córdoba','520081'],['Cuaspud','520082'],['Cumbal','520083'],['Cumbitara','520084'],['El Charco','520085'],['El Peñol','520086'],['El Rosario','520087'],['El Tablón de Gómez','520088'],['El Tambo','520089'],['Francisco Pizarro','520090'],['Funes','520091'],['Guachucal','520092'],['Guaitarilla','520093'],['Gualmatán','520094'],['Iles','520095'],['Imués','520096'],['Ipiales','524010'],['La Cruz','521010'],['La Florida','520097'],['La Llanada','520098'],['La Tola','520099'],['La Unión','521030'],['Leiva','520100'],['Linares','520101'],['Los Andes','520102'],['Magüí','520103'],['Mallama','520104'],['Mosquera','520105'],['Nariño','520106'],['Olaya Herrera','520107'],['Ospina','520108'],['Pasto','520001'],['Policarpa','520109'],['Potosí','520110'],['Providencia','520111'],['Puerres','520112'],['Pupiales','520113'],['Ricaurte','520114'],['Roberto Payán','520115'],['Samaniego','521210'],['San Bernardo','520116'],['San Lorenzo','520117'],['San Pablo','520118'],['San Pedro de Cartago','520119'],['Sandoná','520120'],['Santa Bárbara','520121'],['Santacruz','520122'],['Sapuyes','520123'],['Taminango','520124'],['Tangua','520125'],['Tumaco','528010'],['Túquerres','521610'],['Yacuanquer','520126']],
+  'Norte de Santander':  [['Ábrego','540006'],['Arboledas','540042'],['Bochalema','540098'],['Bucarasica','540099'],['Cácota','540109'],['Cáchira','540110'],['Chinácota','540120'],['Chitagá','540124'],['Convención','540125'],['Cucutilla','540126'],['Cúcuta','540001'],['Durania','540127'],['El Carmen','540128'],['El Tarra','540129'],['El Zulia','540130'],['Gramalote','540131'],['Hacarí','540132'],['Herrán','540133'],['La Esperanza','540134'],['La Playa de Belén','540135'],['Labateca','540136'],['Los Patios','540137'],['Lourdes','540138'],['Mutiscua','540139'],['Ocaña','543050'],['Pamplona','543001'],['Pamplonita','540140'],['Puerto Santander','540141'],['Ragonvalia','540142'],['Salazar','540143'],['San Calixto','540144'],['San Cayetano','540145'],['Santiago','540146'],['Sardinata','540147'],['Silos','540148'],['Teorama','540149'],['Tibú','547001'],['Toledo','540150'],['Villa Caro','540151'],['Villa del Rosario','540152']],
+  'Putumayo':            [['Colón','860010'],['Mocoa','860001'],['Orito','860020'],['Puerto Asís','864050'],['Puerto Caicedo','860050'],['Puerto Guzmán','860060'],['Puerto Leguízamo','865001'],['San Francisco','860030'],['San Miguel','860031'],['Santiago','860032'],['Sibundoy','863001'],['Valle del Guamuez','864050'],['Villagarzón','860080']],
+  'Quindío':             [['Armenia','630001'],['Buenavista','630010'],['Calarcá','631001'],['Circasia','630020'],['Córdoba','630030'],['Filandia','630040'],['Génova','630050'],['La Tebaida','630060'],['Montenegro','630070'],['Pijao','630080'],['Quimbaya','630090'],['Salento','630100']],
+  'Risaralda':           [['Apía','660010'],['Balboa','660020'],['Belén de Umbría','660030'],['Dosquebradas','661010'],['Guática','660040'],['La Celia','660050'],['La Virginia','660060'],['Marsella','660070'],['Mistrató','660080'],['Pereira','660001'],['Pueblo Rico','660090'],['Quinchía','660100'],['Santa Rosa de Cabal','662001'],['Santuario','660110']],
+  'San Andrés y Providencia': [['Providencia','880006'],['San Andrés','880001']],
+  'Santander':           [['Aguada','680010'],['Albania','680013'],['Aratoca','680020'],['Barbosa','680032'],['Barichara','680040'],['Barrancabermeja','687001'],['Betulia','680065'],['Bolívar','680077'],['Bucaramanga','680001'],['Cabrera','680090'],['California','680097'],['Capitanejo','680098'],['Carcasí','680102'],['Cepitá','680107'],['Cerrito','680108'],['Charalá','680110'],['Charta','680111'],['Chimá','680113'],['Chipatá','680114'],['Cimitarra','680120'],['Concepción','680130'],['Confines','680132'],['Contratación','680140'],['Coromoro','680147'],['Curití','680150'],['El Carmen de Chucurí','680155'],['El Guacamayo','680158'],['El Peñón','680165'],['El Playón','680167'],['Encino','680170'],['Enciso','680173'],['Florián','680185'],['Floridablanca','681010'],['Galán','680202'],['Gámbita','680203'],['Girón','681030'],['Guaca','680210'],['Guadalupe','680213'],['Guapotá','680215'],['Guavatá','680217'],['Güepsa','680218'],['Hato','680219'],['Jesús María','680226'],['Jordán','680229'],['La Belleza','680235'],['La Paz','680255'],['Landázuri','680250'],['Lebríja','680260'],['Los Santos','680273'],['Macaravita','680277'],['Málaga','684001'],['Matanza','680296'],['Mogotes','680298'],['Molagavita','680302'],['Ocamonte','680306'],['Oiba','680307'],['Onzaga','680310'],['Palmar','680320'],['Palmas del Socorro','680321'],['Páramo','680324'],['Piedecuesta','681050'],['Pinchote','680333'],['Puente Nacional','682001'],['Puerto Parra','680340'],['Puerto Wilches','680345'],['Rionegro','680360'],['Sabana de Torres','680363'],['San Andrés','680370'],['San Benito','680373'],['San Gil','683001'],['San Joaquín','680380'],['San José de Miranda','680381'],['San Miguel','680382'],['San Vicente de Chucurí','680390'],['Santa Bárbara','680394'],['Santa Helena del Opón','680395'],['Simacota','680397'],['Socorro','683201'],['Suaita','680398'],['Sucre','680399'],['Suratá','680400'],['Tona','680405'],['Valle de San José','680407'],['Vélez','682201'],['Vetas','680410'],['Villanueva','680413'],['Zapatoca','680415']],
+  'Sucre':               [['Buenavista','700010'],['Caimito','700020'],['Chalán','700030'],['Colosó','700040'],['Corozal','701030'],['Coveñas','700050'],['El Roble','700060'],['Galeras','700070'],['Guaranda','700080'],['La Unión','700090'],['Los Palmitos','700100'],['Majagual','700110'],['Morroa','700120'],['Ovejas','700130'],['Palmito','700140'],['Sampués','700150'],['San Benito Abad','700160'],['San Juan de Betulia','700170'],['San Luis de Sincé','701010'],['San Marcos','700180'],['San Onofre','700190'],['San Pedro','700200'],['Santiago de Tolú','700210'],['Sincelejo','700001'],['Sucre','700230'],['Tolú Viejo','700240']],
+  'Tolima':              [['Alpujarra','730006'],['Alvarado','730010'],['Ambalema','730012'],['Anzoátegui','730014'],['Armero','730015'],['Ataco','730016'],['Cajamarca','730020'],['Carmen de Apicalá','730025'],['Casabianca','730030'],['Chaparral','732001'],['Coello','730035'],['Coyaima','730040'],['Cunday','730045'],['Dolores','730050'],['Espinal','734001'],['Falan','730055'],['Flandes','730060'],['Fresno','730063'],['Guamo','730065'],['Herveo','730067'],['Honda','735001'],['Ibagué','730001'],['Icononzo','730070'],['Lérida','730075'],['Líbano','731001'],['Mariquita','735201'],['Melgar','734201'],['Murillo','730080'],['Natagaima','730085'],['Ortega','730090'],['Palocabildo','730093'],['Piedras','730095'],['Planadas','730100'],['Prado','730105'],['Purificación','734401'],['Rioblanco','730110'],['Roncesvalles','730115'],['Rovira','730120'],['Saldaña','730125'],['San Antonio','730130'],['San Luis','730135'],['Santa Isabel','730138'],['Suárez','730143'],['Valle de San Juan','730145'],['Venadillo','730150'],['Villahermosa','730155'],['Villarrica','730160']],
+  'Valle del Cauca':     [['Alcalá','760006'],['Andalucía','760010'],['Ansermanuevo','760020'],['Argelia','760030'],['Bolívar','760040'],['Buenaventura','764001'],['Bugalagrande','760050'],['Caicedonia','760060'],['Cali','760001'],['Calima','760070'],['Candelaria','760080'],['Cartago','762001'],['Dagua','760090'],['El Águila','760100'],['El Cairo','760110'],['El Cerrito','760120'],['El Dovio','760130'],['Florida','760140'],['Ginebra','760150'],['Guadalajara de Buga','763001'],['Guacarí','760160'],['Jamundí','760170'],['La Cumbre','760180'],['La Unión','760190'],['La Victoria','760200'],['Obando','760210'],['Palmira','763201'],['Pradera','760220'],['Restrepo','760230'],['Riofrío','760240'],['Roldanillo','760250'],['San Pedro','760260'],['Sevilla','763401'],['Toro','760270'],['Trujillo','760280'],['Tuluá','763601'],['Ulloa','760290'],['Versalles','760300'],['Vijes','760310'],['Yotoco','760320'],['Yumbo','763001'],['Zarzal','760330']],
+  'Vaupés':              [['Caruru','970100'],['Mitú','970001'],['Pacoa','970200'],['Papunaua','970400'],['Taraira','970300'],['Yavaraté','970500']],
+  'Vichada':             [['Cumaribo','990100'],['La Primavera','990200'],['Puerto Carreño','990001'],['Santa Rosalía','990300']],
+};
+
+// Poblar select de departamentos
+(function initDeptSelect() {
+  const deptSel = $('departamento');
+  Object.keys(COLOMBIA).sort().forEach(dept => {
+    const opt = document.createElement('option');
+    opt.value = dept; opt.textContent = dept;
+    deptSel.appendChild(opt);
+  });
+})();
+
+// Cuando cambia departamento → poblar ciudades
+$('departamento').addEventListener('change', function () {
+  const ciudadSel = $('ciudad');
+  const cpInput   = $('cp');
+  ciudadSel.innerHTML = '';
+  cpInput.value = '';
+
+  const municipios = COLOMBIA[this.value];
+  if (!municipios) {
+    ciudadSel.innerHTML = '<option value="">Primero elige un departamento</option>';
+    ciudadSel.disabled = true;
+    return;
+  }
+
+  const placeholder = document.createElement('option');
+  placeholder.value = ''; placeholder.textContent = 'Selecciona un municipio';
+  ciudadSel.appendChild(placeholder);
+
+  municipios.forEach(([nombre]) => {
+    const opt = document.createElement('option');
+    opt.value = nombre; opt.textContent = nombre;
+    ciudadSel.appendChild(opt);
+  });
+  ciudadSel.disabled = false;
+});
+
+// Cuando cambia ciudad → auto-completar código postal
+$('ciudad').addEventListener('change', function () {
+  const dept = $('departamento').value;
+  const municipios = COLOMBIA[dept] || [];
+  const entry = municipios.find(([nombre]) => nombre === this.value);
+  $('cp').value = entry ? entry[1] : '';
+});
+
 // Navbar scroll
 window.addEventListener('scroll', () => {
   document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
@@ -623,6 +721,41 @@ window.addEventListener('scroll', () => {
 if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
   const devSection = $('dev-test-section');
   if (devSection) devSection.style.display = 'block';
+}
+
+// ── Bloquea el email y pre-rellena datos del usuario autenticado ───────────
+function prefillForm() {
+  const user = (typeof MercaitechAuth !== 'undefined') ? MercaitechAuth.getUser() : null;
+  if (!user) return;
+
+  const nameEl  = document.getElementById('nombre');
+  const lastEl  = document.getElementById('apellido');
+  const emailEl = document.getElementById('email');
+  const parts   = (user.nombre || '').split(' ');
+
+  if (nameEl  && !nameEl.value)  nameEl.value  = parts[0] || '';
+  if (lastEl  && !lastEl.value)  lastEl.value  = parts.slice(1).join(' ') || '';
+
+  if (emailEl) {
+    emailEl.value    = user.email || '';
+    emailEl.readOnly = true;
+    emailEl.style.cssText += ';background:var(--bg-elevated);color:var(--fg-muted);cursor:not-allowed;';
+    const note = document.getElementById('email-locked-note');
+    if (note) note.style.display = 'flex';
+  }
+
+  // Badge "Comprando como" en navbar (evitar duplicados)
+  const nav = document.querySelector('.navbar__inner');
+  if (nav && !nav.querySelector('[data-auth-badge]')) {
+    const badge = document.createElement('div');
+    badge.dataset.authBadge = '1';
+    badge.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg-subtle);margin-left:auto;margin-right:12px';
+    badge.innerHTML = `
+      <span style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--mt-blue-500),var(--mt-cyan-400));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff">${(user.nombre||'?')[0].toUpperCase()}</span>
+      <span>${user.nombre}</span>`;
+    const secureEl = nav.querySelector('div[style*="Pago"]');
+    if (secureEl) nav.insertBefore(badge, secureEl);
+  }
 }
 
 // Init
@@ -646,11 +779,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mpStatus === 'failure') {
       showToast('El pago no pudo completarse. Puedes intentarlo de nuevo.', 'error');
       renderCheckoutSummary();
+      prefillForm();
       return;
     }
 
     if (!numeroOrden) {
       renderCheckoutSummary();
+      prefillForm();
       return;
     }
 
@@ -732,40 +867,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   renderCheckoutSummary();
-
-  // Pre-fill contact form from auth session
-  const user = (typeof MercaitechAuth !== 'undefined') ? MercaitechAuth.getUser() : null;
-  if (user) {
-    const parts = (user.nombre || '').split(' ');
-    const firstName = parts[0] || '';
-    const lastName  = parts.slice(1).join(' ') || '';
-    const nameEl  = document.getElementById('nombre');
-    const lastEl  = document.getElementById('apellido');
-    const emailEl = document.getElementById('email');
-    if (nameEl  && !nameEl.value)  nameEl.value  = firstName;
-    if (lastEl  && !lastEl.value)  lastEl.value  = lastName;
-    // Email siempre se fuerza al correo de la cuenta y se bloquea
-    if (emailEl) {
-      emailEl.value    = user.email || '';
-      emailEl.readOnly = true;
-      emailEl.style.cssText += ';background:var(--bg-elevated);color:var(--fg-muted);cursor:not-allowed;';
-      const note = document.getElementById('email-locked-note');
-      if (note) note.style.display = 'flex';
-    }
-
-    // Show "Comprando como" badge in the navbar area
-    const nav = document.querySelector('.navbar__inner');
-    if (nav) {
-      const badge = document.createElement('div');
-      badge.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg-subtle);margin-left:auto;margin-right:12px';
-      badge.innerHTML = `
-        <span style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--mt-blue-500),var(--mt-cyan-400));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff">${(user.nombre||'?')[0].toUpperCase()}</span>
-        <span>${user.nombre}</span>
-      `;
-      const secureEl = nav.querySelector('div[style*="Pago"]');
-      if (secureEl) nav.insertBefore(badge, secureEl);
-    }
-  }
+  prefillForm();
 });
 </script>
 </body>
